@@ -3,6 +3,7 @@ idf_component_register(
           "Fault_tolerant_iot_proj.cpp"
           "cloud_controller.cpp"
           "local_controller.cpp"
+          "web_hoster.cpp"
           
      INCLUDE_DIRS "."
 )
