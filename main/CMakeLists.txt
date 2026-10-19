@@ -5,5 +5,9 @@ idf_component_register(
           "local_controller.cpp"
           "web_hoster.cpp"
           
-     INCLUDE_DIRS "."
+     INCLUDE_DIRS 
+          "."
+          "cloud_controller"
+          "local_controller"
+          "web_hoster"
 )
