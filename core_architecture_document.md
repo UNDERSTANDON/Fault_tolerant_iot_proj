@@ -39,39 +39,21 @@ The architecture is user-centric, delegating major processing workflows to user 
 
 ## 3. Hardware & Topological Mapping
 
-```
-                       +-------------------+
-                       |   Firebase Cloud  |
-                       +---------+---------+
-                                 ^
-           (10-min routine sync / Immediate hazard sync)
-                                 v
-                       +---------+---------+
-                       |   Mobile App UI   |
-                       +---------+---------+
-                                 ^
-                                 v
-+--------------------------------+--------------------------------+
-| Local Network (ESP32 Controller / Access Point)                 |
-+-----------------------------------------------------------------+
-|                                                                 |
-| [Main Power Line] ---> [UPS] ---> [Main Circuit Breaker]        |
-|                                                                 |
-|  +-------------------+-------------------+-------------------+  |
-|  | Main Entryway     | Living Room       | Kitchen           |  |
-|  +-------------------+-------------------+-------------------+  |
-|  | - CB Sub-panel    | - CB Sub-panel    | - CB Sub-panel    |  |
-|  | - Door Lock (NFC) | - Smoke Sensor    | - Smoke Sensor    |  |
-|  | - Door Bell       | - Heat Sensor     | - Heat Sensor     |  |
-|  | - Light Switch    | - Light Switch    | - Humidity Sensor |  |
-|  | - Motor Control   | - Fan Control     | - Light Switch    |  |
-|  +-------------------+-------------------+-------------------+  |
-|  | Bedroom           |                                          |  |
-|  +-------------------+                                          |  |
-|  | - CB Sub-panel    |                                          |  |
-|  | - Smoke Sensor    |                                          |  |
-|  | - Heat Sensor     |                                          |  |
-|  | - Light Switch    |                                          |  |
-|  +-------------------+                                          |  |
-+-----------------------------------------------------------------+
-```
+```mermaid
+graph TD
+    User["User App"] -->|Control & Access| Cloud["Cloud (Firebase)"]
+    User -->|Direct Control| Local["Local System (ESP32)"]
+
+    subgraph Cloud_System ["Cloud (Firebase)"]
+        FirebaseDB["Structured JSON Logs<br>- is_power_down<br>- is_circuit_breaker_tripped<br>- is_internet_down"]
+        AIAnalysis["AI Analysis<br>- Weekly reports & notifications"]
+    end
+
+    subgraph Local_System ["Local System (ESP32)"]
+        Power["Power & Protection<br>- UPS (Backup Battery)<br>- Circuit Breakers (CB)"]
+        Sensors["Sensors<br>- Smoke & Heat Sensors<br>- Humidity Sensor"]
+        Rooms["Rooms & Actuators<br>- Entrance: NFC Lock, Lights, Doorbell<br>- Living Room: Lights, Fan, ESP32 AP<br>- Kitchen: Lights<br>- Bedroom: Lights"]
+    end
+
+    Cloud_System <-->|Sync every 10 mins / Instant for hazards| Local_System 
+``` 
