@@ -1,0 +1,4 @@
+#ifndef CLOUD_CONTROLLER_H
+#define CLOUD_CONTROLLER_H
+
+#endif // CLOUD_CONTROLLER_H

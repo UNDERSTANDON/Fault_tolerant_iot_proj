@@ -15,4 +15,18 @@ namespace web_hoster
           // Implement the logic to start the web server here
           std::cout << "Starting web server..." << std::endl;
      }
+
+     // LAN function is quite complex
+     // 1. While the house network is not down, ESP32 will connect to the
+     // house network and start the web server.
+     // 2. If the house network is down, ESP32 will start its own AP
+     // and start the web server.
+     // The idea is to make sure that the user can remote control the from afar
+     // and then still can control them while downtime of the house network.
+     // This only compromise the remote capability, but still can control the IoT devices locally.
+     void start_local_network()
+     {
+          // Implement the logic to start the local network here
+          std::cout << "Starting local network..." << std::endl;
+     }
 }

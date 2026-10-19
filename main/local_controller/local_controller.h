@@ -1,0 +1,4 @@
+#ifndef LOCAL_CONTROLLER_H
+#define LOCAL_CONTROLLER_H
+
+#endif // LOCAL_CONTROLLER_H
