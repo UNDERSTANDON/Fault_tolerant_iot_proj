@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <iostream>
+#include "web_hoster.h"
 using namespace std;
 
 // This is an embedded project for ESP32-S3
