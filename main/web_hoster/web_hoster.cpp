@@ -10,10 +10,9 @@ using namespace std;
 // we can just use a LAN website to manage and uses the IoT devices.
 namespace web_hoster
 {
-     void start_web_server()
+     WebHoster::WebHoster()
      {
-          // Implement the logic to start the web server here
-          std::cout << "Starting web server..." << std::endl;
+          // Constructor implementation
      }
 
      // LAN function is quite complex
@@ -24,9 +23,36 @@ namespace web_hoster
      // The idea is to make sure that the user can remote control the from afar
      // and then still can control them while downtime of the house network.
      // This only compromise the remote capability, but still can control the IoT devices locally.
-     void start_local_network()
+     void WebHoster::start_local_network()
      {
           // Implement the logic to start the local network here
           std::cout << "Starting local network..." << std::endl;
+          if (WebHoster::connect_to_house_network())
+          {
+               std::cout << "Connected to house network." << std::endl;
+          }
+          else
+          {
+               std::cout << "House network is down. Starting local network..." << std::endl;
+               // Implement the logic to start the local network here
+          }
+          WebHoster::start_web_server();
+     }
+
+     // Private section
+     // The tool used is IDF_ESP
+     void WebHoster::start_web_server()
+     {
+          // Implement the logic to start the web server here
+          std::cout << "Starting web server..." << std::endl;
+          // Start the web server here
+
+     }
+
+     bool WebHoster::connect_to_house_network()
+     {
+          // Implement the logic to connect to the house network here
+          std::cout << "Connecting to house network..." << std::endl;
+          return true; // Return true if connected successfully, false otherwise
      }
 }
