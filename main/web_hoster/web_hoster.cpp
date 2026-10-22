@@ -3,6 +3,9 @@
 #include <cloud_controller.h>
 #include <local_controller.h>
 #include <iostream>
+#include "esp_http_server.h"
+#include "esp_log.h"
+#include "esp_wifi.h"
 using namespace std;
 
 // This is the web hoster module for the ESP32-S3
