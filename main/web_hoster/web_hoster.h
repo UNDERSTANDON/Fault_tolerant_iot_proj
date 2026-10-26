@@ -11,6 +11,7 @@ namespace web_hoster
           WebHoster();
           void start_local_network();
      private:
+          void start_mDNS(const std::string &ssid, const std::string &password);
           bool connect_to_house_network();
           void start_web_server();
           bool get_wifi_config(std::string &ssid, std::string &password);
