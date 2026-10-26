@@ -1,0 +1,166 @@
+.cardContainer {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.cardContainer:hover {
+  border-color: #c4cabf;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconSquare {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(40, 86, 64, 0.08); /* Exact soft mint green from Figma */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconAccent {
+  color: var(--accent-primary);
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+}
+
+.roomName {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.roomSub {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.openDetailBtn {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.openDetailBtn:hover {
+  color: var(--accent-primary);
+  background-color: rgba(40, 86, 64, 0.08);
+}
+
+/* Big Temperature Display from Figma */
+.tempRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 4px 0 2px;
+}
+
+.tempLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.tempNum {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.tempUnit {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tempRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.75rem;
+}
+
+.tempLabel {
+  color: var(--text-muted);
+}
+
+.tempTime {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.smokeRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.iconNormal {
+  color: var(--accent-primary);
+}
+
+.smokeAlert {
+  color: var(--state-unavailable);
+  font-weight: 700;
+}
+
+.iconAlert {
+  color: var(--state-unavailable);
+  animation: pulse 1s infinite alternate;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 2px 0;
+}
+
+.deviceList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardFooter {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  padding-top: 4px;
+}
+
+@keyframes pulse {
+  from { opacity: 0.8; }
+  to { opacity: 1; transform: scale(1.1); }
+}

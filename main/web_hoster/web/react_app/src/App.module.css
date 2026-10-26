@@ -1,0 +1,59 @@
+.appContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  position: relative;
+}
+
+.mainWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 40px 140px 40px; /* Bug 7 Fix: Increased clearance for bottom drawer */
+  overflow-y: auto;
+  max-width: 1440px;
+}
+
+.spacesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.spacesTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.spacesMeta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Bug 6 Fix: Balanced 4-room grid (4x1 on desktop, 2x2 on tablet) */
+.spacesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 1380px) {
+  .spacesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .mainWrapper {
+    padding: 16px 16px 140px 16px;
+  }
+  .spacesGrid {
+    grid-template-columns: 1fr;
+  }
+}

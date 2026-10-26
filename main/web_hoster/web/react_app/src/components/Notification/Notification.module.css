@@ -1,0 +1,125 @@
+.container {
+  position: fixed;
+  bottom: 60px; /* Bug 8 Fix: Moved to bottom-right to prevent obscuring top header badge */
+  right: var(--spacing-xl);
+  z-index: 150;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--spacing-sm);
+  max-width: 380px;
+  width: calc(100% - 32px);
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: 12px 14px;
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(36, 54, 45, 0.15), 0 4px 6px -2px rgba(36, 54, 45, 0.05);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-primary);
+  animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all var(--transition-fast);
+}
+
+.iconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.textBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.message {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.time {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.closeBtn {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+  background-color: rgba(36, 54, 45, 0.05);
+}
+
+.success {
+  border-left-color: var(--state-normal);
+}
+.iconSuccess {
+  color: var(--state-normal);
+}
+
+.warning {
+  border-left-color: var(--state-local);
+}
+.iconWarning {
+  color: var(--state-local);
+}
+
+.error {
+  border-left-color: var(--state-unavailable);
+}
+.iconError {
+  color: var(--state-unavailable);
+}
+
+.info {
+  border-left-color: var(--accent-primary);
+}
+.iconInfo {
+  color: var(--accent-primary);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-width: none;
+    bottom: 50px;
+  }
+}

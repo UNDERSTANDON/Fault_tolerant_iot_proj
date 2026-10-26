@@ -1,0 +1,107 @@
+.innerCard {
+  background-color: var(--bg-card-inner);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all var(--transition-fast);
+}
+
+.leftMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+.iconOn {
+  color: var(--text-primary);
+}
+
+.iconOff {
+  color: var(--text-secondary);
+}
+
+.iconUps {
+  color: #0284c7;
+}
+
+.textWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.nameLabel {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stateLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.stateLabelOn {
+  color: var(--accent-primary);
+}
+
+/* Exact Pill Toggle Switch from Figma */
+.toggleTrack {
+  width: 44px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  position: relative;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color var(--transition-normal);
+}
+
+.trackOn {
+  background-color: var(--device-on-toggle); /* Exact dark pine green */
+}
+
+.trackOff {
+  background-color: var(--device-off-toggle); /* Exact soft grey */
+}
+
+.toggleThumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-normal);
+}
+
+.thumbOn {
+  transform: translateX(20px);
+}
+
+.thumbOff {
+  transform: translateX(0);
+}
+
+.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.fanSpinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

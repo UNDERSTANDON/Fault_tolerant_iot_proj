@@ -1,0 +1,85 @@
+/* ==========================================================================
+   NEST SMART HOME DESIGN TOKENS (Extracted from Figma Reference Mockups)
+   ========================================================================== */
+
+:root {
+  /* --- 5 Connection State Tokens --- */
+  --state-normal: #1e6b3e;              /* Deep Forest Green (Text & Dot) */
+  --state-normal-bg: #e8efe7;           /* Soft Sage/Mint Tint */
+  --state-normal-border: #cdd3c9;
+
+  --state-local: #9a5b13;               /* Warm Amber / Ochre */
+  --state-local-bg: #eedec2;            /* Warm Sand / Amber Tint */
+  --state-local-border: #d9c39e;
+
+  --state-switching: #0369a1;          /* Sky Blue */
+  --state-switching-bg: #e0f2fe;
+  --state-switching-border: #bae6fd;
+
+  --state-reconnecting: #4338ca;       /* Indigo */
+  --state-reconnecting-bg: #e0e7ff;
+  --state-reconnecting-border: #c7d2fe;
+
+  --state-unavailable: #b91c1c;        /* Soft Brick Red */
+  --state-unavailable-bg: #fbeae8;
+  --state-unavailable-border: #fecaca;
+
+  /* --- Nest Reference Surfaces (Warm Scandinavian Aesthetic) --- */
+  --bg-base: #f5f4ef;                  /* Main canvas background (warm off-white) */
+  --bg-sidebar: #efeee7;               /* Sidebar background */
+  --bg-surface: #ffffff;               /* Pure white for cards, panels, modals */
+  --bg-card: #ffffff;                  /* Primary card surface */
+  --bg-card-inner: #f3f2ec;            /* Pill controls inside cards */
+  --bg-card-hover: #f9f8f4;
+  --bg-elevated: #e8e7e1;
+
+  /* --- Text Colors --- */
+  --text-primary: #24362d;             /* Dark forest graphite */
+  --text-secondary: #6b756d;           /* Muted sage grey */
+  --text-muted: #8b958d;               /* Subtle tertiary grey */
+  --text-subhead: #6b756d;
+
+  /* --- Borders & Dividers --- */
+  --border-color: #dfe3da;             /* Crisp warm divider line */
+  --border-light: #ecefe9;
+  --border-focus: #285640;
+
+  /* --- Signature Brand Accent (Nest Deep Forest Green) --- */
+  --accent-primary: #285640;           /* Signature Nest dark pine green */
+  --accent-primary-hover: #1e4432;
+  --accent-primary-bg: #e8efe7;
+
+  /* --- Device States & Toggles --- */
+  --device-on-toggle: #285640;         /* Switch active dark green */
+  --device-off-toggle: #cfceca;        /* Switch inactive light stone */
+  --device-inner-card: #f3f2ec;
+
+  /* --- Spacing --- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 28px;
+  --spacing-2xl: 40px;
+
+  /* --- Border Radii --- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* --- Shadows (Subtle, High-End Print feel) --- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(36, 54, 45, 0.06);
+  --shadow-lg: 0 10px 25px rgba(36, 54, 45, 0.1);
+
+  /* --- Transitions --- */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* --- Fonts --- */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
