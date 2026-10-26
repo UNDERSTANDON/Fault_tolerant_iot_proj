@@ -9,12 +9,19 @@ idf_component_register(
 
      PRIV_REQUIRES 
           "esp_wifi"
+          "esp_netif"
+          "esp_event"
+          "nvs_flash"
           "esp_http_server"
           "log"
           "cjson"
+          "mdns"
 
      EMBED_TXTFILES
           "web_hoster/wifi_config.json"
+          "web_hoster/web/index.html"
+          "web_hoster/web/style.css"
+          "web_hoster/web/app.js"
 
      INCLUDE_DIRS
           "."
