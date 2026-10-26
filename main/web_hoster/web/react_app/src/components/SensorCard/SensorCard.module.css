@@ -1,0 +1,77 @@
+.badge {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 8px 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconTemp {
+  color: #f97316;
+}
+
+.iconHumidity {
+  color: #38bdf8;
+}
+
+.iconSmoke {
+  color: var(--state-normal);
+}
+
+.iconAlert {
+  color: var(--state-unavailable);
+  animation: pulse 1s infinite alternate;
+}
+
+.iconGateway {
+  color: #a855f7;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.sensorName {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.sensorValue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.unit {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.badgeAlert {
+  border-color: var(--state-unavailable);
+  background-color: var(--state-unavailable-bg);
+}
+
+@keyframes pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+

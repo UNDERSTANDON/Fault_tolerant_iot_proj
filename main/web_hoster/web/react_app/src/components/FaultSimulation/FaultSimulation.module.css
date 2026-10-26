@@ -1,0 +1,186 @@
+.simulationContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border-top: 2px solid var(--accent-primary);
+  box-shadow: 0 -4px 20px rgba(36, 54, 45, 0.12);
+  z-index: 100;
+  transition: transform var(--transition-normal);
+}
+
+.toggleBar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background-color: #f7f6f2;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color var(--transition-fast);
+}
+
+.toggleBar:hover {
+  background-color: #efece5;
+}
+
+.barLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.pulseIcon {
+  color: var(--accent-primary);
+  animation: pulse 1.5s infinite;
+}
+
+.barTitle {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.barRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.activeModeTag {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.activeModeTag strong {
+  color: var(--text-primary);
+}
+
+.drawerContent {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.testActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.actionGroupTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-subhead);
+  letter-spacing: 0.5px;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.testBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background-color: var(--bg-card-inner);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: all var(--transition-fast);
+}
+
+.testBtn:hover {
+  background-color: #eae8df;
+}
+
+.btnActive {
+  background-color: var(--state-normal-bg);
+  border-color: var(--state-normal-border);
+  color: var(--state-normal);
+}
+
+.btnWarning:hover {
+  border-color: var(--state-local);
+}
+
+.btnActiveWarning {
+  background-color: var(--state-local-bg);
+  border-color: var(--state-local-border);
+  color: var(--state-local);
+}
+
+.btnDanger:hover {
+  border-color: var(--state-unavailable);
+}
+
+.btnActiveDanger {
+  background-color: var(--state-unavailable-bg);
+  border-color: var(--state-unavailable-border);
+  color: var(--state-unavailable);
+}
+
+.btnInfo:hover {
+  border-color: var(--state-reconnecting);
+}
+
+.metricsBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border-color);
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+.metricItem {
+  background-color: var(--bg-card-inner);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metricLabel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.metricValue {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+@media (max-width: 800px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+}

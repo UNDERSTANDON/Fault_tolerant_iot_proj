@@ -1,0 +1,253 @@
+.topArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.topBreadcrumbBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.breadcrumbLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.crumbRoot {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.crumbDivider {
+  color: var(--text-muted);
+}
+
+.crumbActive {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.topRightMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.timestampText {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.localFirstTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--state-normal);
+}
+
+.tagLocal .dot {
+  background-color: var(--state-local);
+}
+
+.avatarCircle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #dce3db;
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-top: 4px;
+}
+
+.titleLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-subhead);
+  text-transform: uppercase;
+}
+
+.pageTitle {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+.pageSubtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+.titleRight {
+  display: flex;
+  align-items: center;
+}
+
+/* Badges Matching Reference Screenshot */
+.badgeNormal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background-color: var(--state-normal-bg);
+  color: var(--state-normal);
+  border: 1px solid var(--state-normal-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dotGreen {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--state-normal);
+}
+
+.badgeLocal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background-color: var(--state-local-bg);
+  color: var(--state-local);
+  border: 1px solid var(--state-local-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dotAmber {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--state-local);
+}
+
+.badgeSwitching {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background-color: var(--state-switching-bg);
+  color: var(--state-switching);
+  border: 1px solid var(--state-switching-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dotBlue {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--state-switching);
+}
+
+.badgeReconnecting {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background-color: var(--state-reconnecting-bg);
+  color: var(--state-reconnecting);
+  border: 1px solid var(--state-reconnecting-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dotIndigo {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--state-reconnecting);
+}
+
+.badgeUnavailable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background-color: var(--state-unavailable-bg);
+  color: var(--state-unavailable);
+  border: 1px solid var(--state-unavailable-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dotRed {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--state-unavailable);
+}
+
+.mobileMenuBtn {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .mobileMenuBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-card-inner);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    margin-right: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .topBreadcrumbBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .titleRow {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+}
