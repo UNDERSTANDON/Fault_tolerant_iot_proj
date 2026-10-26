@@ -27,6 +27,8 @@ Use the ESP32 board and any peripherals specified by the firmware. Check the sou
 
 Wi-Fi credentials are read from `main/web_hoster/wifi_config.json` and embedded in the firmware at build time. Replace the placeholder values before building. Do not commit real credentials; anyone with the firmware image may be able to extract them.
 
+The web interface is served over HTTPS at `https://fault-tolerant-iot.local`. CMake uses OpenSSL to generate a self-signed development certificate and private key in the build directory; browsers will show a trust warning. The development certificate is not suitable for production. Provision a certificate trusted by your clients before deploying the firmware outside a development LAN.
+
 ## Status
 
 This overview is intentionally implementation-neutral. Update it with the project's exact hardware, setup commands, implemented fault-tolerance features, and test results as those details are established.
