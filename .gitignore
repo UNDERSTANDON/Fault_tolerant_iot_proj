@@ -5,3 +5,7 @@
 /.vscode/
 /sdkconfig.old
 /Issue.txt
+/idf_run.ps1
+/dependencies.lock
+/managed_components/
+/main/output/

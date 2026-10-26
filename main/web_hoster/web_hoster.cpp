@@ -9,7 +9,6 @@
 #include "esp_http_server.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
-using namespace std;
 
 extern "C"
 {
@@ -86,8 +85,8 @@ namespace web_hoster
      bool WebHoster::get_wifi_config(std::string &ssid, std::string &password)
      {
           const std::size_t config_size =
-              reinterpret_cast<std::uintptr_t>(wifi_config_end) -
-              reinterpret_cast<std::uintptr_t>(wifi_config_start);
+               reinterpret_cast<std::uintptr_t>(wifi_config_end) -
+               reinterpret_cast<std::uintptr_t>(wifi_config_start);
           cJSON *root = cJSON_ParseWithLength(
               reinterpret_cast<const char *>(wifi_config_start), config_size);
           if (root == nullptr)
@@ -107,8 +106,8 @@ namespace web_hoster
           const cJSON *ssid_item = cJSON_GetObjectItemCaseSensitive(wifi_config, "ssid");
           const cJSON *password_item = cJSON_GetObjectItemCaseSensitive(wifi_config, "password");
           if (!cJSON_IsString(ssid_item) || ssid_item->valuestring == nullptr ||
-              ssid_item->valuestring[0] == '\0' ||
-              !cJSON_IsString(password_item) || password_item->valuestring == nullptr)
+               ssid_item->valuestring[0] == '\0' ||
+               !cJSON_IsString(password_item) || password_item->valuestring == nullptr)
           {
                ESP_LOGE(TAG, "Wi-Fi configuration must contain a non-empty SSID and a password string");
                cJSON_Delete(root);

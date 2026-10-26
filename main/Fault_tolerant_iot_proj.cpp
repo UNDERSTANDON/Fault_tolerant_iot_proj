@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <iostream>
 #include "web_hoster.h"
-using namespace std;
 
 // This is an embedded project for ESP32-S3
 // The idea is to create a local-first fault-tolerant IoT system that
