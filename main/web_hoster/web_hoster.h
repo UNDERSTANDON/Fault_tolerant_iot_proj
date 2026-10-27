@@ -14,6 +14,7 @@ namespace web_hoster
           void start_mDNS(const std::string &ssid, const std::string &password);
           bool connect_to_house_network(const std::string &ssid,
                                         const std::string &password);
+          static void reconnect_to_house_network_task(void *parameter);
           void start_web_server();
           bool get_wifi_config(std::string &ssid, std::string &password);
      };

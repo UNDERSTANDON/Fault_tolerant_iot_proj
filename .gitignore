@@ -4,8 +4,10 @@
 /.gitignore
 /.vscode/
 /sdkconfig.old
+/sdkconfig.defaults
 /Issue.txt
 /idf_run.ps1
 /dependencies.lock
 /managed_components/
 /main/output/
+/ESP_specs.txt

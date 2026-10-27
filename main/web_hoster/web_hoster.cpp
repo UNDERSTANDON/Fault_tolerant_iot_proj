@@ -16,6 +16,8 @@
 #include "nvs_flash.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
+#include "freertos/task.h"
+#include "lwip/ip4_addr.h"
 
 extern "C"
 {
@@ -35,14 +37,19 @@ namespace
      constexpr EventBits_t WIFI_CONNECTED_BIT = BIT0;
      constexpr EventBits_t WIFI_FAILED_BIT = BIT1;
      constexpr TickType_t WIFI_CONNECT_TIMEOUT = pdMS_TO_TICKS(15000);
+     constexpr TickType_t WIFI_RECONNECT_INTERVAL = pdMS_TO_TICKS(30000);
 
      httpd_handle_t web_server = nullptr;
      EventGroupHandle_t wifi_event_group = nullptr;
      esp_netif_t *wifi_station_netif = nullptr;
+     esp_netif_t *wifi_ap_netif = nullptr;
      esp_event_handler_instance_t wifi_event_instance = nullptr;
      esp_event_handler_instance_t ip_event_instance = nullptr;
      bool wifi_driver_initialized = false;
      bool wifi_started = false;
+     TaskHandle_t wifi_reconnect_task_handle = nullptr;
+     std::string house_wifi_ssid;
+     std::string house_wifi_password;
 
      struct EmbeddedAsset
      {
@@ -66,6 +73,7 @@ namespace
                const auto *event =
                    static_cast<const wifi_event_sta_disconnected_t *>(event_data);
                ESP_LOGW(TAG, "Wi-Fi disconnected (reason %d)", event->reason);
+               xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
                xEventGroupSetBits(wifi_event_group, WIFI_FAILED_BIT);
           }
           else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
@@ -74,6 +82,7 @@ namespace
                    static_cast<const ip_event_got_ip_t *>(event_data);
                ESP_LOGI(TAG, "Connected with IP address " IPSTR,
                         IP2STR(&event->ip_info.ip));
+               xEventGroupClearBits(wifi_event_group, WIFI_FAILED_BIT);
                xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
           }
      }
@@ -124,6 +133,9 @@ namespace web_hoster
                return;
           }
 
+          house_wifi_ssid = ssid;
+          house_wifi_password = password;
+
           bool connected = WebHoster::connect_to_house_network(ssid, password);
           for (int retry = 1; !connected && retry < 3; ++retry)
           {
@@ -138,19 +150,98 @@ namespace web_hoster
           }
           else
           {
-               std::cout << "House network is down. Starting local network..." << std::endl;
-               // Start the local-network fallback here.
+               std::cout << "House network is down. Starting local fallback LAN host..." << std::endl;
+
+               if (wifi_started)
+               {
+                    esp_err_t stop_result = esp_wifi_stop();
+                    if (stop_result != ESP_OK)
+                    {
+                         ESP_LOGE(TAG, "Failed to stop Wi-Fi before AP fallback: %s",
+                                  esp_err_to_name(stop_result));
+                    }
+                    wifi_started = false;
+               }
+
+               if (wifi_ap_netif == nullptr)
+               {
+                    wifi_ap_netif = esp_netif_create_default_wifi_ap();
+                    if (wifi_ap_netif == nullptr)
+                    {
+                         ESP_LOGE(TAG, "Failed to create Wi-Fi AP interface");
+                         return;
+                    }
+               }
+
+               wifi_config_t ap_config = {};
+               const char *ap_ssid = "ESP32_Fault_Tolerant_IoT_LAN";
+               const char *ap_password = "ESP32_Winter2026!";
+
+               std::strncpy(reinterpret_cast<char *>(ap_config.ap.ssid), ap_ssid,
+                            sizeof(ap_config.ap.ssid) - 1);
+               ap_config.ap.ssid_len = std::strlen(ap_ssid);
+               std::strncpy(reinterpret_cast<char *>(ap_config.ap.password), ap_password,
+                            sizeof(ap_config.ap.password) - 1);
+               ap_config.ap.channel = 1;
+               ap_config.ap.max_connection = 4;
+               ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
+
+               esp_err_t result = esp_wifi_set_mode(WIFI_MODE_AP);
+               if (result != ESP_OK)
+               {
+                    ESP_LOGE(TAG, "Failed to switch Wi-Fi to AP mode: %s",
+                             esp_err_to_name(result));
+                    return;
+               }
+
+               result = esp_wifi_set_config(WIFI_IF_AP, &ap_config);
+               if (result != ESP_OK)
+               {
+                    ESP_LOGE(TAG, "Failed to configure fallback AP: %s",
+                             esp_err_to_name(result));
+                    return;
+               }
+
+               result = esp_wifi_start();
+               if (result != ESP_OK)
+               {
+                    ESP_LOGE(TAG, "Failed to start fallback AP: %s",
+                             esp_err_to_name(result));
+                    return;
+               }
+               wifi_started = true;
+
+               esp_netif_ip_info_t ap_ip_info = {};
+               IP4_ADDR(&ap_ip_info.ip, 192, 168, 4, 1);
+               IP4_ADDR(&ap_ip_info.gw, 192, 168, 4, 1);
+               IP4_ADDR(&ap_ip_info.netmask, 255, 255, 255, 0);
+
+               esp_netif_dhcps_stop(wifi_ap_netif);
+               esp_netif_set_ip_info(wifi_ap_netif, &ap_ip_info);
+               if (esp_netif_dhcps_start(wifi_ap_netif) != ESP_OK)
+               {
+                    ESP_LOGW(TAG, "Failed to start DHCP on fallback AP");
+               }
+
+               ESP_LOGI(TAG, "Fallback LAN host started with SSID '%s' at 192.168.4.1",
+                        ap_ssid);
           }
 
-          if (connected)
-          {
-               WebHoster::start_mDNS(ssid, password);
-          }
-          else
-          {
-               ESP_LOGW(TAG, "Skipping mDNS because Wi-Fi is not connected");
-          }
+          WebHoster::start_mDNS(ssid, password);
           WebHoster::start_web_server();
+
+          if (wifi_reconnect_task_handle == nullptr)
+          {
+               const BaseType_t task_result = xTaskCreate(
+                   WebHoster::reconnect_to_house_network_task,
+                   "wifi_reconnect", 4096, nullptr, 5,
+                   &wifi_reconnect_task_handle);
+               if (task_result != pdPASS)
+               {
+                    wifi_reconnect_task_handle = nullptr;
+                    ESP_LOGE(TAG, "Failed to create Wi-Fi reconnect task");
+               }
+          }
      }
 
      void WebHoster::start_mDNS(const std::string &ssid, const std::string &password)
@@ -167,21 +258,21 @@ namespace web_hoster
                return;
           }
 
-          result = mdns_hostname_set("fault-tolerant-iot");
+          result = mdns_hostname_set("ESP32_Fault_Tolerant_IoT_LAN");
           if (result != ESP_OK)
           {
                ESP_LOGE(TAG, "Failed to set mDNS hostname: %s", esp_err_to_name(result));
                return;
           }
 
-          result = mdns_instance_name_set("Fault-tolerant IoT");
+          result = mdns_instance_name_set("ESP32_Fault_Tolerant_IoT_LAN");
           if (result != ESP_OK)
           {
                ESP_LOGE(TAG, "Failed to set mDNS instance name: %s", esp_err_to_name(result));
                return;
           }
 
-          result = mdns_service_add("Fault-tolerant IoT", "_http", "_tcp", 80, nullptr, 0);
+          result = mdns_service_add("ESP32_Fault_Tolerant_IoT_LAN", "_http", "_tcp", 80, nullptr, 0);
           if (result != ESP_OK && result != ESP_ERR_INVALID_STATE)
           {
                ESP_LOGE(TAG, "Failed to advertise HTTP service via mDNS: %s",
@@ -189,7 +280,7 @@ namespace web_hoster
                return;
           }
 
-          ESP_LOGI(TAG, "mDNS host available at http://fault-tolerant-iot.local");
+          ESP_LOGI(TAG, "mDNS host available at http://esp32-lan.local");
      }
 
      // Private section
@@ -337,7 +428,9 @@ namespace web_hoster
           std::memcpy(wifi_config.sta.ssid, ssid.data(), ssid.size());
           std::memcpy(wifi_config.sta.password, password.data(), password.size());
 
-          result = esp_wifi_set_mode(WIFI_MODE_STA);
+          const wifi_mode_t wifi_mode =
+              wifi_ap_netif == nullptr ? WIFI_MODE_STA : WIFI_MODE_APSTA;
+          result = esp_wifi_set_mode(wifi_mode);
           if (result != ESP_OK)
           {
                ESP_LOGE(TAG, "Failed to set Wi-Fi station mode: %s",
@@ -374,7 +467,7 @@ namespace web_hoster
           }
 
           const EventBits_t bits = xEventGroupWaitBits(
-              wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAILED_BIT, pdTRUE,
+              wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAILED_BIT, pdFALSE,
               pdFALSE, WIFI_CONNECT_TIMEOUT);
           if ((bits & WIFI_CONNECTED_BIT) != 0)
           {
@@ -390,6 +483,37 @@ namespace web_hoster
                ESP_LOGW(TAG, "Timed out waiting for Wi-Fi connection");
           }
           return false;
+     }
+
+     void WebHoster::reconnect_to_house_network_task(void *)
+     {
+          WebHoster hoster;
+          bool connected =
+              (xEventGroupGetBits(wifi_event_group) & WIFI_CONNECTED_BIT) != 0;
+
+          for (;;)
+          {
+               if (connected)
+               {
+                    xEventGroupWaitBits(wifi_event_group, WIFI_FAILED_BIT, pdTRUE,
+                                        pdFALSE, portMAX_DELAY);
+                    connected = false;
+                    ESP_LOGW(TAG, "House Wi-Fi disconnected; attempting to reconnect");
+               }
+               else
+               {
+                    connected = hoster.connect_to_house_network(
+                        house_wifi_ssid, house_wifi_password);
+                    if (!connected)
+                    {
+                         vTaskDelay(WIFI_RECONNECT_INTERVAL);
+                    }
+                    else
+                    {
+                         ESP_LOGI(TAG, "Reconnected to house Wi-Fi");
+                    }
+               }
+          }
      }
 
      // Get wifi config
