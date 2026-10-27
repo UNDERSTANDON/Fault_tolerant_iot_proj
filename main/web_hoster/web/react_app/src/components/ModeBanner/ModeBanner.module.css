@@ -1,0 +1,132 @@
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  margin-bottom: var(--spacing-xl);
+  transition: all var(--transition-normal);
+}
+
+.leftGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.textGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.headline {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.subtext {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition-fast);
+}
+
+.linkButton:hover {
+  text-decoration: underline;
+}
+
+.sinceText {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--state-local);
+}
+
+.statusWait {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Color variations matching Nest reference */
+.bannerNormal {
+  background-color: var(--state-normal-bg);
+  border-color: var(--state-normal-border);
+}
+
+.iconGreen {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.bannerLocal {
+  background-color: var(--state-local-bg);
+  border-color: var(--state-local-border);
+}
+
+.iconAmber {
+  color: var(--state-local);
+  flex-shrink: 0;
+}
+
+.bannerSwitching {
+  background-color: var(--state-switching-bg);
+  border-color: var(--state-switching-border);
+}
+
+.iconBlue {
+  color: var(--state-switching);
+  flex-shrink: 0;
+}
+
+.bannerReconnecting {
+  background-color: var(--state-reconnecting-bg);
+  border-color: var(--state-reconnecting-border);
+}
+
+.iconIndigo {
+  color: var(--state-reconnecting);
+  flex-shrink: 0;
+}
+
+.bannerUnavailable {
+  background-color: var(--state-unavailable-bg);
+  border-color: var(--state-unavailable-border);
+}
+
+.iconRed {
+  color: var(--state-unavailable);
+  flex-shrink: 0;
+}
+
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
