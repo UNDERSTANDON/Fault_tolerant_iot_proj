@@ -27,7 +27,9 @@ Use the ESP32 board and any peripherals specified by the firmware. Check the sou
 
 Wi-Fi credentials are read from `main/web_hoster/wifi_config.json` and embedded in the firmware at build time. Replace the placeholder values before building. Do not commit real credentials; anyone with the firmware image may be able to extract them.
 
-The web interface is served over HTTP at `https://fault-tolerant-iot.local`.
+The React web interface is embedded in the ESP32 firmware and served over HTTP
+at `http://esp32-lan.local/` when the client is connected to the same network
+and supports mDNS.
 
 ## Status
 
