@@ -34,6 +34,9 @@ extern "C"
 namespace
 {
      constexpr char TAG[] = "web_hoster";
+     constexpr char MDNS_HOSTNAME[] = "esp32-lan";
+     constexpr char MDNS_INSTANCE_NAME[] = "ESP32 Fault Tolerant IoT LAN";
+     constexpr uint16_t WEB_SERVER_PORT = 80;
      constexpr EventBits_t WIFI_CONNECTED_BIT = BIT0;
      constexpr EventBits_t WIFI_FAILED_BIT = BIT1;
      constexpr TickType_t WIFI_CONNECT_TIMEOUT = pdMS_TO_TICKS(15000);
@@ -258,21 +261,22 @@ namespace web_hoster
                return;
           }
 
-          result = mdns_hostname_set("ESP32_Fault_Tolerant_IoT_LAN");
+          result = mdns_hostname_set(MDNS_HOSTNAME);
           if (result != ESP_OK)
           {
                ESP_LOGE(TAG, "Failed to set mDNS hostname: %s", esp_err_to_name(result));
                return;
           }
 
-          result = mdns_instance_name_set("ESP32_Fault_Tolerant_IoT_LAN");
+          result = mdns_instance_name_set(MDNS_INSTANCE_NAME);
           if (result != ESP_OK)
           {
                ESP_LOGE(TAG, "Failed to set mDNS instance name: %s", esp_err_to_name(result));
                return;
           }
 
-          result = mdns_service_add("ESP32_Fault_Tolerant_IoT_LAN", "_http", "_tcp", 80, nullptr, 0);
+          result = mdns_service_add(MDNS_INSTANCE_NAME, "_http", "_tcp",
+                                    WEB_SERVER_PORT, nullptr, 0);
           if (result != ESP_OK && result != ESP_ERR_INVALID_STATE)
           {
                ESP_LOGE(TAG, "Failed to advertise HTTP service via mDNS: %s",
@@ -280,7 +284,8 @@ namespace web_hoster
                return;
           }
 
-          ESP_LOGI(TAG, "mDNS host available at http://esp32-lan.local");
+          ESP_LOGI(TAG, "React web app available at http://%s.local/",
+                   MDNS_HOSTNAME);
      }
 
      // Private section
@@ -294,6 +299,7 @@ namespace web_hoster
           }
 
           httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+          config.server_port = WEB_SERVER_PORT;
           esp_err_t result = httpd_start(&web_server, &config);
           if (result != ESP_OK)
           {

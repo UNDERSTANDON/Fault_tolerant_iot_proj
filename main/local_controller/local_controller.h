@@ -8,8 +8,10 @@ namespace local_controller
      class local_controller{
           public:
                local_controller();
-               void getStatus();
-               void getStatus(const std::string &device_name);
+               void getStatus_task();
+               void getStatus_task(const std::string &device_name);
+               void get_network_status_task(const std::string &network);
+               
           private:
 
      };
