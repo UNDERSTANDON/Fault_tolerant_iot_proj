@@ -9,8 +9,4 @@ namespace local_controller {
      // But we are also overload it to getStatus(device_name) to get specific device status
 
      // Events
-     bool is_house_network_down(){
-          // nameholder
-          return false;
-     }
 }

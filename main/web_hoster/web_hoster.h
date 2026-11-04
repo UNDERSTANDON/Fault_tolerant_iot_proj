@@ -10,6 +10,7 @@ namespace web_hoster
      public:
           WebHoster();
           void start_local_network();
+     private:
           private:
           void start_mDNS(const std::string &ssid, const std::string &password);
           bool connect_to_house_network(const std::string &ssid,
