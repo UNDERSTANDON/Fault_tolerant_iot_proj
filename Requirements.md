@@ -17,8 +17,11 @@ planned components and operation flows.
 
 ### Included
 
-- ESP32-S3 device gateway with a local API for status, commands, and events.
+- ESP32-S3 device gateway that samples confirmed attached sensors and exposes
+  a local API for device status and commands.
 - Separate local server for the browser dashboard and supporting services.
+- Sensor telemetry published by the ESP32-S3 to the local Mosquitto broker and
+  made available to the dashboard through the local server.
 - Local network connection, documented fallback access, and recovery.
 - Lighting as the first controllable device class. Only devices with confirmed
   hardware interfaces may be reported as controllable.
@@ -31,9 +34,9 @@ planned components and operation flows.
 
 - Fan control and automatic door/NFC lock control.
 - AI-based hazard prediction, automatic actions, and a mobile application.
-- Smoke, heat, humidity, circuit-breaker, room-power, mains-power, and UPS
-  monitoring until their sensors, interfaces, and safe test methods are
-  confirmed.
+- Specific sensor types and any smoke, heat, humidity, circuit-breaker,
+  room-power, mains-power, or UPS monitoring until sensors, interfaces, and
+  safe test methods are confirmed.
 - Any claim that the system replaces certified electrical protection,
   alarms, or other safety equipment.
 
@@ -50,8 +53,8 @@ planned components and operation flows.
    available.
 3. **Truthful status:** The dashboard distinguishes reported device state
    from requested state, command acknowledgement, stale data, and unavailable
-   services. Unsupported or simulated devices must not appear as real,
-   successfully controlled hardware.
+   services. Sensor readings show their source and freshness. Unsupported or
+   simulated devices and readings must not appear as real hardware data.
 4. **Safe scope:** No actuator is enabled until its specific hardware,
    electrical interface, initialization state, and failure behavior are
    reviewed. Firmware status is not evidence that a protective device has
@@ -91,8 +94,9 @@ before the affected feature is implemented:
 - Local server deployment, service startup/recovery, and behavior when the
   server or its Docker services are unavailable.
 - Local API schema, command acknowledgement levels, and command timeout.
-- MQTT topics, payload version, authentication, and behavior when the broker
-  is unavailable.
+- Sensor sampling intervals, units, validation, and stale-data thresholds.
+- MQTT topics, payload version, dashboard delivery method, authentication,
+  and behavior when the broker is unavailable.
 - Whether a Docker-hosted bridge will forward MQTT events to Firebase, and
   its authentication and credential-storage model.
 - Persistent event-queue capacity, retention, flash wear, and overflow policy.
