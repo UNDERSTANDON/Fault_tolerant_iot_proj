@@ -18,14 +18,17 @@ but does not make the ESP32's device API depend on them.
 ## 2. First-release boundary
 
 The first physical control target is lighting, and only after its actual
-driver, wiring, and safe test procedure are confirmed. The ESP32-S3 owns local
-device command validation, device state, and the LAN-facing device API. The
-dashboard runs on a separate local server, such as a Raspberry Pi. A developer
-computer may host it during development. In this architecture, “gateway”
-means the bridge between supported devices and local services; the ESP32 does
-not replace the home's router, DHCP server, or internet gateway. The home
-router provides LAN connectivity unless the ESP32 is explicitly operating in
-its separately specified fallback-access-point mode.
+driver, wiring, and safe test procedure are confirmed. The ESP32-S3 also
+samples confirmed attached sensors, validates readings, and publishes
+telemetry to the local MQTT broker. Exact sensor types and sampling
+requirements remain to be confirmed. The ESP32-S3 owns local device command
+validation, device state, sensor acquisition, and the LAN-facing device API.
+The dashboard runs on a separate local server, such as a Raspberry Pi. A
+developer computer may host it during development. In this architecture,
+“gateway” means the bridge between supported devices and local services; the
+ESP32 does not replace the home's router, DHCP server, or internet gateway.
+The home router provides LAN connectivity unless the ESP32 is explicitly
+operating in its separately specified fallback-access-point mode.
 
 For regular use, the local server should serve the dashboard's built static
 assets under a managed service. The npm development server is for development,
@@ -47,10 +50,10 @@ control devices in the first release.
 
 | Component | Responsibility | Must not become |
 |---|---|---|
-| ESP32-S3 firmware | Wi-Fi lifecycle, LAN-facing device API, supported device commands, event creation, local status | Dependent on Firebase, the local server, or MQTT for device control |
-| Local server | Host the dashboard and Docker services; provide a stable LAN endpoint | Required for the ESP32's device-control logic |
-| Browser dashboard | Served by the local server; display firmware-reported state, submit commands to the ESP32 API, show errors and stale/unavailable status | A source of authoritative device state |
-| Mosquitto in Docker | Local MQTT broker on the local server for event and telemetry messages | The only path for a user device command |
+| ESP32-S3 firmware | Wi-Fi lifecycle, sensor acquisition, LAN-facing device API, supported device commands, telemetry and event publishing | Dependent on Firebase, the local server, or MQTT for sampling and device control |
+| Local server | Host the dashboard and Docker services; provide a stable LAN endpoint and a path to deliver broker data to the dashboard | Required for the ESP32's sensor acquisition or device-control logic |
+| Browser dashboard | Served by the local server; display broker-delivered sensor readings, submit commands to the ESP32 API, show freshness and errors | A source of authoritative device state or sensor measurements |
+| Mosquitto in Docker | Local MQTT broker on the local server for telemetry and event distribution to the dashboard and cloud bridge | The only path for a user device command |
 | Proposed Docker cloud bridge | Consume MQTT messages, retry cloud delivery, forward acknowledged events | A prerequisite for local device control |
 | Firebase | Store received event/log data; later support analysis and remote notifications | A first-release actuator controller |
 | Physical device interface | Apply commands and provide whatever feedback its confirmed hardware supports | Assumed safe based only on software state |
@@ -62,7 +65,9 @@ flowchart LR
     User["User browser on LAN"] <-->|"Dashboard"| Server["Local server<br/>Raspberry Pi / dev computer"]
     Server <-->|"HTTP local API"| ESP["ESP32-S3 device gateway"]
     ESP -->|"validated desired state"| Device["Supported lighting interface"]
-    ESP -->|"events and telemetry"| Broker["Mosquitto in Docker<br/>on local server"]
+    Sensors["Confirmed sensors"] -->|"measurements"| ESP
+    ESP -->|"telemetry and events"| Broker["Mosquitto in Docker<br/>on local server"]
+    Broker -->|"live readings"| Server
     Broker --> Bridge["Proposed Docker cloud bridge"]
     Bridge -->|"authenticated upload"| Firebase["Firebase logs"]
     Firebase --> Analysis["Later analysis / remote notifications"]
@@ -114,18 +119,28 @@ the ESP32 API.
 
 ### 5.3 Event capture and local MQTT
 
-1. The firmware creates a versioned event with a stable ID, event type,
-   priority, source, occurrence time, and payload.
-2. The event is recorded locally before cloud delivery is attempted. Warnings
-   and critical events are surfaced on the local dashboard.
-3. When Mosquitto is reachable, the firmware publishes the event/telemetry
-   using the agreed MQTT topic and payload contract.
-4. When the broker is unavailable, local commands continue and events remain
-   available for retry. Queue capacity and overflow behavior must be
-   established before relying on persistence.
+1. The ESP32 samples only confirmed sensors on their configured intervals,
+   validates readings, and attaches a sensor ID, value, unit, and timestamp.
+   Invalid or unavailable readings are reported as faults, not normal values.
+2. The ESP32 publishes telemetry and versioned events to Mosquitto using the
+   agreed MQTT topic and payload contract.
+3. Mosquitto distributes live readings to the dashboard path on the local
+   server. The dashboard displays the latest reading and its freshness; it
+   must not imply a reading is current after updates stop.
+4. The dashboard's broker-consumption path is a design decision: either the
+   browser connects through MQTT over WebSockets or a local server service
+   subscribes to MQTT and forwards readings to the browser. The selected path
+   must authenticate clients and must not expose broker write access that
+   permits arbitrary device commands.
+5. Warnings and critical events are surfaced on the dashboard and retained
+   locally for retry according to the approved queue policy. Telemetry
+   buffering/coalescing and queue capacity are separate policies to define.
 
 MQTT delivery and Firebase persistence are separate acknowledgements. A
 broker acknowledgement alone does not mean Firebase stored the event.
+Sensor sampling continues when the broker or local server is unavailable;
+the ESP32 retains its current local readings and retries publishing according
+to the approved policy.
 
 ### 5.4 Cloud synchronization
 
@@ -151,8 +166,8 @@ must be decided before cloud sync is implemented.
 | Failure | Local dashboard/control | Event behavior |
 |---|---|---|
 | Internet or Firebase unavailable | Dashboard and ESP32 API remain available on LAN | Retain and retry cloud-bound events |
-| Local server unavailable | Hosted dashboard, broker, and bridge are unavailable; ESP32 API/device control remain available to another LAN client | Retain events on the ESP32 within the approved queue policy |
-| Mosquitto unavailable | Dashboard and ESP32 API remain available; do not route commands through MQTT | Retain events locally within the approved queue policy |
+| Local server unavailable | Hosted dashboard, broker, and bridge are unavailable; ESP32 API, sampling, and device control remain available to another LAN client | Retain events on the ESP32 within the approved queue policy |
+| Mosquitto unavailable | Dashboard and ESP32 API remain available; sampling and commands continue without MQTT | Retain events and latest readings locally according to the approved queue policy |
 | Wi-Fi/router unavailable | Follow the approved fallback-network policy | Keep local events; cloud delivery waits for recovery |
 | Unsupported device or invalid command | No actuation; return a visible error | Record diagnostic information where appropriate |
 | Device feedback unavailable | Do not claim physical success | Report state as unknown or unverified |
@@ -161,7 +176,8 @@ must be decided before cloud sync is implemented.
 ## 7. Explicitly deferred and unverified
 
 - Fan and NFC door-lock control.
-- Sensor-based power, breaker, UPS, smoke, heat, or humidity detection.
+- Specific sensor selection and sensor-based power, breaker, UPS, smoke, heat,
+  or humidity detection.
 - Any mains switching, circuit protection, or hazard-mitigation claim.
 - Automated AI actions and cloud-originated actuator commands.
 - Final pin map, actuator circuitry, sensor selection, and electrical topology.
