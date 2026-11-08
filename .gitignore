@@ -8,6 +8,7 @@
 /Issue.txt
 /idf_run.ps1
 /dependencies.lock
+/main/web_hoster/wifi_config.json
 /managed_components/
 /main/output/
 /ESP_specs.txt

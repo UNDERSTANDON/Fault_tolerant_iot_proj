@@ -23,9 +23,13 @@ The ESP32 serves as the device controller. It can collect data from connected ha
 
 ## Hardware and configuration
 
-Use the ESP32 board and any peripherals specified by the firmware. Check the source and configuration files for pin assignments, dependencies, network settings, and supported fault-recovery behavior.
+Use the ESP32-S3 board and any peripherals specified by the firmware. Check the source and configuration files for pin assignments, dependencies, network settings, and supported fault-recovery behavior.
 
-Wi-Fi credentials are read from `main/web_hoster/wifi_config.json` and embedded in the firmware at build time. Replace the placeholder values before building. Do not commit real credentials; anyone with the firmware image may be able to extract them.
+Configure the station Wi-Fi SSID/password, MQTT broker URI, and any MQTT credentials in **ESP32 MQTT connectivity demo** using `idf.py menuconfig`. These build-time values are embedded in the firmware image and are not secure provisioning. Keep the local `sdkconfig` out of source control; never put credentials in the broker URI, source code, or logs. Configure a fallback AP password there as well if the fallback access point is needed.
+
+The MQTT test client starts only after station Wi-Fi receives an IP address. It publishes to `demo/esp32-mqtt-connectivity/test` immediately after connecting and every 30 seconds. The versioned test payload is `{"schema_version":1,"kind":"connectivity_test","device_id":"<station-mac>","sequence":1}`; it is test data, not sensor telemetry or device state. Publications use QoS 0, and a local client acceptance log is not proof of broker receipt. Verify delivery with an independent subscriber.
+
+For a local Docker broker, configure a `mqtt://<broker-host-LAN-address>:1883` URI reachable from the ESP32's station network. Do not use `localhost` or assume the ESP32 fallback AP routes to the host. Plaintext MQTT is suitable only for an isolated demo network; use `mqtts://` with the ESP-TLS certificate bundle for TLS. Do not send credentials over plaintext MQTT.
 
 The React web interface is embedded in the ESP32 firmware and served over HTTP
 at `http://esp32-lan.local/` when the client is connected to the same network
