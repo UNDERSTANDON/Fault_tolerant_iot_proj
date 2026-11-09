@@ -1,0 +1,2 @@
+Capture time: 2026-11-09 08:51:30 local time
+demo/esp32-mqtt-connectivity/test {"schema_version":1,"kind":"connectivity_test","device_id":"14c19f3bd6a8","sequence":19}
