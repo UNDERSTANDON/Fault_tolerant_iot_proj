@@ -13,4 +13,9 @@
 /main/output/
 /ESP_specs.txt
 /.github
-/specs
+/specs/
+!/specs/
+/specs/*
+!/specs/esp32-mqtt-connectivity.md
+!/specs/docker-logs-2026-11-09T00-45-36.431Z.csv
+!/specs/esp32-mqtt-subscriber-log-2026-11-09.txt
