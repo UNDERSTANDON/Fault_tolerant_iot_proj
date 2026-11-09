@@ -5,8 +5,7 @@
 #include <local_controller.h>
 #include <iostream>
 #include <cstddef>
-#include <cstdint>
-#include "cJSON.h"
+#include "mqtt_connectivity.h"
 #include "esp_event.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
@@ -21,8 +20,6 @@
 
 extern "C"
 {
-     extern const uint8_t wifi_config_start[] asm("_binary_wifi_config_json_start");
-     extern const uint8_t wifi_config_end[] asm("_binary_wifi_config_json_end");
      extern const uint8_t index_html_start[] asm("_binary_index_html_start");
      extern const uint8_t index_html_end[] asm("_binary_index_html_end");
      extern const uint8_t style_css_start[] asm("_binary_style_css_start");
@@ -87,6 +84,7 @@ namespace
                         IP2STR(&event->ip_info.ip));
                xEventGroupClearBits(wifi_event_group, WIFI_FAILED_BIT);
                xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+               mqtt_connectivity::start();
           }
      }
 
@@ -177,12 +175,22 @@ namespace web_hoster
                }
 
                wifi_config_t ap_config = {};
-               const char *ap_ssid = "ESP32_Fault_Tolerant_IoT_LAN";
-               const char *ap_password = "ESP32_Winter2026!";
+               const char *ap_ssid = CONFIG_CONNECTIVITY_FALLBACK_AP_SSID;
+               const char *ap_password = CONFIG_CONNECTIVITY_FALLBACK_AP_PASSWORD;
+               const std::size_t ap_ssid_length = std::strlen(ap_ssid);
+               const std::size_t ap_password_length = std::strlen(ap_password);
+               if (ap_ssid_length == 0 ||
+                   ap_ssid_length > sizeof(ap_config.ap.ssid) ||
+                   ap_password_length < 8 ||
+                   ap_password_length >= sizeof(ap_config.ap.password))
+               {
+                    ESP_LOGE(TAG, "Fallback AP requires a valid SSID and an 8-63 character password");
+                    return;
+               }
 
                std::strncpy(reinterpret_cast<char *>(ap_config.ap.ssid), ap_ssid,
                             sizeof(ap_config.ap.ssid) - 1);
-               ap_config.ap.ssid_len = std::strlen(ap_ssid);
+               ap_config.ap.ssid_len = ap_ssid_length;
                std::strncpy(reinterpret_cast<char *>(ap_config.ap.password), ap_password,
                             sizeof(ap_config.ap.password) - 1);
                ap_config.ap.channel = 1;
@@ -342,10 +350,11 @@ namespace web_hoster
      {
           std::cout << "Connecting to house network..." << std::endl;
 
-          if (ssid.size() > sizeof(wifi_config_t{}.sta.ssid) ||
-              password.size() > sizeof(wifi_config_t{}.sta.password))
+          if (ssid.empty() || ssid.size() > sizeof(wifi_config_t{}.sta.ssid) ||
+              password.size() >= sizeof(wifi_config_t{}.sta.password) ||
+              (!password.empty() && password.size() < 8))
           {
-               ESP_LOGE(TAG, "Wi-Fi SSID or password exceeds the supported length");
+               ESP_LOGE(TAG, "Wi-Fi SSID or password length is invalid");
                return false;
           }
 
@@ -525,40 +534,14 @@ namespace web_hoster
      // Get wifi config
      bool WebHoster::get_wifi_config(std::string &ssid, std::string &password)
      {
-          const std::size_t config_size =
-              reinterpret_cast<std::uintptr_t>(wifi_config_end) -
-              reinterpret_cast<std::uintptr_t>(wifi_config_start);
-
-          cJSON *root = cJSON_ParseWithLength(
-              reinterpret_cast<const char *>(wifi_config_start), config_size);
-          if (root == nullptr)
+          if (CONFIG_CONNECTIVITY_WIFI_SSID[0] == '\0')
           {
-               ESP_LOGE(TAG, "Embedded Wi-Fi configuration is not valid JSON");
+               ESP_LOGE(TAG, "Set the Wi-Fi SSID in ESP-IDF configuration before starting the network");
                return false;
           }
 
-          const cJSON *wifi_config = cJSON_GetObjectItemCaseSensitive(root, "wifi_config");
-          if (!cJSON_IsObject(wifi_config))
-          {
-               ESP_LOGE(TAG, "Wi-Fi configuration must contain an object named 'wifi_config'");
-               cJSON_Delete(root);
-               return false;
-          }
-
-          const cJSON *ssid_item = cJSON_GetObjectItemCaseSensitive(wifi_config, "ssid");
-          const cJSON *password_item = cJSON_GetObjectItemCaseSensitive(wifi_config, "password");
-          if (!cJSON_IsString(ssid_item) || ssid_item->valuestring == nullptr ||
-              ssid_item->valuestring[0] == '\0' ||
-              !cJSON_IsString(password_item) || password_item->valuestring == nullptr)
-          {
-               ESP_LOGE(TAG, "Wi-Fi configuration must contain a non-empty SSID and a password string");
-               cJSON_Delete(root);
-               return false;
-          }
-
-          ssid = ssid_item->valuestring;
-          password = password_item->valuestring;
-          cJSON_Delete(root);
+          ssid = CONFIG_CONNECTIVITY_WIFI_SSID;
+          password = CONFIG_CONNECTIVITY_WIFI_PASSWORD;
           return true;
      }
 }
