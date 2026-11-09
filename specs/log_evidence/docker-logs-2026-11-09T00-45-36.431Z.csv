@@ -1,0 +1,31 @@
+﻿timestamp,object,message
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Info: running mosquitto as user: mosquitto.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Restored 0 base messages
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Restored 0 retained messages
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Restored 0 clients
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Restored 0 subscriptions
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Restored 0 client messages
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: mosquitto version 2.1.2 starting
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Config loaded from /mosquitto/config/mosquitto.conf.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Bridge support available.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Persistence support available.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: TLS support available.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: TLS-PSK support available.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Websockets support available.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Opening ipv4 listen socket on port 1883.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: Opening ipv6 listen socket on port 1883.
+2026-11-09T00:26:27.305Z,test_local_dashboard/mosquitto,1794183987: mosquitto version 2.1.2 running
+2026-11-09T00:30:01.633Z,test_local_dashboard/mosquitto,1794184201: New connection from 172.18.0.1:44242 on port 1883.
+2026-11-09T00:30:01.634Z,test_local_dashboard/mosquitto,"1794184201: New client connected from 172.18.0.1:44242 as ESP32_3bD6A8 (p4, c1, k120)."
+2026-11-09T00:32:39.518Z,test_local_dashboard/mosquitto,1794184359: New connection from 172.18.0.1:56068 on port 1883.
+2026-11-09T00:32:39.523Z,test_local_dashboard/mosquitto,1794184359: Client ESP32_3bD6A8 [172.18.0.1:44242] disconnected: session taken over.
+2026-11-09T00:32:39.523Z,test_local_dashboard/mosquitto,"1794184359: New client connected from 172.18.0.1:56068 as ESP32_3bD6A8 (p4, c1, k120)."
+2026-11-09T00:32:57.763Z,test_local_dashboard/mosquitto,1794184377: New connection from 172.18.0.1:33696 on port 1883.
+2026-11-09T00:32:57.764Z,test_local_dashboard/mosquitto,1794184377: Client ESP32_3bD6A8 [172.18.0.1:56068] disconnected: session taken over.
+2026-11-09T00:32:57.764Z,test_local_dashboard/mosquitto,"1794184377: New client connected from 172.18.0.1:33696 as ESP32_3bD6A8 (p4, c1, k120)."
+2026-11-09T00:33:36.903Z,test_local_dashboard/mosquitto,1794184416: Client ESP32_3bD6A8 [172.18.0.1:33696] disconnected: connection closed by client.
+2026-11-09T00:39:03.229Z,test_local_dashboard/mosquitto,1794184743: New connection from 172.18.0.1:32888 on port 1883.
+2026-11-09T00:39:03.229Z,test_local_dashboard/mosquitto,"1794184743: New client connected from 172.18.0.1:32888 as ESP32_3bD6A8 (p4, c1, k60)."
+2026-11-09T00:41:32.326Z,test_local_dashboard/mosquitto,1794184892: New connection from 172.18.0.1:57980 on port 1883.
+2026-11-09T00:41:32.334Z,test_local_dashboard/mosquitto,1794184892: Client ESP32_3bD6A8 [172.18.0.1:32888] disconnected: session taken over.
+2026-11-09T00:41:32.334Z,test_local_dashboard/mosquitto,"1794184892: New client connected from 172.18.0.1:57980 as ESP32_3bD6A8 (p4, c1, k60)."
