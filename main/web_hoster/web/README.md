@@ -73,4 +73,3 @@ Sau đó, chỉ cần commit và nạp lại vào ESP32!
 4. **S4: Local Fallback Monitor** - Giám sát chế độ ngoại tuyến khi mất Internet / mất điện lưới.
 5. **S5: Cloud Synchronization** - Kiểm tra hàng đợi đồng bộ Firebase (10 phút/lần hoặc tức thì khi có sự cố).
 6. **S6: Research Experiment Lab** - Công cụ giả lập sự cố (mất mạng, mất điện, nhảy CB) và xuất log CSV phục vụ báo cáo Topic 6.1.
-
