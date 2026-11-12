@@ -82,4 +82,9 @@
   /* --- Fonts --- */
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* --- Auth Gate & Overlay Tokens --- */
+  --overlay-backdrop: rgba(36, 54, 45, 0.45);
+  --z-auth-gate: 1000;
+  --blur-locked: 3px;
 }
