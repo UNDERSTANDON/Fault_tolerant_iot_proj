@@ -12,13 +12,27 @@ import RecoveryView from './components/RecoveryView/RecoveryView';
 import ResearchTestView from './components/ResearchTestView/ResearchTestView';
 import Notification from './components/Notification/Notification';
 import FaultSimulation from './components/FaultSimulation/FaultSimulation';
+import AuthModal from './components/AuthModal/AuthModal';
 import { useSmartHome } from './hooks/useSmartHome';
+import { useAuth } from './hooks/useAuth';
 import styles from './App.module.css';
 
 export default function App() {
   const [activeScreen, setActiveScreen] = useState('DASHBOARD');
   // Bug 1 Fix: Mobile Drawer State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const {
+    currentUser,
+    isAuthenticated,
+    authError,
+    signIn,
+    signUp,
+    signOut,
+    clearError
+  } = useAuth();
+
+  const isLocked = !isAuthenticated;
 
   const {
     rooms,
@@ -46,6 +60,13 @@ export default function App() {
     setSelectedRoomId(null);
   };
 
+  const handleSignOut = () => {
+    signOut();
+    setSelectedRoomId(null);
+    setIsMobileMenuOpen(false);
+    setActiveScreen('DASHBOARD');
+  };
+
   const getScreenTitle = () => {
     switch (activeScreen) {
       case 'DIAGNOSTICS': return 'Connections';
@@ -59,23 +80,30 @@ export default function App() {
   };
 
   return (
-    <div className={styles.appContainer}>
-      {/* Toast Notification System (Global) */}
-      <Notification
-        notifications={notifications}
-        onDismiss={dismissNotification}
-      />
+    <>
+      <div
+        className={`${styles.appContainer} ${isLocked ? styles.appLocked : ''}`}
+        inert={isLocked}
+        aria-hidden={isLocked}
+      >
+        {/* Toast Notification System (Global) */}
+        <Notification
+          notifications={notifications}
+          onDismiss={dismissNotification}
+        />
 
-      {/* 1. Left Sidebar Navigation (Matching Nest Reference Figma) */}
-      <Sidebar
-        activeScreen={activeScreen}
-        onSelectScreen={setActiveScreen}
-        onSelectRoom={setSelectedRoomId}
-        selectedRoomId={selectedRoomId}
-        currentMode={networkState.mode}
-        isMobileOpen={isMobileMenuOpen}
-        onCloseMobile={() => setIsMobileMenuOpen(false)}
-      />
+        {/* 1. Left Sidebar Navigation (Matching Nest Reference Figma) */}
+        <Sidebar
+          activeScreen={activeScreen}
+          onSelectScreen={setActiveScreen}
+          onSelectRoom={setSelectedRoomId}
+          selectedRoomId={selectedRoomId}
+          currentMode={networkState.mode}
+          isMobileOpen={isMobileMenuOpen}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
+          currentUser={currentUser}
+          onSignOut={handleSignOut}
+        />
 
       {/* 2. Main Content Canvas */}
       <div className={styles.mainWrapper}>
@@ -180,15 +208,26 @@ export default function App() {
         />
       )}
 
-      {/* Persistent Fault Simulation Drawer Bar */}
-      <FaultSimulation
-        currentMode={networkState.mode}
-        onTriggerFault={triggerFault}
-        onRestore={restoreNormal}
-        metrics={metrics}
-        isSmokeAlert={isSmokeAlert}
-        onToggleSmokeAlarm={toggleSmokeAlarm}
-      />
-    </div>
+        {/* Persistent Fault Simulation Drawer Bar */}
+        <FaultSimulation
+          currentMode={networkState.mode}
+          onTriggerFault={triggerFault}
+          onRestore={restoreNormal}
+          metrics={metrics}
+          isSmokeAlert={isSmokeAlert}
+          onToggleSmokeAlarm={toggleSmokeAlarm}
+        />
+      </div>
+
+      {/* Mandatory Non-Dismissible Auth Gate Modal */}
+      {isLocked && (
+        <AuthModal
+          authError={authError}
+          onSignIn={signIn}
+          onSignUp={signUp}
+          onClearError={clearError}
+        />
+      )}
+    </>
   );
 }

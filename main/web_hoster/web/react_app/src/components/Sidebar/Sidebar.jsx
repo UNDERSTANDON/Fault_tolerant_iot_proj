@@ -1,4 +1,4 @@
-import { Home, MapPin, ChevronDown, LayoutGrid, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, X } from 'lucide-react';
+import { Home, MapPin, ChevronDown, LayoutGrid, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, X, LogOut } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({
@@ -8,7 +8,9 @@ export default function Sidebar({
   selectedRoomId,
   currentMode,
   isMobileOpen,
-  onCloseMobile
+  onCloseMobile,
+  currentUser,
+  onSignOut
 }) {
   const isOverview = activeScreen === 'DASHBOARD' && !selectedRoomId;
   const isConnections = (activeScreen === 'DIAGNOSTICS' || activeScreen === 'LOCAL_FALLBACK' || activeScreen === 'RECOVERY') && !selectedRoomId;
@@ -148,7 +150,31 @@ export default function Sidebar({
           </p>
         </div>
 
-        {/* 5. Simulated Data Footer Badge */}
+        {/* 5. User Account & Sign Out */}
+        {currentUser && (
+          <div className={styles.userCard}>
+            <div className={styles.userInfo}>
+              <div className={styles.userAvatar}>
+                {currentUser.username.charAt(0).toUpperCase()}
+              </div>
+              <div className={styles.userMeta}>
+                <span className={styles.userName}>{currentUser.username}</span>
+                <span className={styles.userRole}>Signed in</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={styles.signOutBtn}
+              onClick={onSignOut}
+              title="Sign out"
+            >
+              <LogOut size={15} />
+              <span>Sign out</span>
+            </button>
+          </div>
+        )}
+
+        {/* 6. Simulated Data Footer Badge */}
         <div className={styles.sidebarFooter}>
           <div className={styles.simulatedTag}>
             <span className={styles.greenDot}></span>
