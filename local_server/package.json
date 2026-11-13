@@ -1,0 +1,14 @@
+{
+  "name": "fault-tolerant-iot-local-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node lan_broker_bridge.mjs",
+    "start": "node lan_broker_bridge.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mqtt": "^5.16.1",
+    "ws": "^8.18.0"
+  }
+}

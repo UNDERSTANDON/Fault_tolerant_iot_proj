@@ -1,0 +1,5 @@
+user esp32_test
+topic write demo/esp32-mqtt-connectivity/test
+
+user dashboard_bridge
+topic read demo/esp32-mqtt-connectivity/test

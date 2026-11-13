@@ -2,7 +2,21 @@
 
 ## Status
 
-Planning only. Do not start implementation until this plan is approved.
+Approved for implementation; Stage 1 is in progress and has not passed its
+review gate.
+
+The local Mosquitto container has been recreated as
+`fault-tolerant-iot-mosquitto`. Its MQTT/TLS and WSS listeners are bound to
+`127.0.0.1` only. Local verification has passed for certificate validation,
+rejected invalid credentials, publisher/read-only ACL separation, delivery
+from MQTT/TLS to WSS, and recovery after a container restart. The previous
+stopped broker container and its volumes were preserved.
+
+The Windows hotspot is currently inactive, so hotspot-client reachability and
+firewall exposure have not been tested. The ESP32 firmware also does not yet
+load the generated private CA. These gaps prevent Stage 1 acceptance and
+ESP32-to-broker integration; do not treat the localhost tests as evidence of
+either.
 Implementation and verification of this stage must stop for user review before
 Stage 2 begins.
 

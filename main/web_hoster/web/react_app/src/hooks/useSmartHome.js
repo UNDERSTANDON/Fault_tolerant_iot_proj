@@ -2,10 +2,134 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { INITIAL_ROOMS_DATA, INITIAL_NETWORK_STATE, NETWORK_MODES } from '../data/initialMockData';
 
 export function useSmartHome() {
+  const localBridgeUrl = import.meta.env.VITE_LAN_BRIDGE_URL || '';
   const [rooms, setRooms] = useState(INITIAL_ROOMS_DATA);
   const [networkState, setNetworkState] = useState(INITIAL_NETWORK_STATE);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [isSmokeAlert, setIsSmokeAlert] = useState(false);
+
+  useEffect(() => {
+    if (!localBridgeUrl) {
+      return undefined;
+    }
+
+    let socket;
+    let isActive = true;
+    let reconnectTimer;
+    let reconnectAttempt = 0;
+
+    const scheduleReconnect = () => {
+      if (!isActive || reconnectTimer) {
+        return;
+      }
+
+      const delay = Math.min(1000 * (2 ** reconnectAttempt), 5000);
+      reconnectAttempt += 1;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = undefined;
+        openSocket();
+      }, delay);
+    };
+
+    const openSocket = () => {
+      socket = new WebSocket(localBridgeUrl);
+
+      socket.addEventListener('open', () => {
+        if (!isActive) {
+          return;
+        }
+
+        reconnectAttempt = 0;
+        setNetworkState((current) => ({
+          ...current,
+          localLan: true,
+          mqttBroker: false,
+          lastUpdated: new Date().toLocaleTimeString('en-US')
+        }));
+        socket.send(JSON.stringify({ type: 'subscribe', topics: ['demo/esp32-mqtt-connectivity/test'] }));
+      });
+
+      socket.addEventListener('message', (event) => {
+        if (!isActive) {
+          return;
+        }
+
+        try {
+          const message = JSON.parse(event.data);
+
+          if (message.type === 'status') {
+            setNetworkState((current) => ({
+              ...current,
+              mqttBroker: message.state === 'connected',
+              lastUpdated: new Date().toLocaleTimeString('en-US')
+            }));
+            return;
+          }
+
+          if (message.type === 'mqtt-message') {
+            const payload = message.payload ?? {};
+            const value = typeof payload === 'object' && payload !== null ? payload : { value: payload };
+            setNetworkState((current) => ({
+              ...current,
+              mqttBroker: true,
+              lastUpdated: new Date().toLocaleTimeString('en-US')
+            }));
+
+            if (message.topic && message.topic.includes('test')) {
+              setRecentActivity((prev) => [
+                {
+                  id: `bridge-${Date.now()}`,
+                  title: 'Live MQTT test traffic received',
+                  sub: `ACK received · ${value.device_id || 'ESP32'} • ${message.topic}`,
+                  time: new Date().toLocaleTimeString('en-US'),
+                  type: 'network'
+                },
+                ...prev.slice(0, 5)
+              ]);
+            }
+          }
+        } catch (error) {
+          console.warn('Ignoring malformed bridge payload:', error);
+        }
+      });
+
+      socket.addEventListener('close', () => {
+        if (!isActive) {
+          return;
+        }
+
+        setNetworkState((current) => ({
+          ...current,
+          mqttBroker: false,
+          lastUpdated: new Date().toLocaleTimeString('en-US')
+        }));
+        scheduleReconnect();
+      });
+
+      socket.addEventListener('error', () => {
+        if (!isActive) {
+          return;
+        }
+
+        setNetworkState((current) => ({
+          ...current,
+          mqttBroker: false,
+          lastUpdated: new Date().toLocaleTimeString('en-US')
+        }));
+        socket.close();
+      });
+    };
+
+    openSocket();
+
+    return () => {
+      isActive = false;
+      clearTimeout(reconnectTimer);
+      if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+        socket.close();
+      }
+    };
+  }, [localBridgeUrl]);
 
   // Bug 5 Fix: Dynamic Recent Activity List
   const [recentActivity, setRecentActivity] = useState([

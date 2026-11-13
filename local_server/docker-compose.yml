@@ -1,0 +1,18 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: fault-tolerant-iot-mosquitto
+    restart: unless-stopped
+    ports:
+      - "${BROKER_BIND_IP:-127.0.0.1}:8883:8883"
+      - "${BROKER_BIND_IP:-127.0.0.1}:8084:8084"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - type: bind
+        source: ${BROKER_SECRETS_DIR:?Run Initialize-LocalBroker.ps1 first}
+        target: /mosquitto/secrets
+        read_only: true
+      - broker_data:/mosquitto/data
+
+volumes:
+  broker_data:

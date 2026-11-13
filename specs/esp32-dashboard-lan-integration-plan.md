@@ -2,8 +2,8 @@
 
 ## Status
 
-Planning only. This stage depends on Stage 1 being verified and separately
-committed by the user. Do not start implementation before that gate.
+Approved for implementation.
+Added bridge node for TLS/WSS connection.
 
 ## Goal
 
