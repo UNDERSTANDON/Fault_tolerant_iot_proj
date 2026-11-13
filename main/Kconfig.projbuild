@@ -33,6 +33,14 @@ config CONNECTIVITY_MQTT_PASSWORD
     help
         Optional MQTT password. This value is compiled into firmware.
 
+config CONNECTIVITY_MQTT_USE_CUSTOM_CA
+    bool "Trust a local MQTT broker CA certificate"
+    default n
+    help
+        Enable this only when mqtt_connectivity/broker_ca.pem contains the
+        CA certificate for a development broker. The PEM is embedded in the
+        firmware image; never put the CA private key in the project.
+
 config CONNECTIVITY_FALLBACK_AP_SSID
     string "Fallback access point SSID"
     default "ESP32_Fault_Tolerant_IoT_LAN"

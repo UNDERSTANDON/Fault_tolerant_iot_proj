@@ -15,6 +15,14 @@
 #include "esp_crt_bundle.h"
 #endif
 
+#if CONFIG_CONNECTIVITY_MQTT_USE_CUSTOM_CA
+extern "C"
+{
+    extern const uint8_t broker_ca_pem_start[] asm("_binary_broker_ca_pem_start");
+    extern const uint8_t broker_ca_pem_end[] asm("_binary_broker_ca_pem_end");
+}
+#endif
+
 namespace
 {
     constexpr char TAG[] = "mqtt_connectivity";
@@ -133,11 +141,17 @@ namespace
         }
         else if (std::strncmp(uri, "mqtts://", 8) == 0)
         {
-#if CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
+#if CONFIG_CONNECTIVITY_MQTT_USE_CUSTOM_CA
+            config.broker.address.uri = uri;
+            config.broker.verification.certificate =
+                reinterpret_cast<const char *>(broker_ca_pem_start);
+            config.broker.verification.certificate_len =
+                static_cast<std::size_t>(broker_ca_pem_end - broker_ca_pem_start);
+#elif CONFIG_MBEDTLS_CERTIFICATE_BUNDLE
             config.broker.address.uri = uri;
             config.broker.verification.crt_bundle_attach = esp_crt_bundle_attach;
 #else
-            ESP_LOGE(TAG, "mqtts:// requires the ESP-TLS certificate bundle to be enabled");
+            ESP_LOGE(TAG, "mqtts:// requires a trusted custom CA or ESP-TLS certificate bundle");
             return false;
 #endif
         }

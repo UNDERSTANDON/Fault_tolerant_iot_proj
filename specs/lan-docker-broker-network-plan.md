@@ -2,23 +2,28 @@
 
 ## Status
 
-Approved for implementation; Stage 1 is in progress and has not passed its
-review gate.
+Approved for implementation; Stage 1 is in progress and is paused for user
+review. The review gate has not passed.
 
-The local Mosquitto container has been recreated as
-`fault-tolerant-iot-mosquitto`. Its MQTT/TLS and WSS listeners are bound to
-`127.0.0.1` only. Local verification has passed for certificate validation,
-rejected invalid credentials, publisher/read-only ACL separation, delivery
-from MQTT/TLS to WSS, and recovery after a container restart. The previous
+The replacement `fault-tolerant-iot-mosquitto` container is running with its
+MQTT/TLS and WSS listeners bound to the observed hotspot address
+`192.168.137.1`. Host verification has passed certificate validation,
+rejection of invalid credentials, publisher/read-only ACL separation,
+cross-listener delivery, and recovery after a container restart. The previous
 stopped broker container and its volumes were preserved.
 
-The Windows hotspot is currently inactive, so hotspot-client reachability and
-firewall exposure have not been tested. The ESP32 firmware also does not yet
-load the generated private CA. These gaps prevent Stage 1 acceptance and
-ESP32-to-broker integration; do not treat the localhost tests as evidence of
-either.
-Implementation and verification of this stage must stop for user review before
-Stage 2 begins.
+Live hotspot integration is now verified: the ESP32 connected to Wi-Fi at
+`192.168.137.35`, established MQTT/TLS using the local CA, and an independent
+authenticated subscriber received its repeated test publications. The local
+browser bridge also connected to the hotspot WSS endpoint and delivered an
+ESP32 publication to an origin-checked browser client. These are connectivity
+test messages, not production telemetry or device state.
+
+The remaining review item is exposure validation: although the broker ports
+are bound to the hotspot address and the Windows firewall profiles are
+enabled, access from unintended interfaces/networks and the effective
+firewall policy have not been independently tested. Do not begin Stage 2 until
+this boundary is reviewed and the user independently commits the stage.
 
 ## Goal
 
@@ -53,7 +58,9 @@ historical hotspot address or Docker configuration.
   existing compose files, firewall rules, and repository ignore rules.
 - Determine how clients connected to the laptop hotspot can reach a
   Docker-hosted broker. Record the observed interface and address as test
-  results, not as hard-coded assumptions.
+  results, not as hard-coded assumptions. (Verified: hotspot interface
+  `Local Area Connection* 2`, host address `192.168.137.1`; ESP32 address
+  `192.168.137.35`.)
 - Create a reproducible Docker Compose and Mosquitto configuration for:
   - MQTT over TLS for ESP32 and other MQTT clients.
   - MQTT over WebSockets with TLS (WSS) for compatible clients.
@@ -69,7 +76,6 @@ historical hotspot address or Docker configuration.
 
 ### Deferred
 
-- Changes to ESP32 firmware or React application source.
 - Replacing the demo topic/schema with production telemetry or commands.
 - Internet access, remote access, public DNS, cloud integration, and
   production provisioning.
@@ -111,19 +117,23 @@ historical hotspot address or Docker configuration.
    - Confirm container health and listener startup without exposing secrets in
      logs.
    - From the laptop, verify MQTT over TLS and WSS with certificate
-     verification enabled.
+     verification enabled. (Passed.)
    - From a hotspot-connected client, verify expected reachability and
-     certificate validation.
+     certificate validation. (Passed from the ESP32 over MQTT/TLS; the
+     independent subscriber and browser bridge also received ESP32 test
+     publications.)
    - Verify invalid credentials and unauthorized topic operations are
      rejected; valid test publish/subscribe operations succeed only on
-     permitted topics.
-   - Restart the broker and confirm it returns to a healthy state.
+     permitted topics. (Passed.)
+   - Restart the broker and confirm it returns to a healthy state. (Passed.)
    - Check that the services are not reachable from unintended interfaces or
-     networks.
+     networks. (Pending independent verification; current listeners are bound
+     to `192.168.137.1`, and no task-specific firewall rule was added.)
 
 5. **Record evidence and stop for review**
    - Record the tested hotspot path, observed host address, listener ports,
      certificate trust result, access-control tests, and known limitations.
+     (Evidence recorded below.)
    - Keep the evidence free of passwords, private keys, tokens, and
      credential-bearing connection strings.
    - Do not begin Stage 2 until the user has reviewed Stage 1, verified the
@@ -148,3 +158,26 @@ historical hotspot address or Docker configuration.
 Stop after satisfying the acceptance criteria. Present the configuration
 files, test outcomes, network exposure, secret handling, and unresolved risks
 for user review. Do not automatically commit or proceed to Stage 2.
+
+## Verification results
+
+- The Docker container was running with MQTT/TLS on
+  `192.168.137.1:8883` and WSS on `192.168.137.1:8084`.
+- ESP32 serial output reported Wi-Fi address `192.168.137.35` and
+  `MQTT connected`. The firmware loaded the local CA; certificate validation
+  succeeded without disabling TLS verification.
+- An independent authenticated MQTT/TLS subscriber received consecutive
+  messages on `demo/esp32-mqtt-connectivity/test`. A later browser-bridge test
+  connected to `wss://192.168.137.1:8084`, passed the browser ping/subscribe
+  exchange, and delivered a live ESP32 test publication to the browser client.
+- The MQTT verifier passed invalid-credential rejection on both listeners,
+  publisher and bridge ACL separation, and cross-listener delivery.
+- The browser bridge was bound to `127.0.0.1` during its browser delivery
+  check; it is not exposed as a cross-device LAN service.
+- Windows reports its Domain, Private, and Public firewall profiles enabled.
+  The effective inbound rules and reachability from unintended networks have
+  not been independently verified. Do not interpret profile status alone as
+  proof of isolation.
+- Test messages are the firmware connectivity demo only. Production telemetry,
+  device commands, durable event capture, cloud forwarding, and deployment
+  recovery remain outside this stage.
