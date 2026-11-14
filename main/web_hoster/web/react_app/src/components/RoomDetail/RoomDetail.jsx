@@ -66,11 +66,11 @@ export default function RoomDetail({ room, onClose, onToggleDevice, isSystemUnav
         <div className={styles.statusStrip}>
           <div className={styles.stripItem}>
             <Activity size={16} className={styles.stripIcon} />
-            <span>Active Devices: <strong>{activeDeviceCount}/{devices.length}</strong></span>
+            <span>Simulated active devices: <strong>{activeDeviceCount}/{devices.length}</strong></span>
           </div>
           <div className={styles.stripItem}>
             <ShieldCheck size={16} className={styles.stripIcon} />
-            <span>Active Routing: <strong>{networkMode === 'LOCAL' ? 'Local Area Network (LAN)' : 'Cloud & LAN'}</strong></span>
+            <span>Simulated route: <strong>{networkMode === 'LOCAL' ? 'Local Area Network (LAN)' : 'Cloud & LAN'}</strong></span>
           </div>
         </div>
 
@@ -78,7 +78,7 @@ export default function RoomDetail({ room, onClose, onToggleDevice, isSystemUnav
         <div className={styles.modalBody}>
           {/* Column 1: Device Controls */}
           <div className={styles.block}>
-            <h3 className={styles.blockTitle}>Device Controls ({devices.length})</h3>
+            <h3 className={styles.blockTitle}>Demo device controls ({devices.length})</h3>
             <div className={styles.deviceList}>
               {devices.map((device) => (
                 <DeviceControl
@@ -94,7 +94,7 @@ export default function RoomDetail({ room, onClose, onToggleDevice, isSystemUnav
           {/* Column 2: Sensors & Telemetry */}
           {sensors && sensors.length > 0 && (
             <div className={styles.block}>
-              <h3 className={styles.blockTitle}>Sensors & Environment ({sensors.length})</h3>
+              <h3 className={styles.blockTitle}>Simulated sensors ({sensors.length})</h3>
               <div className={styles.sensorGrid}>
                 {sensors.map((sensor) => (
                   <SensorCard key={sensor.id} sensor={sensor} />
@@ -106,13 +106,13 @@ export default function RoomDetail({ room, onClose, onToggleDevice, isSystemUnav
                 <div className={styles.metricCard}>
                   <div className={styles.metricHead}>
                     <Thermometer size={16} color="#f97316" />
-                    <span>Ambient Room Temperature</span>
+                    <span>Simulated ambient temperature</span>
                   </div>
                   <div className={styles.gaugeContainer}>
                     <div className={styles.gaugeBar}>
                       <div className={styles.gaugeFill} style={{ width: '70%' }}></div>
                     </div>
-                    <span className={styles.gaugeLabel}>Comfort Zone (20°C - 35°C)</span>
+                    <span className={styles.gaugeLabel}>Illustrative range (not sensor data)</span>
                   </div>
                 </div>
 
@@ -120,13 +120,13 @@ export default function RoomDetail({ room, onClose, onToggleDevice, isSystemUnav
                   <div className={styles.metricCard}>
                     <div className={styles.metricHead}>
                       <Droplets size={16} color="#38bdf8" />
-                      <span>Kitchen Relative Humidity</span>
+                      <span>Simulated kitchen humidity</span>
                     </div>
                     <div className={styles.gaugeContainer}>
                       <div className={styles.gaugeBar}>
                         <div className={`${styles.gaugeFill} ${styles.fillHumidity}`} style={{ width: '65%' }}></div>
                       </div>
-                      <span className={styles.gaugeLabel}>Optimal Range (50% - 70%)</span>
+                      <span className={styles.gaugeLabel}>Illustrative range (not sensor data)</span>
                     </div>
                   </div>
                 )}
@@ -139,7 +139,7 @@ export default function RoomDetail({ room, onClose, onToggleDevice, isSystemUnav
         <div className={styles.modalFooter}>
           <div className={styles.footerNote}>
             <Clock size={14} />
-            <span>Live telemetry synchronization active</span>
+            <span>Simulation only · no live sensor synchronization</span>
           </div>
           <button type="button" className={styles.backBtn} onClick={onClose}>
             Back to Dashboard

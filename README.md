@@ -37,6 +37,54 @@ and generated credentials are kept under `%LOCALAPPDATA%\FaultTolerantIoT`,
 outside the OneDrive repository. The previous stopped broker container and
 its volumes are left untouched.
 
+The initializer generates separate random passwords for the `esp32_test` and
+`dashboard_bridge` accounts. For ESP32 setup, retrieve the `ESP32_MQTT_USERNAME`
+and `ESP32_MQTT_PASSWORD` values from
+`%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\bridge.env`; do not commit this file
+or paste the password into source code, a broker URI, or logs.
+
+The default broker binding (`127.0.0.1`) is for laptop-only testing. To let an
+ESP32 on the laptop hotspot connect, initialize the broker with the hotspot
+host IP before creating it. For example, replace `192.168.137.1` with the
+verified hotspot interface address:
+
+```powershell
+.\local_server\Initialize-LocalBroker.ps1 `
+  -BrokerDnsName 192.168.137.1 `
+  -BrokerIpAddress 192.168.137.1 `
+  -BindAddress 192.168.137.1
+```
+
+The broker certificate must include the same address, and Windows firewall
+access must be narrowly scoped to the hotspot network. The initializer refuses
+to overwrite existing local broker configuration or credentials; do not delete
+those files to change the binding without first reviewing and preserving them.
+
+For ESP32 TLS configuration, copy the broker's public CA certificate into the
+ignored firmware path:
+
+```powershell
+Copy-Item "$env:LOCALAPPDATA\FaultTolerantIoT\mosquitto\certs\ca.crt" `
+  .\main\mqtt_connectivity\broker_ca.pem
+```
+
+Open `idf.py menuconfig`, then under **ESP32 MQTT connectivity demo** set the
+broker URI to `mqtts://<hotspot-host-ip>:8883`, the MQTT username and password
+to the `esp32_test` values from `bridge.env`, and enable **Trust a local MQTT
+broker CA certificate**. Configure the Wi-Fi credentials there as well, then
+build and flash the firmware. These build-time credentials are embedded in the
+firmware image; keep `sdkconfig` local and rebuild/reflash if they change.
+The custom-CA option defaults to disabled. Before building, verify it is
+enabled in `sdkconfig`:
+
+```powershell
+Select-String .\sdkconfig -Pattern '^CONFIG_CONNECTIVITY_MQTT_USE_CUSTOM_CA=y$'
+```
+
+If this prints no match, reopen `idf.py menuconfig`, enable the option, save,
+then build and flash again. Editing `sdkconfig` alone does not update firmware
+already flashed to the ESP32.
+
 Install the local service dependencies once, then verify certificate
 validation, authentication, ACLs, and delivery:
 
@@ -61,6 +109,12 @@ The bridge reads its broker credentials from the external credentials file.
 It only subscribes to the broker's allowed topics and does not provide
 actuator commands. The browser does not receive broker credentials.
 
+When `VITE_LAN_BRIDGE_URL` is configured, the dashboard reports the bridge's
+broker connection and the last received ESP32 connectivity-test message. A
+test message is marked stale after 70 seconds without another receipt. These
+messages do not update room sensors or device state; those controls and values
+remain simulated, and no device command or acknowledgement path is connected.
+
 This default loopback setup is intentionally not reachable by the ESP32 or
 other LAN clients. Hotspot access requires an active hotspot, a verified
 hotspot interface address, a certificate SAN for that address, and a
@@ -77,10 +131,9 @@ cd .\main\web_hoster\web\react_app
 npm run dev -- --host 0.0.0.0
 ```
 
-The current ESP32 demo uses ESP-IDF's public certificate bundle and does not
-yet load this local CA, so it cannot validate this development certificate
-without a coordinated firmware trust configuration change. Do not disable
-TLS certificate validation to work around that limitation.
+The ESP32 demo supports trusting the local CA through the custom-CA menuconfig
+option above. Do not disable TLS certificate validation to work around a
+certificate or hostname mismatch.
 
 For dashboard bridge setup, copy
 `main/web_hoster/web/react_app/.env.example` to `.env` in that folder and set
@@ -99,7 +152,7 @@ as live sensor or device-state evidence.
 
 Use the ESP32-S3 board and any peripherals specified by the firmware. Check the source and configuration files for pin assignments, dependencies, network settings, and supported fault-recovery behavior.
 
-Configure the station Wi-Fi SSID/password, MQTT broker URI, and any MQTT credentials in **ESP32 MQTT connectivity demo** using `idf.py menuconfig`. These build-time values are embedded in the firmware image and are not secure provisioning. Keep the local `sdkconfig` out of source control; never put credentials in the broker URI, source code, or logs. Configure a fallback AP password there as well if the fallback access point is needed.
+Configure the station Wi-Fi SSID/password, MQTT broker URI, and MQTT credentials in **ESP32 MQTT connectivity demo** using `idf.py menuconfig`. For the local broker, use the generated `esp32_test` username and password described above. These build-time values are embedded in the firmware image and are not secure provisioning. Keep the local `sdkconfig` out of source control; never put credentials in the broker URI, source code, or logs. Configure a fallback AP password there as well if the fallback access point is needed.
 
 The MQTT test client starts only after station Wi-Fi receives an IP address. It publishes to `demo/esp32-mqtt-connectivity/test` immediately after connecting and every 30 seconds. The versioned test payload is `{"schema_version":1,"kind":"connectivity_test","device_id":"<station-mac>","sequence":1}`; it is test data, not sensor telemetry or device state. Publications use QoS 0, and a local client acceptance log is not proof of broker receipt. Verify delivery with an independent subscriber.
 

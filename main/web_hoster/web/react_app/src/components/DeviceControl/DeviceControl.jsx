@@ -29,9 +29,9 @@ export default function DeviceControl({ device, onToggle, disabled }) {
   };
 
   const getStateText = () => {
-    if (type === 'lock') return state === 'LOCKED' ? 'LOCKED' : 'UNLOCKED';
-    if (type === 'ups') return `${value} (${unit})`;
-    return isOn ? 'ON' : 'OFF';
+    if (type === 'lock') return `SIM ${state === 'LOCKED' ? 'LOCKED' : 'UNLOCKED'}`;
+    if (type === 'ups') return `SIM ${value} (${unit})`;
+    return `SIM ${isOn ? 'ON' : 'OFF'}`;
   };
 
   return (
@@ -56,8 +56,8 @@ export default function DeviceControl({ device, onToggle, disabled }) {
           className={`${styles.toggleTrack} ${isOn ? styles.trackOn : styles.trackOff}`}
           onClick={() => !disabled && onToggle(id, !isOn)}
           disabled={disabled}
-          title={`Click to turn ${isOn ? 'OFF' : 'ON'}`}
-          aria-label={`Toggle ${name}`}
+          title={`Demo only: simulate turning ${isOn ? 'OFF' : 'ON'}; no hardware command is sent`}
+          aria-label={`Simulate ${name} ${isOn ? 'off' : 'on'}; no hardware command is sent`}
         >
           <span className={`${styles.toggleThumb} ${isOn ? styles.thumbOn : styles.thumbOff}`}></span>
         </button>

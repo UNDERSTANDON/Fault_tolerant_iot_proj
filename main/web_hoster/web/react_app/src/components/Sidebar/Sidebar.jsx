@@ -146,7 +146,7 @@ export default function Sidebar({
           </div>
           <h4 className={styles.infoTitle}>Always close to home.</h4>
           <p className={styles.infoText}>
-            Local control stays available without Internet.
+            Demo interface only; live device control and network failover are not connected.
           </p>
         </div>
 

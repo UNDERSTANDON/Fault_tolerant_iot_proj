@@ -10,9 +10,9 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
         <div className={styles.leftGroup}>
           <ShieldCheck size={20} className={styles.iconGreen} />
           <div className={styles.textGroup}>
-            <span className={styles.headline}>Your home is securely connected</span>
+            <span className={styles.headline}>Demo mode · simulated network status</span>
             <span className={styles.subtext}>
-              Devices are ready. Commands complete only after device acknowledgment.
+              Room readings and device states are simulated. No hardware commands are connected.
             </span>
           </div>
         </div>
@@ -37,14 +37,14 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
         <div className={styles.leftGroup}>
           <WifiOff size={20} className={styles.iconAmber} />
           <div className={styles.textGroup}>
-            <span className={styles.headline}>LOCAL MODE · Local control</span>
+            <span className={styles.headline}>LOCAL MODE · simulated scenario</span>
             <span className={styles.subtext}>
-              Internet disconnected. You can still control devices over the local network.
+              This changes the demo state only; it does not switch a live network or control hardware.
             </span>
           </div>
         </div>
 
-        <span className={styles.sinceText}>Since 10:22:05</span>
+        <span className={styles.sinceText}>Demo state</span>
       </div>
     );
   }
@@ -55,13 +55,13 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
         <div className={styles.leftGroup}>
           <RefreshCw size={20} className={`${styles.iconBlue} ${styles.spin}`} />
           <div className={styles.textGroup}>
-            <span className={styles.headline}>SWITCHING · Establishing Local Path</span>
+            <span className={styles.headline}>SWITCHING · simulated transition</span>
             <span className={styles.subtext}>
-              Verifying control path. Keep confirmed values; pause new commands briefly.
+              The dashboard is demonstrating a state transition; no network path is being verified.
             </span>
           </div>
         </div>
-        <span className={styles.statusWait}>Resolving...</span>
+        <span className={styles.statusWait}>Simulation</span>
       </div>
     );
   }
@@ -72,13 +72,13 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
         <div className={styles.leftGroup}>
           <RefreshCw size={20} className={`${styles.iconIndigo} ${styles.spin}`} />
           <div className={styles.textGroup}>
-            <span className={styles.headline}>RECONNECTING · Restoring Cloud Telemetry</span>
+            <span className={styles.headline}>RECONNECTING · simulated recovery</span>
             <span className={styles.subtext}>
-              Internet connection recovered. Replaying buffered local telemetry back to cloud.
+              No cloud connection or buffered telemetry is being used by this demo scenario.
             </span>
           </div>
         </div>
-        <span className={styles.statusWait}>Syncing...</span>
+        <span className={styles.statusWait}>Simulation</span>
       </div>
     );
   }
@@ -88,9 +88,9 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
       <div className={styles.leftGroup}>
         <XOctagon size={20} className={styles.iconRed} />
         <div className={styles.textGroup}>
-          <span className={styles.headline}>UNAVAILABLE · Control unavailable</span>
+          <span className={styles.headline}>UNAVAILABLE · simulated scenario</span>
           <span className={styles.subtext}>
-            Unable to reach Local LAN or Central ESP32 Gateway. Controls are temporarily disabled.
+            Demo controls are paused. This does not report live ESP32, LAN, or device availability.
           </span>
         </div>
       </div>

@@ -1,29 +1,29 @@
-import { useState } from 'react';
-import { ArrowLeft, Globe, Network, Cpu, Radio, ShieldCheck, AlertCircle, RefreshCw, Server, Wifi } from 'lucide-react';
+import { ArrowLeft, Cpu, Globe, Network, Radio, Server } from 'lucide-react';
 import styles from './NetworkDiagnostics.module.css';
 
-export default function NetworkDiagnostics({ networkState, onBackToDashboard }) {
-  const [pingStatus, setPingStatus] = useState(null);
-  const [isPinging, setIsPinging] = useState(false);
+const BRIDGE_STATUS_LABELS = {
+  'not-configured': 'NOT CONFIGURED',
+  connecting: 'CONNECTING',
+  connected: 'CONNECTED',
+  reconnecting: 'RECONNECTING',
+  unavailable: 'UNAVAILABLE'
+};
 
-  const handleRunPing = () => {
-    setIsPinging(true);
-    setPingStatus('Pinging Gateway & Cloud Broker...');
-    setTimeout(() => {
-      setIsPinging(false);
-      if (!networkState.localLan) {
-        setPingStatus('PING FAILED: Destination Host Unreachable (LAN Down)');
-      } else if (!networkState.internet) {
-        setPingStatus('PING LOCAL OK: Gateway 192.168.1.1 (12ms) | Cloud 8.8.8.8 (100% packet loss)');
-      } else {
-        setPingStatus('ALL CHANNELS HEALTHY: Gateway (11ms) | Cloud Broker (28ms) | 0% packet loss');
-      }
-    }, 600);
-  };
+function getLastMessageLabel(bridgeState) {
+  if (!bridgeState.lastMessageAt) {
+    return 'No test message received';
+  }
+  return bridgeState.messageStale ? 'Stale' : 'Recent test message';
+}
+
+export default function NetworkDiagnostics({ networkState, bridgeState, onBackToDashboard }) {
+  const isBridgeConnected = bridgeState.status === 'connected';
+  const lastMessageTime = bridgeState.lastMessageAt
+    ? new Date(bridgeState.lastMessageAt).toLocaleString()
+    : 'Never';
 
   return (
     <div className={styles.container}>
-      {/* Navigation Header */}
       <div className={styles.header}>
         <button
           type="button"
@@ -34,119 +34,110 @@ export default function NetworkDiagnostics({ networkState, onBackToDashboard }) 
           <ArrowLeft size={18} />
           <span>Back to Dashboard</span>
         </button>
-        <div className={styles.screenTag}>Screen S3: Network & Channel Diagnostics</div>
+        <div className={styles.screenTag}>Connection diagnostics</div>
       </div>
 
       <div className={styles.titleSection}>
-        <h2 className={styles.title}>Network Topology & Channel Diagnostics</h2>
+        <h2 className={styles.title}>Network & MQTT diagnostics</h2>
         <p className={styles.subtitle}>
-          In-depth telemetry for external cloud routes, domestic LAN broadcast, and ESP32 gateway links.
+          MQTT bridge and ESP32 test-message status are live. Internet and LAN scenario values below are simulated.
         </p>
       </div>
 
-      {/* Network Topology Cards */}
       <div className={styles.topologyGrid}>
-        {/* Node 1: Cloud Service */}
         <div className={`${styles.nodeCard} ${networkState.internet ? styles.nodeHealthy : styles.nodeDown}`}>
           <div className={styles.nodeHeader}>
             <Globe size={22} className={styles.nodeIcon} />
-            <span className={styles.nodeBadge}>{networkState.internet ? 'CONNECTED' : 'DISCONNECTED'}</span>
+            <span className={styles.nodeBadge}>
+              {networkState.internet ? 'SIMULATED ONLINE' : 'SIMULATED OFFLINE'}
+            </span>
           </div>
-          <h3 className={styles.nodeName}>Public Cloud Broker</h3>
-          <p className={styles.nodeDesc}>MQTT over TLS / Remote REST API</p>
+          <h3 className={styles.nodeName}>Internet scenario</h3>
+          <p className={styles.nodeDesc}>Fault-simulation state only; no internet probe is performed.</p>
           <div className={styles.nodeMeta}>
-            <span>Endpoint: <code>broker.hivemq.com:8884</code></span>
-            <span>Status: <strong>{networkState.internet ? 'Online (Accessible)' : 'Unreachable (Timeout)'}</strong></span>
+            <span>Demo state: <strong>{networkState.internet ? 'Connected' : 'Disconnected'}</strong></span>
           </div>
         </div>
 
-        {/* Node 2: Home Wi-Fi Router */}
         <div className={`${styles.nodeCard} ${networkState.localLan ? styles.nodeHealthy : styles.nodeDown}`}>
           <div className={styles.nodeHeader}>
             <Network size={22} className={styles.nodeIcon} />
-            <span className={styles.nodeBadge}>{networkState.localLan ? 'ACTIVE' : 'OFFLINE'}</span>
+            <span className={styles.nodeBadge}>
+              {networkState.localLan ? 'SIMULATED ACTIVE' : 'SIMULATED OFFLINE'}
+            </span>
           </div>
-          <h3 className={styles.nodeName}>Domestic Router / LAN</h3>
-          <p className={styles.nodeDesc}>Local IP Gateway & Subnet Bridge</p>
+          <h3 className={styles.nodeName}>Local network scenario</h3>
+          <p className={styles.nodeDesc}>Fault-simulation state only; no LAN reachability probe is performed.</p>
           <div className={styles.nodeMeta}>
-            <span>Gateway IP: <code>192.168.1.1</code></span>
-            <span>Subnet: <code>255.255.255.0</code></span>
+            <span>Demo state: <strong>{networkState.localLan ? 'Available' : 'Unavailable'}</strong></span>
           </div>
         </div>
 
-        {/* Node 3: ESP32 Access Point Gateway */}
-        <div className={`${styles.nodeCard} ${networkState.localLan ? styles.nodeHealthy : styles.nodeDown}`}>
+        <div className={`${styles.nodeCard} ${styles.nodeDown}`}>
           <div className={styles.nodeHeader}>
             <Cpu size={22} className={styles.nodeIcon} />
-            <span className={styles.nodeBadge}>{networkState.localLan ? 'ONLINE' : 'UNREACHABLE'}</span>
+            <span className={styles.nodeBadge}>NOT IMPLEMENTED</span>
           </div>
-          <h3 className={styles.nodeName}>ESP32 Central Gateway</h3>
-          <p className={styles.nodeDesc}>Living Room Hardware Access Point</p>
+          <h3 className={styles.nodeName}>ESP32 device API</h3>
+          <p className={styles.nodeDesc}>No device status or command API is connected to this dashboard.</p>
           <div className={styles.nodeMeta}>
-            <span>AP IP: <code>192.168.4.1</code></span>
-            <span>Protocol: <code>WebSocket / TCP 8080</code></span>
+            <span>Device controls and room readings are simulated.</span>
           </div>
         </div>
 
-        {/* Node 4: Web Interface Client */}
-        <div className={`${styles.nodeCard} ${styles.nodeHealthy}`}>
+        <div className={`${styles.nodeCard} ${isBridgeConnected ? styles.nodeHealthy : styles.nodeDown}`}>
           <div className={styles.nodeHeader}>
             <Radio size={22} className={styles.nodeIcon} />
-            <span className={styles.nodeBadge}>HOST LOCAL</span>
+            <span className={styles.nodeBadge}>
+              {BRIDGE_STATUS_LABELS[bridgeState.status] || 'UNKNOWN'}
+            </span>
           </div>
-          <h3 className={styles.nodeName}>Web Client Node</h3>
-          <p className={styles.nodeDesc}>React SPA Frontend (Localhost / LAN)</p>
+          <h3 className={styles.nodeName}>MQTT broker via local bridge</h3>
+          <p className={styles.nodeDesc}>Actual browser-to-bridge and Node-to-broker status.</p>
           <div className={styles.nodeMeta}>
-            <span>Client IP: <code>192.168.1.105</code></span>
-            <span>Active Path: <strong>{networkState.mode === 'LOCAL' ? 'Direct LAN WebSocket' : 'Dual Cloud/LAN'}</strong></span>
+            <span>ESP32 test message: <strong>{getLastMessageLabel(bridgeState)}</strong></span>
+            <span>Last received: <code>{lastMessageTime}</code></span>
+            {bridgeState.lastMessage && (
+              <span>Sequence: <code>{bridgeState.lastMessage.sequence}</code></span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Benchmark & Ping Test Tool */}
       <div className={styles.diagnosticToolCard}>
         <div className={styles.toolHeader}>
           <div className={styles.toolTitleGroup}>
             <Server size={20} className={styles.toolIcon} />
             <div>
-              <h3 className={styles.toolTitle}>Real-time Link Benchmark & Ping Probe</h3>
-              <p className={styles.toolSubtitle}>Sends ICMP and WebSocket heartbeat probes to evaluate packet transmission.</p>
+              <h3 className={styles.toolTitle}>Live connectivity-test channel</h3>
+              <p className={styles.toolSubtitle}>
+                The ESP32 publishes test messages; this is not sensor telemetry or a device acknowledgement.
+              </p>
             </div>
           </div>
-          <button
-            type="button"
-            className={styles.pingButton}
-            onClick={handleRunPing}
-            disabled={isPinging}
-          >
-            <RefreshCw size={16} className={isPinging ? styles.spin : ''} />
-            <span>{isPinging ? 'Probing Link...' : 'Run Ping Benchmark'}</span>
-          </button>
         </div>
-
-        {pingStatus && (
-          <div className={styles.pingConsole}>
-            <span className={styles.consolePrompt}>$ traceroute --smart-home-gateway</span>
-            <span className={styles.consoleResult}>{pingStatus}</span>
-          </div>
-        )}
 
         <div className={styles.specsRow}>
           <div className={styles.specItem}>
-            <Wifi size={16} />
-            <span>Wi-Fi Signal (RSSI): <strong>-42 dBm (Excellent)</strong></span>
+            <Radio size={16} />
+            <span>Bridge: <strong>{BRIDGE_STATUS_LABELS[bridgeState.status] || 'UNKNOWN'}</strong></span>
           </div>
           <div className={styles.specItem}>
-            <ShieldCheck size={16} />
-            <span>Failover Readiness: <strong>Sub-second Autonomous Switching</strong></span>
+            <Cpu size={16} />
+            <span>Topic: <code>demo/esp32-mqtt-connectivity/test</code></span>
           </div>
           <div className={styles.specItem}>
-            <AlertCircle size={16} />
-            <span>Loss Protection: <strong>Local Command Queue Buffered</strong></span>
+            <Network size={16} />
+            <span>Freshness: <strong>{getLastMessageLabel(bridgeState)}</strong></span>
           </div>
         </div>
+
+        {bridgeState.error && (
+          <div className={styles.pingConsole} role="status" aria-live="polite">
+            <span className={styles.bridgeError}>{bridgeState.error}</span>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

@@ -37,6 +37,7 @@ export default function App() {
   const {
     rooms,
     networkState,
+    bridgeState,
     metrics,
     selectedRoomId,
     setSelectedRoomId,
@@ -118,7 +119,7 @@ export default function App() {
         {activeScreen === 'DASHBOARD' && (
           <main>
             {/* 4-Channel Status Card */}
-            <ConnectionStatus networkState={networkState} />
+            <ConnectionStatus networkState={networkState} bridgeState={bridgeState} />
 
             {/* Contextual Mode Banner */}
             <ModeBanner
@@ -130,7 +131,7 @@ export default function App() {
             <section>
               <div className={styles.spacesHeader}>
                 <h2 className={styles.spacesTitle}>Your spaces</h2>
-                <span className={styles.spacesMeta}>Sensors updated at 10:24:00 · Simulated data</span>
+                <span className={styles.spacesMeta}>Room sensors · Simulated values, not hardware readings</span>
               </div>
 
               <div className={styles.spacesGrid}>
@@ -159,6 +160,7 @@ export default function App() {
         {activeScreen === 'DIAGNOSTICS' && (
           <NetworkDiagnostics
             networkState={networkState}
+            bridgeState={bridgeState}
             onBackToDashboard={handleBackToDashboard}
           />
         )}
@@ -178,7 +180,7 @@ export default function App() {
           <RecoveryView
             networkState={networkState}
             onBackToDashboard={handleBackToDashboard}
-            onTriggerSync={restoreNormal}
+            onResetDemo={restoreNormal}
           />
         )}
 

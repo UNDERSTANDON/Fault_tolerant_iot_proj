@@ -4,6 +4,27 @@
 
 Approved for implementation.
 Added bridge node for TLS/WSS connection.
+Added clear setup instructions.
+
+Step 3's existing Node bridge was exercised with a live ESP32 connectivity
+test publication on 2026-11-14. The bridge connected to the broker over WSS
+with certificate verification enabled and delivered the ESP32 message to a
+same-host WebSocket test client using an allowed Origin header. This verifies
+test-message delivery only; it does not verify dashboard integration or
+sensor telemetry.
+
+The browser-facing bridge was bound to loopback for this test and accepted
+the configured browser origin. Browser authentication and cross-device
+LAN/WSS access have not been implemented or verified. Step 3 is therefore
+partially verified, not accepted as complete. The user currently has only the
+ESP32 available for physical-device testing; sensor/actuator tests remain out
+of scope. Stage 1's separate review gate also remains outstanding.
+
+Step 4's dashboard changes are implemented for the connectivity-test path.
+The dashboard now separates actual bridge/broker status and ESP32 test-message
+freshness from simulated internet/LAN, room readings, and device controls.
+Browser runtime verification remains pending; the local React `.env` currently
+does not configure `VITE_LAN_BRIDGE_URL`.
 
 ## Goal
 
@@ -139,6 +160,47 @@ keeping broker credentials out of browser code.
      and unimplemented device features.
    - Stop for user review and a separate safe commit. Do not automatically
      commit or proceed beyond the reviewed scope.
+
+## Test evidence so far
+
+- The ESP32 was configured for `mqtts://192.168.137.1:8883`; the local
+  `sdkconfig` had custom-CA trust enabled and the CA PEM was present.
+- The broker was running with MQTT/TLS on `192.168.137.1:8883` and WSS on
+  `192.168.137.1:8084`. The ESP32 test publisher sent to
+  `demo/esp32-mqtt-connectivity/test`.
+- The Node bridge connected to the WSS listener with certificate verification
+  enabled, subscribed to the test topic, and forwarded a live ESP32
+  `connectivity_test` message to a local WebSocket test client using the
+  allowed local Origin header. The payload schema and sequence were validated.
+- The bridge was not exposed to the LAN; no browser password/session
+  authentication or browser-to-Node TLS was tested. Do not use this loopback
+  test as evidence of cross-device dashboard access.
+- Only the firmware's versioned connectivity test payload was verified. No
+  physical sensor readings, actuator commands, or production telemetry were
+  tested.
+
+## Step 4 implementation and verification
+
+- The React dashboard consumes only the approved connectivity-test topic and
+  validates its topic and versioned payload before displaying it. The bridge
+  connection status is separate from simulated LAN/internet state. The UI
+  reports the last test-message receipt and marks it stale after 70 seconds;
+  bridge errors and an unconfigured endpoint are shown explicitly.
+- MQTT test messages do not modify room readings or device states. Room
+  sensors, hazard displays, device controls, fault scenarios, and research
+  metrics are explicitly labeled as simulated. Device toggles no longer claim
+  an acknowledgement or successful hardware command.
+- `npm run build` passed and emitted the configured firmware assets
+  (`index.html`, `app.js`, and `style.css`). A local-secret scan confirmed
+  broker passwords are absent from the generated browser bundle.
+- The React app's local `.env` is absent, so the dashboard currently renders
+  the explicit “bridge not configured” state until the local bridge URL is
+  configured as documented in the README. A real browser rendering test has
+  not been performed. `npm run lint` is unavailable because this project has
+  no `eslint.config.*` for its ESLint 10 setup.
+- The Node bridge remains loopback-only and uses an origin allowlist; it has
+  no browser password/session authentication or browser-to-Node TLS. No
+  cross-device browser access is claimed or tested.
 
 ## Acceptance criteria
 

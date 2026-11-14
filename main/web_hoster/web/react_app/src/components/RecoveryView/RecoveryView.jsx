@@ -1,25 +1,25 @@
 import { useState } from 'react';
-import { ArrowLeft, RefreshCw, CheckCircle2, Clock, ArrowRight, Database } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Clock, ArrowRight, Database } from 'lucide-react';
 import styles from './RecoveryView.module.css';
 
-export default function RecoveryView({ networkState, onBackToDashboard, onTriggerSync }) {
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState(new Date().toLocaleTimeString('en-US'));
+export default function RecoveryView({ networkState, onBackToDashboard, onResetDemo }) {
+  const [isResetting, setIsResetting] = useState(false);
+  const [lastDemoActionTime, setLastDemoActionTime] = useState(null);
 
-  const handleManualSync = () => {
-    setIsSyncing(true);
+  const handleResetDemo = () => {
+    setIsResetting(true);
     setTimeout(() => {
-      setIsSyncing(false);
-      setLastSyncTime(new Date().toLocaleTimeString('en-US'));
-      if (onTriggerSync) onTriggerSync();
+      setIsResetting(false);
+      setLastDemoActionTime(new Date().toLocaleTimeString('en-US'));
+      if (onResetDemo) onResetDemo();
     }, 700);
   };
 
-  const syncQueue = [
-    { id: 'q-1', time: '21:05:12', room: 'Living Room', device: 'Ceiling Light', event: 'State -> ON (Local LAN)', status: 'SYNCHRONIZED' },
-    { id: 'q-2', time: '21:06:40', room: 'Kitchen', device: 'Kitchen Temp', event: 'Telemetry 29.8°C recorded', status: 'SYNCHRONIZED' },
-    { id: 'q-3', time: '21:08:15', room: 'Living Room', device: 'Ventilation Fan', event: 'State -> OFF (Local LAN)', status: 'SYNCHRONIZED' },
-    { id: 'q-4', time: '21:10:02', room: 'Hallway', device: 'NFC Door Lock', event: 'Status Verified LOCKED', status: 'SYNCHRONIZED' }
+  const sampleEvents = [
+    { id: 'sample-1', time: '—', room: 'Living Room', device: 'Ceiling Light', event: 'Illustrative state change', status: 'SAMPLE ONLY' },
+    { id: 'sample-2', time: '—', room: 'Kitchen', device: 'Temperature', event: 'Illustrative sensor value', status: 'SAMPLE ONLY' },
+    { id: 'sample-3', time: '—', room: 'Living Room', device: 'Ventilation Fan', event: 'Illustrative state change', status: 'SAMPLE ONLY' },
+    { id: 'sample-4', time: '—', room: 'Hallway', device: 'Door lock', event: 'Illustrative device state', status: 'SAMPLE ONLY' }
   ];
 
   const isReconnecting = networkState.mode === 'RECONNECTING';
@@ -37,30 +37,30 @@ export default function RecoveryView({ networkState, onBackToDashboard, onTrigge
           <ArrowLeft size={18} />
           <span>Back to Dashboard</span>
         </button>
-        <div className={styles.screenTag}>Screen S5: Cloud Reconnection & Sync</div>
+        <div className={styles.screenTag}>Simulated recovery scenario</div>
       </div>
 
       <div className={styles.titleSection}>
-        <h2 className={styles.title}>Cloud Synchronization & Recovery Pipeline</h2>
+        <h2 className={styles.title}>Recovery scenario · demo only</h2>
         <p className={styles.subtitle}>
-          Post-outage state reconciliation: Flushes buffered local commands and telemetry back to the cloud broker.
+          No cloud service, persistent queue, or telemetry replay is connected. This screen only demonstrates UI states.
         </p>
       </div>
 
       {/* Sync Status Banner */}
-      <div className={`${styles.statusCard} ${isReconnecting ? styles.statusReconnecting : styles.statusSynced}`}>
+      <div className={`${styles.statusCard} ${isReconnecting ? styles.statusReconnecting : styles.statusDemo}`}>
         <div className={styles.statusLeft}>
           <div className={styles.statusIcon}>
-            {isReconnecting ? <RefreshCw size={26} className={styles.spin} /> : <CheckCircle2 size={26} />}
+            {isReconnecting ? <RefreshCw size={26} className={styles.spin} /> : <Clock size={26} />}
           </div>
           <div>
             <h3 className={styles.statusTitle}>
-              {isReconnecting ? 'RECONNECTING & REPLAYING LOCAL BUFFER...' : 'CLOUD RECOVERY & TELEMETRY IN SYNC'}
+              {isReconnecting ? 'SIMULATED RECOVERY STATE' : 'SIMULATED BASELINE'}
             </h3>
             <p className={styles.statusDesc}>
               {isReconnecting
-                ? 'Internet connection detected. Harmonizing offline local sensor history with remote cloud service.'
-                : 'All local domestic events have been committed to the remote ledger. Client and Cloud states are identical.'}
+                ? 'The demo is showing a recovery state; no connection or data replay is occurring.'
+                : 'This is a demo state. No events have been uploaded or synchronized.'}
             </p>
           </div>
         </div>
@@ -68,68 +68,68 @@ export default function RecoveryView({ networkState, onBackToDashboard, onTrigge
         <button
           type="button"
           className={styles.syncBtn}
-          onClick={handleManualSync}
-          disabled={isSyncing}
+          onClick={handleResetDemo}
+          disabled={isResetting}
         >
-          <RefreshCw size={16} className={isSyncing ? styles.spin : ''} />
-          <span>{isSyncing ? 'Synchronizing...' : 'Trigger Cloud Sync'}</span>
+          <RefreshCw size={16} className={isResetting ? styles.spin : ''} />
+          <span>{isResetting ? 'Resetting demo...' : 'Reset demo baseline'}</span>
         </button>
       </div>
 
       {/* 4-Step Recovery Pipeline */}
       <div className={styles.pipelineCard}>
-        <h3 className={styles.pipelineTitle}>Automated 4-Step Failback Protocol</h3>
+        <h3 className={styles.pipelineTitle}>Illustrative recovery flow · not implemented</h3>
         <div className={styles.pipelineSteps}>
-          <div className={`${styles.stepItem} ${styles.stepComplete}`}>
+          <div className={styles.stepItem}>
             <div className={styles.stepNumber}>1</div>
             <div className={styles.stepInfo}>
-              <strong>Carrier Handshake</strong>
-              <span>DNS & Gateway reachability verified</span>
+              <strong>Carrier handshake</strong>
+              <span>Planned · not verified</span>
             </div>
-            <ArrowRight size={16} className={styles.arrowIcon} />
+            <ArrowRight size={16} className={styles.arrowIcon} aria-hidden="true" />
           </div>
 
-          <div className={`${styles.stepItem} ${styles.stepComplete}`}>
+          <div className={styles.stepItem}>
             <div className={styles.stepNumber}>2</div>
             <div className={styles.stepInfo}>
-              <strong>Buffer Lock</strong>
-              <span>Local queue frozen for atomic commit</span>
+              <strong>Buffer lock</strong>
+              <span>Planned · no queue exists</span>
             </div>
-            <ArrowRight size={16} className={styles.arrowIcon} />
+            <ArrowRight size={16} className={styles.arrowIcon} aria-hidden="true" />
           </div>
 
-          <div className={`${styles.stepItem} ${styles.stepComplete}`}>
+          <div className={styles.stepItem}>
             <div className={styles.stepNumber}>3</div>
             <div className={styles.stepInfo}>
-              <strong>Batch Telemetry Upload</strong>
-              <span>Buffered readings published to MQTT</span>
+              <strong>Telemetry upload</strong>
+              <span>Planned · no sensor telemetry is connected</span>
             </div>
-            <ArrowRight size={16} className={styles.arrowIcon} />
+            <ArrowRight size={16} className={styles.arrowIcon} aria-hidden="true" />
           </div>
 
-          <div className={`${styles.stepItem} ${styles.stepComplete}`}>
+          <div className={styles.stepItem}>
             <div className={styles.stepNumber}>4</div>
             <div className={styles.stepInfo}>
-              <strong>Switch to Normal</strong>
-              <span>Dual Cloud/LAN routing re-engaged</span>
+              <strong>Return to normal</strong>
+              <span>Planned · no cloud or LAN route is changed</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Synchronized Telemetry Queue Table */}
+      {/* Illustrative, non-persistent sample data */}
       <div className={styles.queueCard}>
         <div className={styles.queueHeader}>
           <div className={styles.queueTitleGroup}>
             <Database size={20} className={styles.queueIcon} />
             <div>
-              <h3 className={styles.queueTitle}>Local Buffer Replay Log</h3>
-              <p className={styles.queueSubtitle}>Events recorded autonomously during local fallback execution.</p>
+              <h3 className={styles.queueTitle}>Sample event list · not a real queue</h3>
+              <p className={styles.queueSubtitle}>Illustrative rows only; no events are stored, replayed, or synchronized.</p>
             </div>
           </div>
           <div className={styles.queueMeta}>
             <Clock size={14} />
-            <span>Last Sync Timestamp: <strong>{lastSyncTime}</strong></span>
+            <span>Last demo action: <strong>{lastDemoActionTime || 'None'}</strong></span>
           </div>
         </div>
 
@@ -137,16 +137,16 @@ export default function RecoveryView({ networkState, onBackToDashboard, onTrigge
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Queue ID</th>
-                <th>Local Timestamp</th>
+                <th>Sample ID</th>
+                <th>Timestamp</th>
                 <th>Zone</th>
                 <th>Device Target</th>
                 <th>Event Payload</th>
-                <th>Sync Status</th>
+                <th>Data status</th>
               </tr>
             </thead>
             <tbody>
-              {syncQueue.map((item) => (
+              {sampleEvents.map((item) => (
                 <tr key={item.id}>
                   <td><code>{item.id}</code></td>
                   <td>{item.time}</td>
@@ -154,8 +154,7 @@ export default function RecoveryView({ networkState, onBackToDashboard, onTrigge
                   <td>{item.device}</td>
                   <td><span className={styles.payloadTag}>{item.event}</span></td>
                   <td>
-                    <span className={styles.syncBadge}>
-                      <CheckCircle2 size={12} color="#10b981" />
+                    <span className={styles.sampleBadge}>
                       <span>{item.status}</span>
                     </span>
                   </td>
