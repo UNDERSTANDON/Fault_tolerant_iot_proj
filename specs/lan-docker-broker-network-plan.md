@@ -2,8 +2,10 @@
 
 ## Status
 
-Approved for implementation; Stage 1 is in progress and is paused for user
-review. The review gate has not passed.
+Approved for implementation;
+Review passed, process to implement both the network and the
+dashboard in sequence.
+User reviewed.
 
 The replacement `fault-tolerant-iot-mosquitto` container is running with its
 MQTT/TLS and WSS listeners bound to the observed hotspot address
@@ -24,6 +26,23 @@ are bound to the hotspot address and the Windows firewall profiles are
 enabled, access from unintended interfaces/networks and the effective
 firewall policy have not been independently tested. Do not begin Stage 2 until
 this boundary is reviewed and the user independently commits the stage.
+
+A project firewall helper has been applied. The Vite and MQTT/TLS allow rules
+are scoped to the hotspot subnet. The first run failed to update Docker
+Desktop's broad inbound rules because their `DeferToUser` edge-traversal
+setting is incompatible with explicit address filters. The corrected helper
+changes edge traversal to `Block`, then scopes and verifies each Docker rule.
+The user reran it successfully; active Docker, TCP 5173, and TCP 8883 rules
+were confirmed scoped to `192.168.137.1` and `192.168.137.0/24`. The latest
+helper's TCP 8081 rule is now enabled and verified with the same local address
+and remote subnet scope. The restarted authenticated bridge listens at
+`192.168.137.1:8081`. The dashboard screenshot records a successful WSS
+upgrade and a recent test-message status; a separate Nov. 16 physical-phone
+capture confirms the dashboard and recent ESP32 test message on the phone.
+The user reports proceeding past the certificate warning without installing
+the CA, so the phone capture is not trusted-TLS evidence and the entered
+browser token should be rotated. Independent reachability from unintended
+networks and the review gate remain.
 
 ## Goal
 
@@ -127,8 +146,9 @@ historical hotspot address or Docker configuration.
      permitted topics. (Passed.)
    - Restart the broker and confirm it returns to a healthy state. (Passed.)
    - Check that the services are not reachable from unintended interfaces or
-     networks. (Pending independent verification; current listeners are bound
-     to `192.168.137.1`, and no task-specific firewall rule was added.)
+     networks. (Pending independent verification; listeners are bound to
+     `192.168.137.1` and project/Docker firewall rules are scoped to
+     `192.168.137.0/24`.)
 
 5. **Record evidence and stop for review**
    - Record the tested hotspot path, observed host address, listener ports,
@@ -155,9 +175,12 @@ historical hotspot address or Docker configuration.
 
 ## Stage review gate
 
-Stop after satisfying the acceptance criteria. Present the configuration
-files, test outcomes, network exposure, secret handling, and unresolved risks
-for user review. Do not automatically commit or proceed to Stage 2.
+While I allows both stage to proceed at the same time, which allows
+us to have the UI to work on, I am quite happy how this turns out.
+I understand that the CA cert is practically not possible to distribute
+to every single test device as well as access token being very
+finicky to implement. Also, it's not saved into cookie which is an
+issue when the user wants to F5. I'll put this into Stage 3's specs.
 
 ## Verification results
 
@@ -178,6 +201,61 @@ for user review. Do not automatically commit or proceed to Stage 2.
   The effective inbound rules and reachability from unintended networks have
   not been independently verified. Do not interpret profile status alone as
   proof of isolation.
+- All three firewall profiles currently default to blocking inbound traffic
+  and permit local firewall rules. Docker Desktop's enabled inbound rules for
+  `com.docker.backend.exe` were verified with local address
+  `192.168.137.1`, remote address `192.168.137.0/24`, and edge traversal
+  `Block`. The broker container is currently the only running container and
+  publishes MQTT/TLS and WSS on the hotspot address.
+- [Configure-HotspotFirewall.ps1](../local_server/Configure-HotspotFirewall.ps1)
+  has TCP 5173 and 8883 inbound allow rules restricted to
+  `192.168.137.1` and `192.168.137.0/24`. Its initial attempt to restrict
+  Docker Desktop failed with Windows error 0x80070057 because those rules use
+  `DeferToUser` edge traversal. The corrected helper backs up/restores that
+  policy, changes it to `Block` before applying address restrictions, and
+  verifies each change. The user successfully applied this correction. The
+  authenticated dashboard WSS rule for TCP 8081 is now enabled and verified
+  with local address `192.168.137.1` and remote address
+  `192.168.137.0/24`. Its successful browser handshake does not replace
+  independent testing from unintended networks.
+- The Nov. 16 dashboard capture
+  ([dashboard_connection-2026-11-16-1352.png](log_evidence/Lan-Docker_to_ESP_evidences/dashboard_connection-2026-11-16-1352.png))
+  records an HTTP 200 dashboard load, WSS HTTP 101 upgrade, connected bridge
+  status, and a recent ESP32 connectivity-test timestamp in a DevTools view.
+- The physical-phone capture
+  ([phone_dashboard_connection-2026-11-16-1405.jpg](log_evidence/Lan-Docker_to_ESP_evidences/phone_dashboard_connection-2026-11-16-1405.jpg))
+  shows the dashboard on the hotspot address, bridge connected, and an ESP32
+  connectivity-test timestamp of 2:04:59 PM at 14:05. This verifies the
+  phone-to-dashboard path at that time. The user proceeded past the
+  certificate warning without installing the CA, so this is not trusted-TLS
+  evidence; rotate the entered browser token before retesting. This also does
+  not verify unintended-network isolation or recovery behavior.
 - Test messages are the firmware connectivity demo only. Production telemetry,
   device commands, durable event capture, cloud forwarding, and deployment
   recovery remain outside this stage.
+- The Nov. 14 serial capture
+  ([esp32s3-2026-11-14.log](log_evidence/Lan-Docker_to_ESP_evidences/esp32s3-2026-11-14.log))
+  records Wi-Fi association, MQTT connection, and local acceptance of QoS 0
+  test publications. Local acceptance is not broker receipt confirmation.
+- The latest Mosquitto export
+  ([docker-logs-2026-11-14T08-51-57.148Z.csv](log_evidence/Lan-Docker_to_ESP_evidences/docker-logs-2026-11-14T08-51-57.148Z.csv))
+  records TLS client connections and authorization rejections. Mosquitto's
+  connection log does not itself prove a publication was delivered.
+- The dashboard capture
+  ([dashboard_connection_bridge.png](log_evidence/Lan-Docker_to_ESP_evidences/dashboard_connection_bridge.png))
+  shows the bridge as connected and the ESP32 connectivity test as received
+  recently at capture time. It is a point-in-time UI capture, not continuing
+  connectivity evidence.
+- The Node bridge captures
+  ([dashboard-bridge-20261114-164524.log](log_evidence/Lan-Docker_to_ESP_evidences/dashboard-bridge-20261114-164524.log)
+  and
+  [dashboard-bridge-20261114-165356.log](log_evidence/Lan-Docker_to_ESP_evidences/dashboard-bridge-20261114-165356.log))
+  show the bridge listening on loopback, connecting to the broker over WSS,
+  subscribing to the allowed test topic, and receiving ESP32 test messages.
+  They do not demonstrate phone-to-bridge connectivity.
+- Phone CA cert
+  ([phone_connection-2026-11-16-1506.jpg](log_evidence/Lan-Docker_to_ESP-evidence/phone_connection-2026-11-16-1506.jpg))
+  shows the CA certificate being approved on the phone and the browser then
+  connecting into the bridge through that trusted certificate path, confirming
+  the phone accepted the local CA and reached the bridge successfully.
+  

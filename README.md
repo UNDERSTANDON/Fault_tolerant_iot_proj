@@ -96,54 +96,104 @@ cd ..
 docker compose --env-file .\local_server\.env -f .\local_server\docker-compose.yml ps
 ```
 
-To connect the dashboard bridge on the same laptop, set
-`VITE_LAN_BRIDGE_URL=ws://127.0.0.1:8081` in
-`main/web_hoster/web/react_app/.env`, then run:
+For phone/ESP32 hotspot testing, configure the Windows firewall from an
+elevated PowerShell session. First identify the active hotspot interface:
+
+```powershell
+Get-NetIPAddress -AddressFamily IPv4 |
+  Select-Object InterfaceAlias, IPAddress, PrefixLength
+```
+
+Preview the rules using the exact hotspot interface alias (the alias below is
+the currently observed one; it may change):
+
+```powershell
+.\local_server\Configure-HotspotFirewall.ps1 `
+  -HotspotInterfaceAlias "Local Area Connection* 2" `
+  -ScopeDockerBackend `
+  -WhatIf
+```
+
+If the preview shows the intended hotspot address and subnet, run the same
+command without `-WhatIf` from elevated PowerShell. It creates hotspot-scoped
+inbound rules for Vite HTTPS (TCP 5173), authenticated dashboard bridge WSS
+(TCP 8081), and ESP32 MQTT/TLS (TCP 8883). It also narrows Docker Desktop's
+inbound allowance to the selected hotspot address and subnet. That Docker
+rule applies to every Docker-published port on this laptop; other Docker
+workloads will also become hotspot-only. The original Docker rule address
+scopes and edge-traversal policies are backed up outside the repository under
+`%LOCALAPPDATA%\FaultTolerantIoT\firewall`.
+
+Docker Desktop's existing inbound rules may use `DeferToUser` edge traversal,
+which Windows does not permit together with an address restriction. The helper
+changes that policy to `Block` before applying the hotspot address scope and
+verifies each updated rule. The original edge-traversal policy is included in
+the backup and restored by `-RestoreDockerBackend`.
+
+Configure the local HTTPS dashboard and authenticated WSS bridge using the
+same active interface:
+
+```powershell
+.\local_server\Configure-LanDashboard.ps1 `
+  -HotspotInterfaceAlias "Local Area Connection* 2"
+```
+
+This verifies the local server certificate includes the hotspot IP, generates
+a random browser access token in the external credentials file if needed, and
+updates ignored local environment files. The token is not embedded in the
+browser bundle or printed. Install the public `ca.crt` on the phone as a
+trusted certificate authority before opening
+`https://<hotspot-host-ip>:5173`; do not bypass certificate warnings or copy
+the private server key to the phone. The CA file is
+`%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\certs\ca.crt`.
+
+Restart the two development processes after configuring them:
+
+```powershell
+cd .\main\web_hoster\web\react_app
+npm run dev
+```
 
 ```powershell
 cd .\local_server
 npm run dev
 ```
 
-The bridge reads its broker credentials from the external credentials file.
-It only subscribes to the broker's allowed topics and does not provide
-actuator commands. The browser does not receive broker credentials.
+The Vite server and bridge bind to the current hotspot IP, not every host
+interface. The bridge uses TLS, validates the HTTPS dashboard Origin, requires
+the browser access token, and only forwards the allowlisted connectivity-test
+topic. On the dashboard, enter the token from
+`%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\bridge.env` into the access-token
+field. Keep it private; it is not a broker credential. The browser connection
+does not support device commands.
 
-When `VITE_LAN_BRIDGE_URL` is configured, the dashboard reports the bridge's
-broker connection and the last received ESP32 connectivity-test message. A
-test message is marked stale after 70 seconds without another receipt. These
-messages do not update room sensors or device state; those controls and values
-remain simulated, and no device command or acknowledgement path is connected.
+If the token was entered after bypassing a certificate warning, treat it as
+potentially exposed. Close the dashboard, remove only the
+`BRIDGE_BROWSER_TOKEN` line from
+`%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\bridge.env`, rerun
+`Configure-LanDashboard.ps1` to generate a replacement, and restart the
+bridge. Do not share the token in screenshots or messages.
 
-This default loopback setup is intentionally not reachable by the ESP32 or
-other LAN clients. Hotspot access requires an active hotspot, a verified
-hotspot interface address, a certificate SAN for that address, and a
-reviewed Windows firewall rule. Do not bind to `0.0.0.0` as a workaround.
+The dashboard reports bridge status and the last ESP32 connectivity-test
+message; a test message becomes stale after 70 seconds. It does not update
+simulated room readings or device state. Keep the hotspot active and verify
+its IP/certificate SAN when it changes. Do not bind services to `0.0.0.0` as
+an access workaround.
+The hotspot-specific `.env` settings are for `npm run dev`; production
+`npm run build` intentionally omits the local bridge URL so the laptop's
+address is not embedded in the ESP32 web assets.
 
-The React dashboard's simulation remains available unless the local bridge is
-configured. A live broker test message is connectivity test data, not sensor
-telemetry or reported device state.
-
-To start the dashboard:
+To restore the saved Docker firewall scopes and remove the project rules,
+run these commands from an elevated PowerShell session:
 
 ```powershell
-cd .\main\web_hoster\web\react_app
-npm run dev -- --host 0.0.0.0
+.\local_server\Configure-HotspotFirewall.ps1 -RestoreDockerBackend
+.\local_server\Configure-HotspotFirewall.ps1 -Remove
 ```
 
 The ESP32 demo supports trusting the local CA through the custom-CA menuconfig
 option above. Do not disable TLS certificate validation to work around a
 certificate or hostname mismatch.
-
-For dashboard bridge setup, copy
-`main/web_hoster/web/react_app/.env.example` to `.env` in that folder and set
-`VITE_LAN_BRIDGE_URL=ws://127.0.0.1:8081`. The bridge runs with
-`npm run dev` from `local_server`; it connects to Mosquitto over WSS with
-certificate validation and uses the read-only bridge account.
-
-The browser-facing bridge is loopback-only and currently intended for the
-laptop browser, not cross-device use. It does not expose device commands or
-provide persistent event delivery.
 
 Do not treat simulated dashboard state or broker connectivity test traffic
 as live sensor or device-state evidence.

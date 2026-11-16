@@ -4,6 +4,23 @@ import { INITIAL_ROOMS_DATA, INITIAL_NETWORK_STATE, NETWORK_MODES } from '../dat
 const TEST_TOPIC = 'demo/esp32-mqtt-connectivity/test';
 const TEST_MESSAGE_STALE_AFTER_MS = 70000;
 
+function getBridgeSecurityMode(url) {
+  if (!url) {
+    return { isRemote: false, usesTls: false };
+  }
+
+  try {
+    const parsedUrl = new URL(url, window.location.href);
+    const host = parsedUrl.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+    const isLoopback = host === 'localhost'
+      || host === '::1'
+      || /^127(?:\.\d{1,3}){3}$/.test(host);
+    return { isRemote: !isLoopback, usesTls: parsedUrl.protocol === 'wss:' };
+  } catch {
+    return { isRemote: true, usesTls: false };
+  }
+}
+
 function isConnectivityTestPayload(topic, payload) {
   return topic === TEST_TOPIC
     && payload !== null
@@ -19,20 +36,57 @@ function isConnectivityTestPayload(topic, payload) {
 
 export function useSmartHome() {
   const localBridgeUrl = import.meta.env.VITE_LAN_BRIDGE_URL || '';
+  const bridgeSecurity = getBridgeSecurityMode(localBridgeUrl);
   const [rooms, setRooms] = useState(INITIAL_ROOMS_DATA);
   const [networkState, setNetworkState] = useState(INITIAL_NETWORK_STATE);
+  const [bridgeAccessToken, setBridgeAccessToken] = useState('');
+  const [bridgeConnectAttempt, setBridgeConnectAttempt] = useState(0);
   const [bridgeState, setBridgeState] = useState({
-    status: localBridgeUrl ? 'connecting' : 'not-configured',
+    status: !localBridgeUrl
+      ? 'not-configured'
+      : (bridgeSecurity.isRemote ? 'authentication-required' : 'connecting'),
     lastMessageAt: null,
     lastMessage: null,
     messageStale: false,
-    error: localBridgeUrl ? null : 'Local MQTT bridge is not configured.'
+    requiresAuthentication: bridgeSecurity.isRemote,
+    error: !localBridgeUrl
+      ? 'Local MQTT bridge is not configured.'
+      : (bridgeSecurity.isRemote ? 'Enter the local bridge access token to connect.' : null)
   });
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [isSmokeAlert, setIsSmokeAlert] = useState(false);
 
+  const connectBridge = useCallback((token) => {
+    setBridgeAccessToken(token.trim());
+    setBridgeConnectAttempt((attempt) => attempt + 1);
+    setBridgeState((current) => ({
+      ...current,
+      status: 'connecting',
+      error: null
+    }));
+  }, []);
+
   useEffect(() => {
     if (!localBridgeUrl) {
+      return undefined;
+    }
+
+    if (bridgeSecurity.isRemote && !bridgeSecurity.usesTls) {
+      setBridgeState((current) => ({
+        ...current,
+        status: 'unavailable',
+        error: 'Remote dashboard connections require a WSS bridge URL.'
+      }));
+      return undefined;
+    }
+
+    if (bridgeSecurity.isRemote && !bridgeAccessToken) {
+      setBridgeState((current) => ({
+        ...current,
+        status: 'authentication-required',
+        requiresAuthentication: true,
+        error: 'Enter the local bridge access token to connect.'
+      }));
       return undefined;
     }
 
@@ -40,6 +94,7 @@ export function useSmartHome() {
     let isActive = true;
     let reconnectTimer;
     let reconnectAttempt = 0;
+    let authenticationRejected = false;
 
     const scheduleReconnect = () => {
       if (!isActive || reconnectTimer) {
@@ -77,7 +132,9 @@ export function useSmartHome() {
           status: 'connecting',
           error: null
         }));
-        socket.send(JSON.stringify({ type: 'subscribe', topics: [TEST_TOPIC] }));
+        socket.send(JSON.stringify(bridgeSecurity.isRemote
+          ? { type: 'authenticate', token: bridgeAccessToken }
+          : { type: 'subscribe', topics: [TEST_TOPIC] }));
       });
 
       socket.addEventListener('message', (event) => {
@@ -87,6 +144,22 @@ export function useSmartHome() {
 
         try {
           const message = JSON.parse(event.data);
+
+          if (message.type === 'authenticated') {
+            socket.send(JSON.stringify({ type: 'subscribe', topics: [TEST_TOPIC] }));
+            return;
+          }
+
+          if (message.type === 'authentication-error') {
+            authenticationRejected = true;
+            setBridgeState((current) => ({
+              ...current,
+              status: 'unauthorized',
+              error: 'Bridge authentication failed. Check the access token and try again.'
+            }));
+            socket.close();
+            return;
+          }
 
           if (message.type === 'status') {
             if (!['connected', 'reconnecting', 'unavailable'].includes(message.state)) {
@@ -163,6 +236,10 @@ export function useSmartHome() {
           return;
         }
 
+        if (authenticationRejected) {
+          return;
+        }
+
         setBridgeState((current) => ({
           ...current,
           status: 'reconnecting',
@@ -194,7 +271,7 @@ export function useSmartHome() {
         socket.close();
       }
     };
-  }, [localBridgeUrl]);
+  }, [bridgeAccessToken, bridgeConnectAttempt, bridgeSecurity.isRemote, bridgeSecurity.usesTls, localBridgeUrl]);
 
   useEffect(() => {
     if (!bridgeState.lastMessageAt || bridgeState.messageStale) {
@@ -679,6 +756,7 @@ export function useSmartHome() {
     rooms,
     networkState,
     bridgeState,
+    connectBridge,
     metrics,
     selectedRoomId,
     setSelectedRoomId,

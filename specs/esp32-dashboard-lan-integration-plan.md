@@ -13,18 +13,43 @@ same-host WebSocket test client using an allowed Origin header. This verifies
 test-message delivery only; it does not verify dashboard integration or
 sensor telemetry.
 
-The browser-facing bridge was bound to loopback for this test and accepted
-the configured browser origin. Browser authentication and cross-device
-LAN/WSS access have not been implemented or verified. Step 3 is therefore
-partially verified, not accepted as complete. The user currently has only the
-ESP32 available for physical-device testing; sensor/actuator tests remain out
-of scope. Stage 1's separate review gate also remains outstanding.
+The browser-facing bridge was bound to loopback for this Nov. 14 test and
+accepted the configured browser origin. That test predates the LAN WSS and
+token-authentication changes. The Nov. 16 physical-phone capture now confirms
+the phone can load the dashboard, see the bridge as connected, and receive a
+recent ESP32 connectivity-test message. This verifies the test-data path at
+that time, not sensor/actuator behavior or recovery. The user reports they
+proceeded past the certificate warning without installing the CA, so this is
+not valid evidence of trusted TLS and must not be accepted as a secure phone
+session. The entered browser token should be rotated before retesting. Stage
+1's separate review gate remains outstanding.
 
 Step 4's dashboard changes are implemented for the connectivity-test path.
 The dashboard now separates actual bridge/broker status and ESP32 test-message
 freshness from simulated internet/LAN, room readings, and device controls.
-Browser runtime verification remains pending; the local React `.env` currently
-does not configure `VITE_LAN_BRIDGE_URL`.
+The Nov. 14 capture records the earlier loopback bridge. The Nov. 16 capture
+([dashboard_connection-2026-11-16-1352.png](log_evidence/Lan-Docker_to_ESP_evidences/dashboard_connection-2026-11-16-1352.png))
+shows the page returning HTTP 200, a WebSocket upgrade returning HTTP 101,
+the bridge as connected, and an ESP32 connectivity test received at 1:51 PM.
+The user reports restarting the bridge. The later physical-phone capture
+([phone_dashboard_connection-2026-11-16-1405.jpg](log_evidence/Lan-Docker_to_ESP_evidences/phone_dashboard_connection-2026-11-16-1405.jpg))
+shows the dashboard on the hotspot address with the bridge connected and the
+last ESP32 test message at 2:04:59 PM. Recovery and stale-state transitions
+remain unverified. The user proceeded past the certificate warning without
+installing the local CA; therefore the capture does not establish trusted
+TLS, and the token entered during that session must be rotated.
+
+Step 5 firewall setup scopes Docker Desktop and the Vite/MQTT/WSS ports to the
+current hotspot subnet. The active bridge listener is now bound to
+`192.168.137.1:8081`; its enabled firewall rule is scoped to local
+`192.168.137.1` and remote `192.168.137.0/24`. The active Vite server serves
+HTTPS with the local CA. Laptop HTTPS and WSS smoke tests pass with CA
+verification, Origin rejection, invalid/valid browser tokens, connected
+broker status, and the topic allowlist. The Nov. 16 screenshot adds browser
+WSS/dashboard evidence, and the 14:05 capture confirms phone access with a
+recent ESP32 test message. The user reports bypassing the certificate warning,
+so trusted TLS is not established and the token must be rotated before the
+next phone test. Stage 1's separate exposure/review gate remains outstanding.
 
 ## Goal
 
@@ -58,6 +83,11 @@ keeping broker credentials out of browser code.
 - The browser must not receive the broker's reusable username/password or
   private key. The local Node service owns broker credentials and connects
   to the broker using MQTT over WSS with certificate validation enabled.
+- The LAN development dashboard and bridge use HTTPS/WSS with the local CA.
+  Browser authentication uses a separate random 256-bit token kept in the
+  machine-local credentials file and entered at runtime; it is not included
+  in the Vite bundle or URL. The bridge checks the exact HTTPS Origin and
+  forwards only the read-only connectivity-test topic.
 - MQTT transport TLS does not itself authorize browser users, limit topics,
   or secure browser-to-Node traffic. Apply authentication, authorization,
   topic restrictions, and local-network exposure controls at each boundary.
@@ -193,14 +223,58 @@ keeping broker credentials out of browser code.
 - `npm run build` passed and emitted the configured firmware assets
   (`index.html`, `app.js`, and `style.css`). A local-secret scan confirmed
   broker passwords are absent from the generated browser bundle.
-- The React app's local `.env` is absent, so the dashboard currently renders
-  the explicit “bridge not configured” state until the local bridge URL is
-  configured as documented in the README. A real browser rendering test has
-  not been performed. `npm run lint` is unavailable because this project has
-  no `eslint.config.*` for its ESLint 10 setup.
-- The Node bridge remains loopback-only and uses an origin allowlist; it has
-  no browser password/session authentication or browser-to-Node TLS. No
-  cross-device browser access is claimed or tested.
+- The supplied dashboard capture
+  ([dashboard_connection_bridge.png](log_evidence/Lan-Docker_to_ESP_evidences/dashboard_connection_bridge.png))
+  provides point-in-time browser evidence of a connected bridge and a
+  recently received ESP32 test message. A local `.env` now exists, but its
+  values are not included in evidence. The screenshot does not verify
+  subsequent message freshness, stale/recovery transitions, or continued
+  connectivity.
+- The bridge stdout captures
+  ([dashboard-bridge-20261114-164524.log](log_evidence/Lan-Docker_to_ESP_evidences/dashboard-bridge-20261114-164524.log)
+  and
+  [dashboard-bridge-20261114-165356.log](log_evidence/Lan-Docker_to_ESP_evidences/dashboard-bridge-20261114-165356.log))
+  show broker connection over verified WSS, subscription, and received test
+  messages while the bridge was bound to loopback. They do not prove phone
+  browser connectivity. `npm run lint` is unavailable because this project
+  has no `eslint.config.*` for its ESLint 10 setup.
+- The Nov. 14 Node bridge evidence shows the earlier loopback-only service
+  with no browser password/session authentication or browser-to-Node TLS.
+  Current code adds LAN TLS and token authentication, but those captures do
+  not verify the new behavior.
+- The Nov. 16 dashboard capture
+  ([dashboard_connection-2026-11-16-1352.png](log_evidence/Lan-Docker_to_ESP_evidences/dashboard_connection-2026-11-16-1352.png))
+  shows an HTTP 200 page load, WSS HTTP 101 upgrade, connected bridge status,
+  and a recent test-message timestamp in a mobile-sized DevTools view.
+- The later physical-phone capture
+  ([phone_dashboard_connection-2026-11-16-1405.jpg](log_evidence/Lan-Docker_to_ESP_evidences/phone_dashboard_connection-2026-11-16-1405.jpg))
+  shows the dashboard loaded at the hotspot address, bridge connected, and
+  the last ESP32 test message at 2:04:59 PM while the phone clock read 14:05.
+  The user reports they proceeded past the certificate warning without
+  installing the CA. Treat this as an insecure diagnostic run, not trusted-TLS
+  acceptance; rotate the entered browser token before retesting. Recovery and
+  stale transitions remain unverified.
+- A local smoke test of the current dev servers verified the dashboard's
+  HTTPS certificate against the local CA and the bridge's WSS certificate,
+  exact-origin rejection, invalid-token rejection, valid-token acceptance,
+  connected broker status, and connectivity-test topic allowlist response.
+  This test ran from the laptop, not the phone; it did not verify receipt of
+  a new ESP32 publication.
+- The Windows firewall helper
+  ([Configure-HotspotFirewall.ps1](../local_server/Configure-HotspotFirewall.ps1))
+  has created hotspot-scoped Vite and MQTT/TLS rules and narrowed Docker
+  Desktop ingress. TCP 8081 is now enabled for authenticated WSS with local
+  address `192.168.137.1` and remote subnet `192.168.137.0/24`. The initial
+  Docker scope update failed on `DeferToUser`; the corrected version changed
+  edge traversal to `Block` and was verified in the active policy store.
+- `Configure-LanDashboard.ps1` has configured the ignored local environment
+  files for HTTPS/WSS on `192.168.137.1` and generated a local browser token.
+  The user reports restarting the bridge, and the current listener is verified
+  on `192.168.137.1:8081`. The physical-phone dashboard capture verifies
+  browser access and recent test-message display, but the user reports
+  bypassing the certificate warning instead of installing the CA. Trusted
+  TLS remains unverified, and the token entered in that session must be
+  rotated before the next test.
 
 ## Acceptance criteria
 

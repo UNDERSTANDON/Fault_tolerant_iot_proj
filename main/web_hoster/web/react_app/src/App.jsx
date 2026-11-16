@@ -38,6 +38,7 @@ export default function App() {
     rooms,
     networkState,
     bridgeState,
+    connectBridge,
     metrics,
     selectedRoomId,
     setSelectedRoomId,
@@ -119,7 +120,11 @@ export default function App() {
         {activeScreen === 'DASHBOARD' && (
           <main>
             {/* 4-Channel Status Card */}
-            <ConnectionStatus networkState={networkState} bridgeState={bridgeState} />
+            <ConnectionStatus
+              networkState={networkState}
+              bridgeState={bridgeState}
+              onConnectBridge={connectBridge}
+            />
 
             {/* Contextual Mode Banner */}
             <ModeBanner

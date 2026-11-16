@@ -1,9 +1,11 @@
+import { createServer as createHttpsServer } from 'node:https';
 import { WebSocketServer } from 'ws';
 import mqtt from 'mqtt';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import { isValidBrowserToken } from './bridge_auth.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +22,9 @@ const config = {
   brokerCaPath: process.env.BROKER_CA_PATH || '',
   bridgeHost: process.env.BRIDGE_HOST || '127.0.0.1',
   bridgePort: Number(process.env.BRIDGE_PORT || 8081),
+  browserToken: process.env.BRIDGE_BROWSER_TOKEN || '',
+  tlsCertPath: process.env.BRIDGE_TLS_CERT_PATH || '',
+  tlsKeyPath: process.env.BRIDGE_TLS_KEY_PATH || '',
   allowedTopics: ['demo/esp32-mqtt-connectivity/test']
 };
 const allowedOrigins = new Set(
@@ -31,6 +36,22 @@ const allowedOrigins = new Set(
 
 const messageClients = new Set();
 const MAX_BROKER_MESSAGE_BYTES = 2048;
+const MAX_BROWSER_MESSAGE_BYTES = 512;
+const BROWSER_AUTH_TIMEOUT_MS = 10000;
+const isLoopbackBridge = ['localhost', '127.0.0.1', '::1'].includes(config.bridgeHost);
+
+if (!Number.isInteger(config.bridgePort) || config.bridgePort < 1 || config.bridgePort > 65535) {
+  throw new Error('BRIDGE_PORT must be a valid TCP port.');
+}
+if (!isLoopbackBridge && !/^[a-f0-9]{64}$/i.test(config.browserToken)) {
+  throw new Error('A 256-bit BRIDGE_BROWSER_TOKEN is required for a LAN bridge listener.');
+}
+if (!isLoopbackBridge && allowedOrigins.size === 0) {
+  throw new Error('At least one explicit BRIDGE_ALLOWED_ORIGINS entry is required for a LAN bridge listener.');
+}
+if (!isLoopbackBridge && [...allowedOrigins].some((origin) => !origin.startsWith('https://'))) {
+  throw new Error('LAN bridge origins must use HTTPS.');
+}
 
 const isAllowedTopic = (topic) => {
   return config.allowedTopics.includes(topic);
@@ -158,28 +179,90 @@ brokerClient.on('message', (topic, payloadBuffer) => {
   sendPayload(topic, payload);
 });
 
+const tlsDirectory = config.brokerCaPath ? path.dirname(config.brokerCaPath) : '';
+const tlsCertPath = config.tlsCertPath || (tlsDirectory ? path.join(tlsDirectory, 'server.crt') : '');
+const tlsKeyPath = config.tlsKeyPath || (tlsDirectory ? path.join(tlsDirectory, 'server.key') : '');
+const httpsServer = isLoopbackBridge
+  ? null
+  : createHttpsServer({
+    cert: readFileSync(tlsCertPath),
+    key: readFileSync(tlsKeyPath)
+  });
+
 const wss = new WebSocketServer({
-  host: config.bridgeHost,
-  port: config.bridgePort,
+  ...(httpsServer
+    ? { server: httpsServer }
+    : { host: config.bridgeHost, port: config.bridgePort }),
   maxPayload: MAX_BROKER_MESSAGE_BYTES,
-  verifyClient: (info) => {
+  verifyClient: (info, done) => {
     const origin = info.req.headers.origin;
-    return typeof origin === 'string' && allowedOrigins.has(origin);
+    const allowed = typeof origin === 'string' && allowedOrigins.has(origin);
+    if (allowed) {
+      done(true);
+    }
+    else {
+      done(false, 403, 'Origin not allowed');
+    }
   }
 });
 
 wss.on('connection', (socket) => {
-  messageClients.add(socket);
-  socket.send(JSON.stringify({
-    type: 'status',
-    state: brokerClient.connected ? 'connected' : 'unavailable',
-    detail: brokerClient.connected ? 'MQTT broker reachable' : 'MQTT broker unavailable',
-    time: new Date().toISOString()
-  }));
+  let isAuthenticated = isLoopbackBridge;
+  const authenticationTimer = isAuthenticated
+    ? null
+    : setTimeout(() => socket.close(1008, 'Authentication timeout'), BROWSER_AUTH_TIMEOUT_MS);
+
+  const sendBrokerStatus = () => {
+    socket.send(JSON.stringify({
+      type: 'status',
+      state: brokerClient.connected ? 'connected' : 'unavailable',
+      detail: brokerClient.connected ? 'MQTT broker reachable' : 'MQTT broker unavailable',
+      time: new Date().toISOString()
+    }));
+  };
+
+  if (isAuthenticated) {
+    messageClients.add(socket);
+    sendBrokerStatus();
+  }
 
   socket.on('message', (raw) => {
+    if (raw.length > MAX_BROWSER_MESSAGE_BYTES) {
+      socket.send(JSON.stringify({
+        type: 'error',
+        message: 'Browser message is too large',
+        time: new Date().toISOString()
+      }));
+      socket.close(1009, 'Message too large');
+      return;
+    }
+
     try {
       const message = JSON.parse(raw.toString('utf8'));
+
+      if (!isAuthenticated) {
+        if (message.type !== 'authenticate'
+          || !isValidBrowserToken(message.token, config.browserToken)) {
+          socket.send(JSON.stringify({
+            type: 'authentication-error',
+            message: 'Bridge authentication failed',
+            time: new Date().toISOString()
+          }));
+          socket.close(1008, 'Authentication failed');
+          return;
+        }
+
+        isAuthenticated = true;
+        clearTimeout(authenticationTimer);
+        messageClients.add(socket);
+        socket.send(JSON.stringify({
+          type: 'authenticated',
+          time: new Date().toISOString()
+        }));
+        sendBrokerStatus();
+        return;
+      }
+
       if (message.type === 'ping') {
         socket.send(JSON.stringify({ type: 'pong', time: new Date().toISOString() }));
         return;
@@ -203,10 +286,14 @@ wss.on('connection', (socket) => {
         message: 'Malformed browser payload',
         time: new Date().toISOString()
       }));
+      socket.close(1007, 'Malformed browser payload');
     }
   });
 
   socket.on('close', () => {
+    if (authenticationTimer) {
+      clearTimeout(authenticationTimer);
+    }
     messageClients.delete(socket);
   });
 
@@ -216,5 +303,12 @@ wss.on('connection', (socket) => {
   });
 });
 
-console.log(`Local bridge listening on ws://${config.bridgeHost}:${config.bridgePort}`);
+if (httpsServer) {
+  httpsServer.listen(config.bridgePort, config.bridgeHost, () => {
+    console.log(`Authenticated LAN bridge listening on wss://${config.bridgeHost}:${config.bridgePort}`);
+  });
+}
+else {
+  console.log(`Local bridge listening on ws://${config.bridgeHost}:${config.bridgePort}`);
+}
 console.log(`Broker URL: ${config.brokerUrl}`);

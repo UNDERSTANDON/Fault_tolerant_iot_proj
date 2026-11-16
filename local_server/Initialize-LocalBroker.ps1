@@ -52,8 +52,21 @@ function New-RandomPassword {
     return [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', 'A').Replace('/', 'B')
 }
 
+function New-RandomBrowserToken {
+    $bytes = New-Object byte[] 32
+    $generator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $generator.GetBytes($bytes)
+    }
+    finally {
+        $generator.Dispose()
+    }
+    return ([BitConverter]::ToString($bytes)).Replace("-", "").ToLowerInvariant()
+}
+
 $esp32Password = New-RandomPassword
 $bridgePassword = New-RandomPassword
+$browserToken = New-RandomBrowserToken
 $caPath = (Join-Path $certDir "ca.crt") -replace '\\', '/'
 $credentials = @(
     "MQTT_TLS_URL=mqtts://$BrokerDnsName`:8883",
@@ -61,6 +74,7 @@ $credentials = @(
     "BROKER_CA_PATH=$caPath",
     "BROKER_USERNAME=dashboard_bridge",
     "BROKER_PASSWORD=$bridgePassword",
+    "BRIDGE_BROWSER_TOKEN=$browserToken",
     "ESP32_MQTT_USERNAME=esp32_test",
     "ESP32_MQTT_PASSWORD=$esp32Password"
 ) -join "`r`n"
