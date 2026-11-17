@@ -50,6 +50,17 @@ WSS/dashboard evidence, and the 14:05 capture confirms phone access with a
 recent ESP32 test message. The user reports bypassing the certificate warning,
 so trusted TLS is not established and the token must be rotated before the
 next phone test. Stage 1's separate exposure/review gate remains outstanding.
+`local_server/lan_stability_monitor.mjs` now provides a 30-minute HTTPS/WSS and
+ESP32-message-freshness monitor with secret-free CSV/summary output. The first
+30-minute run completed with a recovered-interruption result: 179 dashboard
+HTTPS checks (2 failed), 6 bridge-disconnected samples, 7 broker-unavailable
+samples, 10 bridge reconnects, 56 test messages, and no stale-message samples.
+The final bridge/broker/message state was healthy. The user confirms they
+intentionally restarted containers, the hotspot, the bridge, and the ESP32
+connection during the run, but does not remember their approximate times.
+Thus, this is recovery evidence for those components collectively, not a
+per-component timing/correlation result. The monitor ran on the laptop and
+cannot observe phone UI state; phone verification remains separate.
 
 ## Goal
 
@@ -275,6 +286,24 @@ keeping broker credentials out of browser code.
   bypassing the certificate warning instead of installing the CA. Trusted
   TLS remains unverified, and the token entered in that session must be
   rotated before the next test.
+- `npm run test:lan -- --duration-minutes 30` runs
+  `local_server/lan_stability_monitor.mjs`. It verifies HTTPS with the local CA,
+  checks the dashboard, rejects an invalid browser token, authenticates to
+  WSS, observes broker status and ESP32 test-message freshness, and reconnects
+  its monitor after bridge interruptions. It does not restart services or
+  observe the phone UI. Its CSV and summary are written outside the repository
+  under `%LOCALAPPDATA%\FaultTolerantIoT\test-runs`. The Nov. 17 run completed
+  for 30 minutes with 2 dashboard HTTPS failures, 6 bridge-disconnected
+  samples, 7 broker-unavailable samples, 10 reconnects, 56 test messages, no
+  stale samples, and a healthy final state. The summary is
+  [lan-stability-2026-11-17T06-03-14-419Z-summary.txt](log_evidence/Lan-Docker_to_ESP_evidences/lan-stability-2026-11-17T06-03-14-419Z-summary.txt).
+  The matching detailed
+  [CSV](log_evidence/Lan-Docker_to_ESP_evidences/lan-stability-2026-11-17T06-03-14-419Z.csv)
+  is also attached as evidence. The user confirms intentional container,
+  hotspot, bridge, and ESP32 disconnect/reconnect actions during the run, but
+  their times are unknown, so outages cannot be attributed per component.
+  This is recovery evidence, not an uninterrupted PASS; phone UI/CA trust was
+  not observed by the monitor.
 
 ## Acceptance criteria
 
@@ -295,7 +324,5 @@ keeping broker credentials out of browser code.
 
 ## Stage review gate
 
-Stage 2 is complete only after the user reviews the implementation, tests,
-network exposure, and secret handling, then creates a separate safe commit.
-Any changes to hardware control, production provisioning, or remote access
-require a separate scope and review.
+User reviewed.
+There is not much I can say that isn't repeated from the aforementioned.

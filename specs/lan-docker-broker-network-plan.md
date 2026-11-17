@@ -44,6 +44,21 @@ the CA, so the phone capture is not trusted-TLS evidence and the entered
 browser token should be rotated. Independent reachability from unintended
 networks and the review gate remain.
 
+The first 30-minute laptop-side LAN stability run completed on Nov. 17. It
+reported recovery with interruptions/check failures rather than an
+uninterrupted pass: two dashboard HTTPS checks failed, six samples observed
+the bridge disconnected, seven observed the broker unavailable, and the
+monitor reconnected ten times. It received 56 ESP32 connectivity-test
+messages, recorded no stale-message samples, and ended with bridge, broker,
+and message state healthy. The user confirms they intentionally restarted
+containers, the hotspot, and the bridge and disconnected/reconnected the ESP32
+during the run, but does not remember when. The aggregate interruptions
+therefore demonstrate recovery collectively, not per-component timing. The
+monitor also cannot observe the phone UI. See the
+[run summary](log_evidence/Lan-Docker_to_ESP_evidences/lan-stability-2026-11-17T06-03-14-419Z-summary.txt);
+the matching [sample CSV](log_evidence/Lan-Docker_to_ESP_evidences/lan-stability-2026-11-17T06-03-14-419Z.csv)
+is also attached.
+
 ## Goal
 
 Recreate a reproducible Docker MQTT broker setup on the Windows laptop, which
@@ -230,6 +245,18 @@ issue when the user wants to F5. I'll put this into Stage 3's specs.
   certificate warning without installing the CA, so this is not trusted-TLS
   evidence; rotate the entered browser token before retesting. This also does
   not verify unintended-network isolation or recovery behavior.
+- The Nov. 17 30-minute stability run
+  ([lan-stability-2026-11-17T06-03-14-419Z-summary.txt](log_evidence/Lan-Docker_to_ESP_evidences/lan-stability-2026-11-17T06-03-14-419Z-summary.txt))
+  verified invalid-token rejection, allowed-topic confirmation, 56 ESP32
+  connectivity-test messages, and no stale-message samples. It also recorded
+  two failed dashboard checks, six bridge-disconnected samples, seven
+  broker-unavailable samples, and ten reconnects, followed by a healthy final
+  state. This is recovery evidence with interruptions, not an uninterrupted
+  pass. The associated
+  [CSV sample log](log_evidence/Lan-Docker_to_ESP_evidences/lan-stability-2026-11-17T06-03-14-419Z.csv)
+  is retained with the evidence. The user confirms the interruptions were
+  intentional but cannot correlate them to timestamps; the monitor does not
+  observe the phone.
 - Test messages are the firmware connectivity demo only. Production telemetry,
   device commands, durable event capture, cloud forwarding, and deployment
   recovery remain outside this stage.

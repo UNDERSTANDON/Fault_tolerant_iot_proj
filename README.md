@@ -183,6 +183,46 @@ The hotspot-specific `.env` settings are for `npm run dev`; production
 `npm run build` intentionally omits the local bridge URL so the laptop's
 address is not embedded in the ESP32 web assets.
 
+### 30-minute LAN stability test
+
+Before starting, make sure the phone trusts the local CA and that any browser
+token entered while bypassing a certificate warning has been rotated. Start
+the HTTPS dashboard and authenticated bridge as described above, connect the
+ESP32 to the hotspot, and open the dashboard on the phone with the new token.
+Keep the phone dashboard visible during the run.
+
+In a third PowerShell terminal, run:
+
+```powershell
+cd .\local_server
+npm run test:lan -- --duration-minutes 30
+```
+
+The monitor verifies the dashboard HTTPS certificate against the local CA,
+checks the HTTPS page every 10 seconds, opens an authenticated WSS client,
+confirms a deliberately invalid browser token is rejected, tracks broker
+status and the bridge topic allowlist, tracks ESP32 connectivity-test
+freshness, and reconnects its monitoring client if the bridge restarts. It
+does not restart Docker or other services automatically. You may shorten a
+trial with `--duration-minutes 1` or adjust sampling with
+`--sample-seconds 5` (allowed range: 5-60 seconds).
+
+Keep the phone on the dashboard and note the time if its connection visibly
+drops or returns. For a recovery test, optionally restart only the bridge
+mid-run and wait for both the monitor and phone dashboard to reconnect before
+testing another component. Broker/Docker and hotspot restarts interrupt
+services; do those only as separate, deliberate tests, one at a time. A
+laptop restart cannot be monitored by a process running on that laptop.
+
+The script writes a timestamped CSV and summary under
+`%LOCALAPPDATA%\FaultTolerantIoT\test-runs`. The report contains health
+states and counts, not the browser token, MQTT payload, or device identifier.
+`PASS` means no observed interruption during the run; a recovered outage is
+reported separately and should be reviewed alongside the timestamps. This
+laptop-side monitor cannot inspect the phone UI or prove that Android trusts
+the CA, so retain a phone screenshot after the run. It tests only the
+connectivity-test topic, not sensors or device commands.
+
 To restore the saved Docker firewall scopes and remove the project rules,
 run these commands from an elevated PowerShell session:
 
