@@ -138,14 +138,36 @@ same active interface:
   -HotspotInterfaceAlias "Local Area Connection* 2"
 ```
 
-This verifies the local server certificate includes the hotspot IP, generates
-a random browser access token in the external credentials file if needed, and
-updates ignored local environment files. The token is not embedded in the
-browser bundle or printed. Install the public `ca.crt` on the phone as a
-trusted certificate authority before opening
-`https://<hotspot-host-ip>:5173`; do not bypass certificate warnings or copy
-the private server key to the phone. The CA file is
-`%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\certs\ca.crt`.
+This verifies the local server certificate includes the hotspot IP and updates
+ignored local environment files. The browser does not receive a reusable
+bridge token. Instead, the dashboard uses an HttpOnly session cookie issued by
+the local server. Install the public `ca.crt` on the phone as a trusted
+certificate authority before opening `https://<hotspot-host-ip>:5173`; do not
+bypass certificate warnings or copy the private server key to the phone. The CA
+file is `%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\certs\ca.crt`.
+
+Before first login, create the administrator from a terminal on the laptop:
+
+```powershell
+cd .\local_server
+npm run setup:admin
+```
+
+The command prompts for a username and hidden password, refuses to overwrite an
+existing account file, and creates the first administrator locally. The server
+does not expose administrator bootstrap over HTTP. The runtime does not ship a
+default administrator account. Once signed in, administrators can create
+visitor accounts and enable or disable them from **User accounts**; public
+visitor registration is not available. Disabling a visitor revokes their active
+sessions. Browser-session cookies have no persistent lifetime; the server
+expires sessions after six hours by default. Browser session restore may retain
+a session cookie after a restart.
+The password is hashed in the account file and cannot be recovered from
+`%LOCALAPPDATA%\FaultTolerantIoT\local-server\users.json`. If an existing
+administrator password is unknown, the current implementation has no password
+recovery flow; do not delete or edit the account file as a workaround.
+Keep credentials outside source control and never paste them into screenshots
+or logs.
 
 Restart the two development processes after configuring them:
 
@@ -160,19 +182,11 @@ npm run dev
 ```
 
 The Vite server and bridge bind to the current hotspot IP, not every host
-interface. The bridge uses TLS, validates the HTTPS dashboard Origin, requires
-the browser access token, and only forwards the allowlisted connectivity-test
-topic. On the dashboard, enter the token from
-`%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\bridge.env` into the access-token
-field. Keep it private; it is not a broker credential. The browser connection
-does not support device commands.
-
-If the token was entered after bypassing a certificate warning, treat it as
-potentially exposed. Close the dashboard, remove only the
-`BRIDGE_BROWSER_TOKEN` line from
-`%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\bridge.env`, rerun
-`Configure-LanDashboard.ps1` to generate a replacement, and restart the
-bridge. Do not share the token in screenshots or messages.
+interface. The bridge uses TLS, validates the HTTPS dashboard Origin, and only
+forwards the allowlisted connectivity-test topic. Browser access is authorized
+by the server-side session cookie; the bridge does not expose a shared browser
+credential or require the browser to store a token. The browser connection does
+not support device commands.
 
 The dashboard reports bridge status and the last ESP32 connectivity-test
 message; a test message becomes stale after 70 seconds. It does not update
@@ -185,23 +199,26 @@ address is not embedded in the ESP32 web assets.
 
 ### 30-minute LAN stability test
 
-Before starting, make sure the phone trusts the local CA and that any browser
-token entered while bypassing a certificate warning has been rotated. Start
-the HTTPS dashboard and authenticated bridge as described above, connect the
-ESP32 to the hotspot, and open the dashboard on the phone with the new token.
-Keep the phone dashboard visible during the run.
+Before starting, make sure the phone trusts the local CA. Start the HTTPS
+dashboard and authenticated bridge as described above, connect the ESP32 to
+the hotspot, and sign in on the phone with a local account. Keep the phone
+dashboard visible during the run.
 
 In a third PowerShell terminal, run:
 
 ```powershell
 cd .\local_server
+$env:LOCAL_AUTH_ADMIN_USERNAME = Read-Host "Administrator username"
+$securePassword = Read-Host "Administrator password" -AsSecureString
+$env:LOCAL_AUTH_ADMIN_PASSWORD = (New-Object System.Net.NetworkCredential('', $securePassword)).Password
 npm run test:lan -- --duration-minutes 30
+Remove-Item Env:\LOCAL_AUTH_ADMIN_USERNAME, Env:\LOCAL_AUTH_ADMIN_PASSWORD
 ```
 
 The monitor verifies the dashboard HTTPS certificate against the local CA,
 checks the HTTPS page every 10 seconds, opens an authenticated WSS client,
-confirms a deliberately invalid browser token is rejected, tracks broker
-status and the bridge topic allowlist, tracks ESP32 connectivity-test
+confirms a WebSocket handshake without a valid session is rejected, tracks
+broker status and the bridge topic allowlist, tracks ESP32 connectivity-test
 freshness, and reconnects its monitoring client if the bridge restarts. It
 does not restart Docker or other services automatically. You may shorten a
 trial with `--duration-minutes 1` or adjust sampling with
@@ -216,7 +233,8 @@ laptop restart cannot be monitored by a process running on that laptop.
 
 The script writes a timestamped CSV and summary under
 `%LOCALAPPDATA%\FaultTolerantIoT\test-runs`. The report contains health
-states and counts, not the browser token, MQTT payload, or device identifier.
+states and counts, not passwords, session cookies, MQTT payload, or device
+identifier.
 `PASS` means no observed interruption during the run; a recovered outage is
 reported separately and should be reviewed alongside the timestamps. This
 laptop-side monitor cannot inspect the phone UI or prove that Android trusts

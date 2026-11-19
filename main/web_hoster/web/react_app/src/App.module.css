@@ -22,6 +22,15 @@
   max-width: 1440px;
 }
 
+.inlineError {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border: 1px solid var(--status-error, #e5484d);
+  border-radius: 8px;
+  color: var(--status-error, #b42318);
+  background: var(--bg-surface, #fff);
+}
+
 .spacesHeader {
   display: flex;
   align-items: center;

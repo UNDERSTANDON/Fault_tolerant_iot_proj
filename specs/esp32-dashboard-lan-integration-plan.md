@@ -278,22 +278,24 @@ keeping broker credentials out of browser code.
   address `192.168.137.1` and remote subnet `192.168.137.0/24`. The initial
   Docker scope update failed on `DeferToUser`; the corrected version changed
   edge traversal to `Block` and was verified in the active policy store.
-- `Configure-LanDashboard.ps1` has configured the ignored local environment
-  files for HTTPS/WSS on `192.168.137.1` and generated a local browser token.
-  The user reports restarting the bridge, and the current listener is verified
-  on `192.168.137.1:8081`. The physical-phone dashboard capture verifies
-  browser access and recent test-message display, but the user reports
-  bypassing the certificate warning instead of installing the CA. Trusted
-  TLS remains unverified, and the token entered in that session must be
-  rotated before the next test.
+- `Configure-LanDashboard.ps1` configures the ignored local environment files
+  for HTTPS/WSS on the current hotspot IP. The pre-Stage-3 browser-token flow
+  has been replaced by cookie-backed user sessions; running this script removes
+  a stale `BRIDGE_BROWSER_TOKEN` entry from the ignored credentials file.
+  Earlier phone captures and LAN runs used the previous auth flow and are not
+  evidence for current session behavior. Trusted phone TLS still requires the
+  local CA to be installed; do not bypass certificate validation.
 - `npm run test:lan -- --duration-minutes 30` runs
   `local_server/lan_stability_monitor.mjs`. It verifies HTTPS with the local CA,
-  checks the dashboard, rejects an invalid browser token, authenticates to
-  WSS, observes broker status and ESP32 test-message freshness, and reconnects
-  its monitor after bridge interruptions. It does not restart services or
-  observe the phone UI. Its CSV and summary are written outside the repository
-  under `%LOCALAPPDATA%\FaultTolerantIoT\test-runs`. The Nov. 17 run completed
-  for 30 minutes with 2 dashboard HTTPS failures, 6 bridge-disconnected
+  checks the dashboard, rejects a WSS connection without a session, signs in
+  through the local auth endpoint, observes broker status and ESP32
+  test-message freshness, and reconnects its monitor after bridge interruptions.
+  It does not restart services or observe the phone UI. Its CSV and summary
+  are written outside the repository
+  under `%LOCALAPPDATA%\FaultTolerantIoT\test-runs`. The Nov. 17 run predates
+  the session-auth migration and must not be used as evidence for current
+  authentication. It completed for 30 minutes with 2 dashboard HTTPS failures,
+  6 bridge-disconnected
   samples, 7 broker-unavailable samples, 10 reconnects, 56 test messages, no
   stale samples, and a healthy final state. The summary is
   [lan-stability-2026-11-17T06-03-14-419Z-summary.txt](log_evidence/Lan-Docker_to_ESP_evidences/lan-stability-2026-11-17T06-03-14-419Z-summary.txt).

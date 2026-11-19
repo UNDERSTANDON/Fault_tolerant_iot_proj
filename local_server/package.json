@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node lan_broker_bridge.mjs",
     "start": "node lan_broker_bridge.mjs",
+    "setup:admin": "node setup_local_admin.mjs",
     "test": "node --test",
     "test:lan": "node lan_stability_monitor.mjs"
   },

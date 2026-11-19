@@ -2,8 +2,19 @@
 
 ## Status
 
-Planning only. No implementation is authorized by this document. Review the
-scope and decisions before beginning Stage 3 implementation.
+Implementation approved by user.
+
+Current implementation provides local admin bootstrap, HttpOnly sessions, and
+administrator-only visitor account creation and disablement. Visitor dashboard
+access is limited to connection diagnostics. Password recovery and at-rest
+encryption are not implemented. The first-created administrator remains the
+sole administrator; later records with an admin role are restored to visitor,
+and active sessions use the latest stored role. First-admin provisioning is
+performed locally with `npm run setup:admin`; HTTP bootstrap is disabled.
+
+Secured few UI evidences in [./log_evidence/Local_user_and_session].
+
+Human review: LGTM but might need a bit more audit.
 
 ## Goal
 
@@ -18,18 +29,20 @@ sampling, actuator commands, or hardware behavior.
 
 ## Current behavior and boundaries
 
-- `main/web_hoster/web/react_app/src/hooks/useAuth.js` currently stores mock
-  users and a session in browser `localStorage`; it is not server-side
-  authentication.
-- `main/web_hoster/web/react_app/src/hooks/useSmartHome.js` currently accepts
-  a bridge access token in browser memory and sends it to the bridge over
-  WSS.
-- `local_server/lan_broker_bridge.mjs` verifies a shared browser token and
-  proxies only the connectivity-test topic. Broker credentials are held by
-  the local Node service.
-- The current bridge token is a shared browser-to-bridge credential, not an
-  individual user's setting. Stage 3 should replace this browser-token
-  exchange with server-validated browser sessions.
+- `main/web_hoster/web/react_app/src/hooks/useAuth.js` authenticates against
+  the local server with an HttpOnly session cookie; it does not persist users
+  or credentials in browser storage.
+- `main/web_hoster/web/react_app/src/hooks/useSmartHome.js` opens the
+  connectivity-test WSS channel using the browser's session cookie.
+- `local_server/lan_broker_bridge.mjs` validates the cookie-backed session
+  for browser HTTP/WSS requests and uses broker credentials only for its
+  server-to-broker connection.
+- The dashboard fetches the signed-in user's theme preference after login and
+  refresh. The API accepts only the supported `light` or `dark` theme field;
+  the dashboard does not yet expose a preference-editing control.
+- The former `BRIDGE_BROWSER_TOKEN` setup is obsolete. The broker initializer
+  no longer creates it, and LAN configuration removes any stale entry from
+  the ignored broker credentials file.
 - Browser `localStorage`, JavaScript memory, URLs, and frontend build
   variables are not suitable storage locations for reusable bridge or broker
   credentials.
@@ -43,8 +56,8 @@ sampling, actuator commands, or hardware behavior.
 ### Included
 
 - Server-side local account storage and authentication.
-- Exactly one system administrator account, bootstrapped locally during
-  setup; no public administrator sign-up.
+- Exactly one system administrator account, provisioned from a host-local
+  terminal; no public or LAN administrator sign-up.
 - Administrator ability to create, disable, and manage visitor accounts.
 - Visitor access to the dashboard's currently supported read-only
   connectivity-test view.
@@ -104,10 +117,10 @@ sampling, actuator commands, or hardware behavior.
   identifier in a `Secure`, `HttpOnly`, appropriately `SameSite` cookie.
   Rotate the session identifier after login and invalidate it on logout,
   account disablement, password change, or administrator revocation.
-- Use a browser-session cookie so a page refresh retains the session without
-  storing a token in JavaScript. A browser-session cookie normally ends with
-  the browser session, but browser session restore can preserve it; it does
-  not guarantee expiration immediately when one tab closes.
+- Use a browser-session cookie without a persistent `Max-Age` or `Expires`
+  attribute so a page refresh retains the session without storing a token in
+  JavaScript. Browser session restore may preserve the cookie; server-side
+  expiration still limits session lifetime.
 - On page load, request session status; after login or refresh with a valid
   session, GET the current user's non-secret profile/preferences. Never
   provide an endpoint that returns session secrets or broker credentials.
@@ -123,8 +136,9 @@ sampling, actuator commands, or hardware behavior.
 ## Implementation and verification steps
 
 1. **Confirm setup and recovery boundaries**
-   - Decide the first-run administrator bootstrap mechanism that does not
-     ship a default password or expose account creation to the LAN.
+   - First-admin setup is resolved as a host-local command that prompts for
+     credentials without echoing the password. There is no HTTP bootstrap
+     endpoint; the command refuses to overwrite an existing account file.
    - Specify how an administrator recovers access if the password is lost,
      without silently resetting credentials or exposing existing secrets.
    - Confirm the exact OS application-data paths, permissions, backup, and
@@ -133,7 +147,7 @@ sampling, actuator commands, or hardware behavior.
      to filesystem permissions; document portability and backup implications.
 
 2. **Implement server-side accounts**
-   - Add account persistence and a one-time administrator bootstrap flow.
+   - Add account persistence and host-local administrator provisioning.
    - Implement password hashing, login, logout, session rotation/expiry,
      visitor creation/disablement, and authorization checks.
    - Ensure there can be only one active system administrator account.
@@ -165,8 +179,8 @@ sampling, actuator commands, or hardware behavior.
      connectivity-test data.
 
 5. **Security and behavior tests**
-   - Verify first-run bootstrap cannot be repeated after an administrator
-     exists and does not use a committed/default password.
+   - Verify first-admin provisioning is host-local, refuses to overwrite an
+     existing account file, and does not use a committed/default password.
    - Verify password hashes, role separation, visitor disablement, and
      administrator-only actions.
    - Verify login rotates the session, refresh retains the same valid session,
@@ -180,6 +194,39 @@ sampling, actuator commands, or hardware behavior.
    - Verify the server maintains broker connectivity and the user remains
      authenticated across refresh without pasting a bridge token.
    - Verify no visitor operation can publish MQTT messages or control devices.
+
+   **Automated verification completed**
+
+   Run `cd local_server; npm test`. The auth integration suite verifies
+   host-local first-admin provisioning, disabled HTTP bootstrap, refusal to
+   overwrite existing account files, fail-closed handling of malformed
+   account storage, and password hashing;
+   administrator-only user management; forced visitor role; visitor
+   disablement and session revocation; session rotation, refresh continuity,
+   expiry, and logout; settings and log secret non-disclosure; exact-origin
+   CORS/CSRF checks; login rate limiting; and read-only HTTP/WSS access.
+   HTTPS tests generate a temporary local certificate and verify `Secure`,
+   `HttpOnly`, and `SameSite` session-cookie attributes without disabling
+   client certificate validation; login cookies have no persistent lifetime
+   attribute. Tests also cover safe settings-field validation and ensure
+   health responses omit local filesystem paths. The tests use isolated
+   temporary app-data directories and do not read or modify the real account
+   store.
+
+   Browser source and built-asset inspection found no `localStorage` or
+   `sessionStorage` access. The shared dashboard browser was checked for
+   query-string secrets and browser storage entries; the HTTPS integration
+   test verifies the session cookie is HttpOnly and Secure. The dashboard
+   fetches the authenticated user's settings after session restoration or
+   sign-in and surfaces settings-load failures. Preference editing remains
+   outside the current dashboard UI.
+
+   **Not established by the automated auth suite:** live MQTT broker
+   connectivity/recovery and end-to-end phone refresh while attached to the
+   configured hotspot. Run the existing LAN stability test against the
+   restarted bridge and real broker to verify those deployment-specific
+   checks. The account model does not provide password recovery or encrypted
+   account-file storage.
 
 6. **Review and stop**
    - Record the tested setup, account recovery procedure, storage location and
@@ -213,11 +260,12 @@ sampling, actuator commands, or hardware behavior.
 
 ## Decisions and open questions for implementation review
 
-- “Until the page closes” is implemented as a browser-session cookie that
-  survives refresh. Browser restore behavior may retain session cookies, and
-  a cookie cannot reliably express “expire as soon as this one tab closes.”
-- Choose the one-time administrator bootstrap and account recovery workflow
-  before implementation.
+- “Until the page closes” is approximated by a browser-session cookie with
+  server-side six-hour expiration. Browser restore behavior may retain session
+  cookies, and a cookie cannot reliably express “expire as soon as this one
+  tab closes.”
+- Administrator setup is host-local. Password recovery remains unresolved;
+  no reset operation is exposed.
 - Confirm which non-secret preferences are user-specific and which service
   configuration is system-wide. Broker credentials remain system-level and
   server-only.

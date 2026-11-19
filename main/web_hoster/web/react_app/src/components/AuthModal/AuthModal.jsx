@@ -2,11 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Home, Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import styles from './AuthModal.module.css';
 
-export default function AuthModal({ authError, onSignIn, onSignUp, onClearError }) {
-  const [mode, setMode] = useState('SIGN_IN'); // 'SIGN_IN' | 'SIGN_UP'
+export default function AuthModal({ authError, needsBootstrap, onSignIn, onClearError }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const dialogRef = useRef(null);
@@ -21,12 +19,12 @@ export default function AuthModal({ authError, onSignIn, onSignUp, onClearError 
     };
   }, []);
 
-  // Auto-focus username input on mount and tab switch
+  // Auto-focus username input on mount
   useEffect(() => {
     if (usernameInputRef.current) {
       usernameInputRef.current.focus();
     }
-  }, [mode]);
+  }, []);
 
   // Layer 4 & 5: Block Escape key and trap Tab focus within the modal
   useEffect(() => {
@@ -66,28 +64,9 @@ export default function AuthModal({ authError, onSignIn, onSignUp, onClearError 
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, []);
 
-  const handleSwitchMode = (targetMode) => {
-    if (targetMode === mode) return;
-    setMode(targetMode);
-    setPassword('');
-    setConfirmPassword('');
-    if (onClearError) onClearError();
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (mode === 'SIGN_IN') {
-      onSignIn(username, password);
-    } else {
-      onSignUp(username, password, confirmPassword);
-    }
-  };
-
-  const handleFillDemo = () => {
-    setMode('SIGN_IN');
-    setUsername('admin');
-    setPassword('admin1234');
-    if (onClearError) onClearError();
+    onSignIn(username, password);
   };
 
   return (
@@ -111,28 +90,6 @@ export default function AuthModal({ authError, onSignIn, onSignUp, onClearError 
               Fault-Tolerant IoT Interface · Authentication Required
             </p>
           </div>
-        </div>
-
-        {/* Mode Tabs */}
-        <div className={styles.tabs} role="tablist" aria-label="Authentication mode">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'SIGN_IN'}
-            className={`${styles.tabBtn} ${mode === 'SIGN_IN' ? styles.tabBtnActive : ''}`}
-            onClick={() => handleSwitchMode('SIGN_IN')}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'SIGN_UP'}
-            className={`${styles.tabBtn} ${mode === 'SIGN_UP' ? styles.tabBtnActive : ''}`}
-            onClick={() => handleSwitchMode('SIGN_UP')}
-          >
-            Create Account
-          </button>
         </div>
 
         {/* Form */}
@@ -166,8 +123,8 @@ export default function AuthModal({ authError, onSignIn, onSignUp, onClearError 
                 id="auth-password"
                 type={showPassword ? 'text' : 'password'}
                 className={`${styles.input} ${styles.inputWithIcon}`}
-                placeholder={mode === 'SIGN_UP' ? 'At least 6 characters' : 'Enter your password'}
-                autoComplete={mode === 'SIGN_IN' ? 'current-password' : 'new-password'}
+                placeholder="Enter your password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -187,27 +144,6 @@ export default function AuthModal({ authError, onSignIn, onSignUp, onClearError 
             </div>
           </div>
 
-          {mode === 'SIGN_UP' && (
-            <div className={styles.field}>
-              <label htmlFor="auth-confirm-password" className={styles.label}>
-                Confirm Password
-              </label>
-              <input
-                id="auth-confirm-password"
-                type={showPassword ? 'text' : 'password'}
-                className={styles.input}
-                placeholder="Re-enter your password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  if (authError && onClearError) onClearError();
-                }}
-                required
-              />
-            </div>
-          )}
-
           {authError && (
             <div className={styles.errorBox} role="alert">
               <AlertCircle size={16} />
@@ -216,28 +152,19 @@ export default function AuthModal({ authError, onSignIn, onSignUp, onClearError 
           )}
 
           <button type="submit" className={styles.submitBtn}>
-            <span>{mode === 'SIGN_IN' ? 'Sign In to Dashboard' : 'Create Account & Continue'}</span>
+            <span>Sign In to Dashboard</span>
             <ArrowRight size={16} />
           </button>
         </form>
 
-        {/* Demo Helper & Local Storage Footnote */}
         <div className={styles.footerBox}>
-          <div className={styles.demoRow}>
-            <span>
-              Demo account: <span className={styles.demoCode}>admin / admin1234</span>
-            </span>
-            <button
-              type="button"
-              className={styles.fillDemoBtn}
-              onClick={handleFillDemo}
-            >
-              Auto-fill
-            </button>
-          </div>
           <div className={styles.lockNotice}>
             <ShieldCheck size={14} />
-            <span>Sign in or create an account to unlock smart home controls</span>
+            <span>
+              {needsBootstrap
+                ? 'No administrator is set up. Run npm run setup:admin from the local_server folder on this laptop.'
+                : 'Sign in with an existing local administrator or visitor account.'}
+            </span>
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Globe, Network, Radio, Wifi } from 'lucide-react';
 import styles from './ConnectionStatus.module.css';
 
@@ -23,7 +22,6 @@ function getStatusClass(status) {
 }
 
 export default function ConnectionStatus({ networkState, bridgeState, onConnectBridge }) {
-  const [accessToken, setAccessToken] = useState('');
   const { internet, localLan } = networkState;
   const bridgeLabel = BRIDGE_STATUS_LABELS[bridgeState.status] || 'Unknown';
   const messageLabel = !bridgeState.lastMessageAt
@@ -106,33 +104,10 @@ export default function ConnectionStatus({ networkState, bridgeState, onConnectB
         </p>
       )}
 
-      {bridgeState.requiresAuthentication
-        && ['authentication-required', 'unauthorized'].includes(bridgeState.status)
-        && onConnectBridge && (
-        <form
-          className={styles.bridgeAuth}
-          onSubmit={(event) => {
-            event.preventDefault();
-            onConnectBridge(accessToken);
-          }}
-        >
-          <label htmlFor="bridge-access-token">Local bridge access token</label>
-          <input
-            id="bridge-access-token"
-            type="password"
-            autoComplete="current-password"
-            inputMode="text"
-            pattern="[A-Fa-f0-9]{64}"
-            minLength={64}
-            maxLength={64}
-            value={accessToken}
-            onChange={(event) => setAccessToken(event.target.value)}
-            required
-          />
-          <button type="submit" disabled={!accessToken || bridgeState.status === 'connecting'}>
-            Connect
-          </button>
-        </form>
+      {onConnectBridge && ['not-configured', 'unauthorized', 'unavailable'].includes(bridgeState.status) && (
+        <button type="button" className={styles.bridgeAuth} onClick={onConnectBridge}>
+          Reconnect bridge
+        </button>
       )}
     </div>
   );

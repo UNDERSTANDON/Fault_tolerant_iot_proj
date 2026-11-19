@@ -105,9 +105,10 @@ function loadConfiguration() {
       || path.join(defaultSecretsDirectory, 'bridge.env')
   );
   const credentials = dotenv.parse(readFileSync(credentialsPath));
-  const browserToken = credentials.BRIDGE_BROWSER_TOKEN || '';
-  if (!/^[a-f0-9]{64}$/i.test(browserToken)) {
-    throw new Error('A valid local BRIDGE_BROWSER_TOKEN is required; its value is never written to the report.');
+  const username = (process.env.LOCAL_AUTH_ADMIN_USERNAME || '').trim();
+  const password = process.env.LOCAL_AUTH_ADMIN_PASSWORD || '';
+  if (!username || !password) {
+    throw new Error('Set LOCAL_AUTH_ADMIN_USERNAME and LOCAL_AUTH_ADMIN_PASSWORD in the current terminal for authenticated bridge checks.');
   }
 
   const caPath = expandEnvironmentVariables(
@@ -120,10 +121,12 @@ function loadConfiguration() {
   return {
     host,
     bridgePort,
-    browserToken,
+    username,
+    password,
     origin: dashboardOrigin,
     dashboardUrl: new URL('/', dashboardOrigin),
     bridgeUrl: `wss://${host}:${bridgePort}`,
+    authUrl: `https://${host}:${bridgePort}`,
     ca
   };
 }
@@ -197,25 +200,69 @@ function waitForSocketMessage(socket, expectedType, timeoutMs = 5000) {
   });
 }
 
-async function verifyInvalidTokenIsRejected(config) {
-  const socket = new WebSocket(config.bridgeUrl, {
-    ca: config.ca,
-    origin: config.origin,
-    rejectUnauthorized: true,
-    handshakeTimeout: 10000
+async function loginToBridge(config) {
+  const response = await new Promise((resolve, reject) => {
+    const request = https.request(
+      `${config.authUrl}/api/auth/login`,
+      {
+        method: 'POST',
+        ca: config.ca,
+        rejectUnauthorized: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      },
+      (incoming) => {
+        const chunks = [];
+        incoming.on('data', (chunk) => chunks.push(chunk));
+        incoming.on('end', () => {
+          const text = Buffer.concat(chunks).toString('utf8');
+          resolve({
+            statusCode: incoming.statusCode || 0,
+            headers: incoming.headers,
+            body: text
+          });
+        });
+      }
+    );
+
+    request.on('error', reject);
+    request.write(JSON.stringify({ username: config.username, password: config.password }));
+    request.end();
   });
 
-  try {
-    await waitForSocketOpen(socket);
-    const rejection = waitForSocketMessage(socket, 'authentication-error');
-    const firstDigit = config.browserToken[0] === '0' ? '1' : '0';
-    const invalidToken = `${firstDigit}${config.browserToken.slice(1)}`;
-    socket.send(JSON.stringify({ type: 'authenticate', token: invalidToken }));
-    await rejection;
-    return true;
-  } finally {
-    socket.close();
+  if (response.statusCode !== 200) {
+    throw new Error(`Bridge login failed with HTTP ${response.statusCode}: ${response.body}`);
   }
+
+  const setCookieHeader = response.headers['set-cookie'];
+  if (!setCookieHeader) {
+    throw new Error('Bridge login did not return a session cookie.');
+  }
+
+  return Array.isArray(setCookieHeader) ? setCookieHeader[0].split(';')[0] : String(setCookieHeader).split(';')[0];
+}
+
+async function verifySessionRequired(config) {
+  return await new Promise((resolve) => {
+    const socket = new WebSocket(config.bridgeUrl, {
+      ca: config.ca,
+      origin: config.origin,
+      rejectUnauthorized: true,
+      handshakeTimeout: 10000,
+      headers: {}
+    });
+
+    const finish = (value) => {
+      socket.close();
+      resolve(value);
+    };
+
+    socket.once('unexpected-response', () => finish(true));
+    socket.once('error', () => finish(true));
+    socket.once('open', () => finish(false));
+    setTimeout(() => finish(false), 3000);
+  });
 }
 
 function isValidTestMessage(message) {
@@ -290,7 +337,7 @@ async function run() {
     lastErrorCode: '',
     reconnectTimer: null
   };
-  let invalidTokenRejected = false;
+  let sessionRequiredRejected = false;
   let dashboardChecks = 0;
   let dashboardFailures = 0;
   let staleSamples = 0;
@@ -342,16 +389,14 @@ async function run() {
       ca: config.ca,
       origin: config.origin,
       rejectUnauthorized: true,
-      handshakeTimeout: 10000
+      handshakeTimeout: 10000,
+      headers: config.sessionCookie ? { Cookie: config.sessionCookie } : {}
     });
     state.socket = socket;
 
     socket.on('open', () => {
       state.socketState = 'authenticating';
-      socket.send(JSON.stringify({
-        type: 'authenticate',
-        token: config.browserToken
-      }));
+      socket.send(JSON.stringify({ type: 'authenticate' }));
     });
 
     socket.on('message', (raw) => {
@@ -443,9 +488,10 @@ async function run() {
       throw new Error('Dashboard HTTPS preflight failed. Check the service, certificate SAN, and local CA.');
     }
 
-    invalidTokenRejected = await verifyInvalidTokenIsRejected(config);
-    if (!invalidTokenRejected) {
-      throw new Error('The bridge did not reject an invalid browser token.');
+    config.sessionCookie = await loginToBridge(config);
+    sessionRequiredRejected = await verifySessionRequired(config);
+    if (!sessionRequiredRejected) {
+      throw new Error('The bridge accepted a connection without a session cookie.');
     }
 
     connectBridge();
@@ -541,7 +587,7 @@ async function run() {
       && lastMessageAge <= STALE_AFTER_MS;
     const outcome = completed
       && dashboardFailures === 0
-      && invalidTokenRejected
+      && sessionRequiredRejected
       && state.authenticatedSessions > 0
       && state.topicAllowlistVerified
       && state.brokerConnectedSeen
@@ -553,7 +599,7 @@ async function run() {
       && !state.lastErrorCode
       ? 'PASS'
       : (completed
-        && invalidTokenRejected
+        && sessionRequiredRejected
         && state.authenticatedSessions > 0
         && state.topicAllowlistVerified
         && state.brokerConnectedSeen
@@ -572,7 +618,7 @@ async function run() {
       `Dashboard HTTPS failures: ${dashboardFailures}`,
       `Bridge-disconnected samples: ${bridgeDisconnectedSamples}`,
       `Broker-unavailable samples: ${brokerUnavailableSamples}`,
-      `Invalid browser token rejected: ${invalidTokenRejected}`,
+      `Session required: ${sessionRequiredRejected}`,
       `Authenticated bridge sessions: ${state.authenticatedSessions}`,
       `Allowed topic confirmed: ${state.topicAllowlistVerified}`,
       `Bridge reconnects: ${state.reconnects}`,

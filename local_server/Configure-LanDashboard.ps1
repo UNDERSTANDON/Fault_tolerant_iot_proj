@@ -71,29 +71,7 @@ if (-not (Test-Path -LiteralPath $credentialsPath -PathType Leaf)) {
 }
 
 $credentialText = Get-Content -Raw -LiteralPath $credentialsPath
-$tokenMatches = [regex]::Matches($credentialText, '(?m)^BRIDGE_BROWSER_TOKEN=(.*)$')
-if ($tokenMatches.Count -gt 1) {
-    throw "The local credentials file contains duplicate BRIDGE_BROWSER_TOKEN entries."
-}
-if ($tokenMatches.Count -eq 1) {
-    $browserToken = $tokenMatches[0].Groups[1].Value.Trim()
-    if ($browserToken -notmatch '^[a-f0-9]{64}$') {
-        throw "The configured BRIDGE_BROWSER_TOKEN must be 64 hexadecimal characters."
-    }
-    $updatedCredentialText = $credentialText
-}
-else {
-    $bytes = New-Object byte[] 32
-    $generator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-    try {
-        $generator.GetBytes($bytes)
-    }
-    finally {
-        $generator.Dispose()
-    }
-    $browserToken = ([BitConverter]::ToString($bytes)).Replace("-", "").ToLowerInvariant()
-    $updatedCredentialText = $credentialText.TrimEnd("`r", "`n") + "`r`nBRIDGE_BROWSER_TOKEN=$browserToken`r`n"
-}
+$updatedCredentialText = [regex]::Replace($credentialText, '(?m)^BRIDGE_BROWSER_TOKEN=.*(?:\r?\n|$)', '')
 
 function Set-EnvironmentEntry {
     param(
@@ -139,12 +117,13 @@ else {
 }
 $updatedDashboardEnv = Set-EnvironmentEntry $dashboardEnv "DEV_LAN_HOST" $hotspotIp.IPAddressToString
 $updatedDashboardEnv = Set-EnvironmentEntry $updatedDashboardEnv "VITE_LAN_BRIDGE_URL" "wss://$($hotspotIp.IPAddressToString):8081"
+$updatedDashboardEnv = Set-EnvironmentEntry $updatedDashboardEnv "VITE_LOCAL_SERVER_URL" "https://$($hotspotIp.IPAddressToString):8081"
 
 if ($PSCmdlet.ShouldProcess("Local bridge credentials and ignored environment files", "Configure authenticated WSS at $($hotspotIp.IPAddressToString)")) {
     Set-Content -LiteralPath $credentialsPath -Value $updatedCredentialText -Encoding Ascii
     Set-Content -LiteralPath $composeEnvPath -Value $updatedComposeEnv -Encoding Ascii
     Set-Content -LiteralPath $dashboardEnvPath -Value $updatedDashboardEnv -Encoding Ascii
-    Write-Output "Configured the authenticated LAN dashboard bridge for $($hotspotIp.IPAddressToString)."
-    Write-Output "A browser access token is stored locally in the broker credentials file; its value was not displayed."
+    Write-Output "Configured the authenticated HTTPS/WSS local server for $($hotspotIp.IPAddressToString)."
+    Write-Output "Removed any obsolete browser-token entry from the local credentials file."
     Write-Output "The trusted local CA certificate is at $caPath and must be installed on each browser device."
 }

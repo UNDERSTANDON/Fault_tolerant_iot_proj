@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar/Sidebar';
 import Header from './components/Header/Header';
 import ModeBanner from './components/ModeBanner/ModeBanner';
@@ -13,6 +13,7 @@ import ResearchTestView from './components/ResearchTestView/ResearchTestView';
 import Notification from './components/Notification/Notification';
 import FaultSimulation from './components/FaultSimulation/FaultSimulation';
 import AuthModal from './components/AuthModal/AuthModal';
+import UserManagement from './components/UserManagement/UserManagement';
 import { useSmartHome } from './hooks/useSmartHome';
 import { useAuth } from './hooks/useAuth';
 import styles from './App.module.css';
@@ -26,13 +27,21 @@ export default function App() {
     currentUser,
     isAuthenticated,
     authError,
+    needsBootstrap,
+    settingsError,
+    users,
+    usersError,
+    isLoadingUsers,
+    loadUsers,
+    createVisitor,
+    setVisitorEnabled,
     signIn,
-    signUp,
     signOut,
     clearError
   } = useAuth();
 
   const isLocked = !isAuthenticated;
+  const isVisitor = currentUser?.role === 'visitor';
 
   const {
     rooms,
@@ -53,12 +62,19 @@ export default function App() {
     restoreNormal
   } = useSmartHome();
 
+  useEffect(() => {
+    if (isVisitor) {
+      setActiveScreen('DIAGNOSTICS');
+      setSelectedRoomId(null);
+    }
+  }, [isVisitor, setSelectedRoomId]);
+
   const isSystemUnavailable = networkState.mode === 'UNAVAILABLE';
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
 
   // Return to Dashboard handler
   const handleBackToDashboard = () => {
-    setActiveScreen('DASHBOARD');
+    setActiveScreen(isVisitor ? 'DIAGNOSTICS' : 'DASHBOARD');
     setSelectedRoomId(null);
   };
 
@@ -75,6 +91,7 @@ export default function App() {
       case 'LOCAL_FALLBACK': return 'Local Fallback';
       case 'RECOVERY': return 'Cloud Sync';
       case 'RESEARCH_TEST': return 'Testing';
+      case 'USERS': return 'User accounts';
       case 'DASHBOARD':
       default:
         return 'Overview';
@@ -105,6 +122,7 @@ export default function App() {
           onCloseMobile={() => setIsMobileMenuOpen(false)}
           currentUser={currentUser}
           onSignOut={handleSignOut}
+          onManageUsers={() => setActiveScreen('USERS')}
         />
 
       {/* 2. Main Content Canvas */}
@@ -115,9 +133,10 @@ export default function App() {
           activeScreenName={getScreenTitle()}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         />
+        {settingsError && <div className={styles.inlineError} role="alert">{settingsError}</div>}
 
         {/* Dynamic Screen Routing */}
-        {activeScreen === 'DASHBOARD' && (
+        {!isVisitor && activeScreen === 'DASHBOARD' && (
           <main>
             {/* 4-Channel Status Card */}
             <ConnectionStatus
@@ -171,7 +190,7 @@ export default function App() {
         )}
 
         {/* SCREEN S4: Local Fallback Architecture */}
-        {activeScreen === 'LOCAL_FALLBACK' && (
+        {!isVisitor && activeScreen === 'LOCAL_FALLBACK' && (
           <LocalFallbackView
             networkState={networkState}
             rooms={rooms}
@@ -181,7 +200,7 @@ export default function App() {
         )}
 
         {/* SCREEN S5: Cloud Reconnection & Sync */}
-        {activeScreen === 'RECOVERY' && (
+        {!isVisitor && activeScreen === 'RECOVERY' && (
           <RecoveryView
             networkState={networkState}
             onBackToDashboard={handleBackToDashboard}
@@ -190,7 +209,7 @@ export default function App() {
         )}
 
         {/* SCREEN S6: Research Experiment Laboratory (Bug 3 Fixed: dynamic experimentLogs) */}
-        {activeScreen === 'RESEARCH_TEST' && (
+        {!isVisitor && activeScreen === 'RESEARCH_TEST' && (
           <ResearchTestView
             networkState={networkState}
             metrics={metrics}
@@ -202,10 +221,21 @@ export default function App() {
             experimentLogs={experimentLogs}
           />
         )}
+
+        {activeScreen === 'USERS' && currentUser?.role === 'admin' && (
+          <UserManagement
+            users={users}
+            usersError={usersError}
+            isLoadingUsers={isLoadingUsers}
+            onLoadUsers={loadUsers}
+            onCreateVisitor={createVisitor}
+            onSetVisitorEnabled={setVisitorEnabled}
+          />
+        )}
       </div>
 
       {/* SCREEN S2: Room Detail View (Modal Overlay accessible from any card or sidebar) */}
-      {selectedRoom && (
+      {!isVisitor && selectedRoom && (
         <RoomDetail
           room={selectedRoom}
           onClose={() => setSelectedRoomId(null)}
@@ -216,22 +246,24 @@ export default function App() {
       )}
 
         {/* Persistent Fault Simulation Drawer Bar */}
-        <FaultSimulation
-          currentMode={networkState.mode}
-          onTriggerFault={triggerFault}
-          onRestore={restoreNormal}
-          metrics={metrics}
-          isSmokeAlert={isSmokeAlert}
-          onToggleSmokeAlarm={toggleSmokeAlarm}
-        />
+        {!isVisitor && (
+          <FaultSimulation
+            currentMode={networkState.mode}
+            onTriggerFault={triggerFault}
+            onRestore={restoreNormal}
+            metrics={metrics}
+            isSmokeAlert={isSmokeAlert}
+            onToggleSmokeAlarm={toggleSmokeAlarm}
+          />
+        )}
       </div>
 
       {/* Mandatory Non-Dismissible Auth Gate Modal */}
       {isLocked && (
         <AuthModal
           authError={authError}
+          needsBootstrap={needsBootstrap}
           onSignIn={signIn}
-          onSignUp={signUp}
           onClearError={clearError}
         />
       )}

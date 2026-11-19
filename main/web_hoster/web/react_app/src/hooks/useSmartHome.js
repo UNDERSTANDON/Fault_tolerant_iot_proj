@@ -39,25 +39,19 @@ export function useSmartHome() {
   const bridgeSecurity = getBridgeSecurityMode(localBridgeUrl);
   const [rooms, setRooms] = useState(INITIAL_ROOMS_DATA);
   const [networkState, setNetworkState] = useState(INITIAL_NETWORK_STATE);
-  const [bridgeAccessToken, setBridgeAccessToken] = useState('');
   const [bridgeConnectAttempt, setBridgeConnectAttempt] = useState(0);
   const [bridgeState, setBridgeState] = useState({
-    status: !localBridgeUrl
-      ? 'not-configured'
-      : (bridgeSecurity.isRemote ? 'authentication-required' : 'connecting'),
+    status: !localBridgeUrl ? 'not-configured' : 'connecting',
     lastMessageAt: null,
     lastMessage: null,
     messageStale: false,
-    requiresAuthentication: bridgeSecurity.isRemote,
-    error: !localBridgeUrl
-      ? 'Local MQTT bridge is not configured.'
-      : (bridgeSecurity.isRemote ? 'Enter the local bridge access token to connect.' : null)
+    requiresAuthentication: false,
+    error: !localBridgeUrl ? 'Local MQTT bridge is not configured.' : null
   });
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [isSmokeAlert, setIsSmokeAlert] = useState(false);
 
-  const connectBridge = useCallback((token) => {
-    setBridgeAccessToken(token.trim());
+  const connectBridge = useCallback(() => {
     setBridgeConnectAttempt((attempt) => attempt + 1);
     setBridgeState((current) => ({
       ...current,
@@ -76,16 +70,6 @@ export function useSmartHome() {
         ...current,
         status: 'unavailable',
         error: 'Remote dashboard connections require a WSS bridge URL.'
-      }));
-      return undefined;
-    }
-
-    if (bridgeSecurity.isRemote && !bridgeAccessToken) {
-      setBridgeState((current) => ({
-        ...current,
-        status: 'authentication-required',
-        requiresAuthentication: true,
-        error: 'Enter the local bridge access token to connect.'
       }));
       return undefined;
     }
@@ -132,9 +116,7 @@ export function useSmartHome() {
           status: 'connecting',
           error: null
         }));
-        socket.send(JSON.stringify(bridgeSecurity.isRemote
-          ? { type: 'authenticate', token: bridgeAccessToken }
-          : { type: 'subscribe', topics: [TEST_TOPIC] }));
+        socket.send(JSON.stringify({ type: 'subscribe', topics: [TEST_TOPIC] }));
       });
 
       socket.addEventListener('message', (event) => {
@@ -155,7 +137,7 @@ export function useSmartHome() {
             setBridgeState((current) => ({
               ...current,
               status: 'unauthorized',
-              error: 'Bridge authentication failed. Check the access token and try again.'
+              error: 'Bridge authentication failed. Sign in to the local dashboard again and retry.'
             }));
             socket.close();
             return;
@@ -271,7 +253,7 @@ export function useSmartHome() {
         socket.close();
       }
     };
-  }, [bridgeAccessToken, bridgeConnectAttempt, bridgeSecurity.isRemote, bridgeSecurity.usesTls, localBridgeUrl]);
+  }, [bridgeConnectAttempt, bridgeSecurity.isRemote, bridgeSecurity.usesTls, localBridgeUrl]);
 
   useEffect(() => {
     if (!bridgeState.lastMessageAt || bridgeState.messageStale) {
