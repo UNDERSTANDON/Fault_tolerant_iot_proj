@@ -1,8 +1,8 @@
-import { Thermometer, Droplets, Flame, Wifi, AlertCircle } from 'lucide-react';
+import { Thermometer, Droplets, Flame, Wifi, ShieldCheck } from 'lucide-react';
 import styles from './SensorCard.module.css';
 
-export default function SensorCard({ sensor }) {
-  const { name, value, unit, type, status } = sensor;
+export default function SensorCard({ sensor, showSource = false }) {
+  const { name, model, value, unit, type, status, source = 'Simulator' } = sensor;
 
   const getSensorIcon = () => {
     switch (type) {
@@ -14,7 +14,7 @@ export default function SensorCard({ sensor }) {
         return status === 'ALERT' ? (
           <Flame size={18} className={styles.iconAlert} />
         ) : (
-          <AlertCircle size={18} className={styles.iconSmoke} />
+          <ShieldCheck size={18} className={styles.iconSmoke} />
         );
       case 'gateway':
       default:
@@ -30,10 +30,16 @@ export default function SensorCard({ sensor }) {
         {getSensorIcon()}
       </div>
       <div className={styles.content}>
-        <span className={styles.sensorName}>{name}</span>
-        <span className={styles.sensorValue}>
-          {value} {unit ? <span className={styles.unit}>{unit}</span> : null}
-        </span>
+        <div className={styles.nameRow}>
+          <span className={styles.sensorName} title={name}>{name}</span>
+          {model && <span className={styles.modelTag}>{model}</span>}
+        </div>
+        <div className={styles.valueRow}>
+          <span className={styles.sensorValue}>
+            {value} {unit ? <span className={styles.unit}>{unit}</span> : null}
+          </span>
+          {showSource && <span className={styles.sourceTag}>Source: {source}</span>}
+        </div>
       </div>
     </div>
   );

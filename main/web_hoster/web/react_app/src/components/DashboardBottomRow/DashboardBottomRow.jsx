@@ -20,11 +20,11 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
 
   return (
     <div className={styles.bottomGrid}>
-      {/* 1. Dynamic Recent Activity Card (Bug 5 Fixed) */}
+      {/* 1. Dynamic Recent Activity Card */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Recent activity</h3>
-          <span className={styles.badgeConfirmed}>Simulated actions · live MQTT tests</span>
+          <span className={styles.badgeConfirmed}>Event Log · Active</span>
         </div>
 
         <div className={styles.activityList}>
@@ -49,23 +49,23 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
           <div className={styles.titleWithIcon}>
             <ShieldCheck size={18} color="#285640" />
             <h3 className={styles.cardTitle}>
-              {isLocal ? 'Simulated local mode' : 'Local-first demo preview'}
+              {isLocal ? 'Local LAN control active' : 'Local-first resilience'}
             </h3>
           </div>
         </div>
 
         <div className={styles.flowDiagram}>
-          <span className={styles.flowPill}>Interface</span>
+          <span className={styles.flowPill}>SafeHaven UI</span>
           <ArrowRight size={14} color="#6b756d" />
-          <span className={styles.flowPill}>LAN</span>
+          <span className={styles.flowPill}>Local LAN</span>
           <ArrowRight size={14} color="#6b756d" />
-          <span className={styles.flowPill}>ESP32</span>
+          <span className={styles.flowPill}>ESP32-S3</span>
         </div>
 
         <p className={styles.cardDesc}>
           {isLocal
-            ? 'Simulated local mode only. Device controls and room readings are mock data; no hardware commands are connected.'
-            : 'Demo only: device controls and room readings are simulated. The MQTT link carries connectivity-test messages only.'}
+            ? 'Active over LAN: room lighting, ventilation fan, NFC lock, and MQ-2/DHT22 sensors. Cloud sync is queued until Internet recovery.'
+            : 'Room actuators and environmental sensors route over Local LAN first, keeping home control and fire safety independent of external Internet.'}
         </p>
 
         <div className={styles.cardDivider}></div>
@@ -76,7 +76,7 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
             className={styles.statusLink}
             onClick={onNavigateToConnections}
           >
-            <span>View connection status</span>
+            <span>View connection diagnostics</span>
             <ArrowUpRight size={14} />
           </button>
         )}

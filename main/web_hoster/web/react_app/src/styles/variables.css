@@ -1,5 +1,5 @@
 /* ==========================================================================
-   NEST SMART HOME DESIGN TOKENS (Extracted from Figma Reference Mockups)
+   SAFEHAVEN SMART HOME DESIGN TOKENS (Local-First Resilient IoT Interface)
    ========================================================================== */
 
 :root {
@@ -24,7 +24,7 @@
   --state-unavailable-bg: #fbeae8;
   --state-unavailable-border: #fecaca;
 
-  /* --- Nest Reference Surfaces (Warm Scandinavian Aesthetic) --- */
+  /* --- SafeHaven Reference Surfaces (Warm Scandinavian Aesthetic) --- */
   --bg-base: #f5f4ef;                  /* Main canvas background (warm off-white) */
   --bg-sidebar: #efeee7;               /* Sidebar background */
   --bg-surface: #ffffff;               /* Pure white for cards, panels, modals */
@@ -44,8 +44,8 @@
   --border-light: #ecefe9;
   --border-focus: #285640;
 
-  /* --- Signature Brand Accent (Nest Deep Forest Green) --- */
-  --accent-primary: #285640;           /* Signature Nest dark pine green */
+  /* --- Signature Brand Accent (SafeHaven Deep Forest Green) --- */
+  --accent-primary: #285640;           /* Signature SafeHaven dark pine green */
   --accent-primary-hover: #1e4432;
   --accent-primary-bg: #e8efe7;
 

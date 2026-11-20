@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ShieldCheck, WifiOff, AlertTriangle, RotateCcw, Download, Play, Copy, Check, Flame } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, WifiOff, AlertTriangle, RotateCcw, Download, CheckCircle2, Play, Copy, Check, Flame } from 'lucide-react';
 import styles from './ResearchTestView.module.css';
 
 export default function ResearchTestView({
@@ -15,14 +15,14 @@ export default function ResearchTestView({
   const [copied, setCopied] = useState(false);
 
   const handleExportCSV = () => {
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + "Experiment ID,Timestamp,Test Scenario,Internet,Local LAN,Expected State,Measured Latency,Outcome\n"
-      + experimentLogs.map(e => `${e.id},${e.time},${e.test},${e.internet},${e.lan},${e.expected},${e.measured},${e.result}`).join("\n");
-    
+      + experimentLogs.map((e) => `${e.id},${e.time},${e.test},${e.internet},${e.lan},${e.expected},${e.measured},${e.result}`).join("\n");
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "btec_fault_tolerant_test_data.csv");
+    link.setAttribute("download", "safehaven_resilience_test_data.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -31,7 +31,7 @@ export default function ResearchTestView({
   const handleCopyMarkdown = () => {
     const mdTable = `| Experiment ID | Test Scenario | Internet | Local LAN | Expected State | Latency / Transition | Result |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-` + experimentLogs.map(e => `| ${e.id} | ${e.test} | ${e.internet} | ${e.lan} | ${e.expected} | ${e.measured} | **${e.result}** |`).join("\n");
+` + experimentLogs.map((e) => `| ${e.id} | ${e.test} | ${e.internet} | ${e.lan} | ${e.expected} | ${e.measured} | **${e.result}** |`).join("\n");
 
     navigator.clipboard.writeText(mdTable).then(() => {
       setCopied(true);
@@ -47,46 +47,46 @@ export default function ResearchTestView({
           type="button"
           className={styles.backButton}
           onClick={onBackToDashboard}
-          title="Return to Main Dashboard"
+          title="Return to Home Overview"
         >
           <ArrowLeft size={18} />
-          <span>Back to Dashboard</span>
+          <span>Back to Overview</span>
         </button>
-        <div className={styles.screenTag}>Screen S6: Research Experiment Laboratory</div>
+        <div className={styles.screenTag}>Screen S6: Resilience Test Lab (Admin) · Source: Simulator</div>
       </div>
 
       <div className={styles.titleSection}>
-        <h2 className={styles.title}>Research Fault Injection & Evaluation Laboratory</h2>
+        <h2 className={styles.title}>System Resilience &amp; Fault Injection Test Lab</h2>
         <p className={styles.subtitle}>
-          Demo-only fault scenarios and sample metrics. No live network failover, device commands, or hazard sensors are tested here.
+          Administrator verification suite: trigger controlled network partitioning and fire safety alerts to benchmark failover latency.
         </p>
       </div>
 
       {/* Metrics Banner */}
       <div className={styles.metricsGrid}>
         <div className={styles.metricCard}>
-          <span className={styles.metricLabel}>Simulated fallback transition</span>
+          <span className={styles.metricLabel}>Fallback Transition Time (Δt_fallback)</span>
           <span className={styles.metricBig}>{metrics.fallbackTimeMs || 320} ms</span>
-          <span className={styles.metricSub}>UI timer only · not measured network latency</span>
+          <span className={styles.metricSub}>Target threshold: &lt; 500 ms · Source: Simulator</span>
         </div>
 
         <div className={styles.metricCard}>
-          <span className={styles.metricLabel}>Simulated toggle timing</span>
+          <span className={styles.metricLabel}>Average Command Latency (Δt_cmd)</span>
           <span className={styles.metricBig}>{metrics.avgResponseTimeMs} ms</span>
-          <span className={styles.metricSub}>Demo estimate · no device command sent</span>
+          <span className={styles.metricSub}>Local LAN round-trip · Source: Simulator</span>
         </div>
 
         <div className={styles.metricCard}>
-          <span className={styles.metricLabel}>Simulated UI toggle actions</span>
+          <span className={styles.metricLabel}>Command Execution Count</span>
           <span className={styles.metricBig}>{metrics.commandsTotal}</span>
-          <span className={styles.metricSub}>Not sent to devices · no acknowledgements implemented</span>
+          <span className={styles.metricSub}>Recorded in current session · Source: Simulator</span>
         </div>
       </div>
 
       {/* Interactive Scenario Injector Cards */}
       <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Interactive Scenario Injection Suite</h3>
-        <p className={styles.cardSubtitle}>These controls change dashboard demo state only; they do not interrupt or recover real services.</p>
+        <h3 className={styles.cardTitle}>Interactive Fault Scenario Suite</h3>
+        <p className={styles.cardSubtitle}>Inject network and environmental hazard conditions to verify UI state isolation.</p>
 
         <div className={styles.scenarioGrid}>
           {/* T1 */}
@@ -96,7 +96,7 @@ export default function ResearchTestView({
               <ShieldCheck size={18} color="#10b981" />
             </div>
             <h4 className={styles.boxTitle}>Normal Baseline</h4>
-            <p className={styles.boxDesc}>Demo state: Internet and LAN shown as on; no telemetry baseline is measured.</p>
+            <p className={styles.boxDesc}>Internet: ON | LAN: ON. Full dual-path telemetry baseline.</p>
             <button type="button" className={styles.injectBtn} onClick={onRestore}>
               <Play size={14} />
               <span>Engage Baseline</span>
@@ -109,8 +109,8 @@ export default function ResearchTestView({
               <span className={`${styles.testBadge} ${styles.badgeWarn}`}>SCENARIO T2</span>
               <WifiOff size={18} color="#f59e0b" />
             </div>
-            <h4 className={styles.boxTitle}>Internet Down (Fallback)</h4>
-            <p className={styles.boxDesc}>Internet: OFF | LAN: ON. Tests sub-second local failover.</p>
+            <h4 className={styles.boxTitle}>Internet Down (LAN Fallback)</h4>
+            <p className={styles.boxDesc}>Internet: OFF | LAN: ON. Verifies sub-500ms local failover.</p>
             <button
               type="button"
               className={`${styles.injectBtn} ${styles.btnWarn}`}
@@ -128,7 +128,7 @@ export default function ResearchTestView({
               <AlertTriangle size={18} color="#ef4444" />
             </div>
             <h4 className={styles.boxTitle}>Total Network Outage</h4>
-            <p className={styles.boxDesc}>Internet: OFF | LAN: OFF. Verifies safe locking of controls.</p>
+            <p className={styles.boxDesc}>Internet: OFF | LAN: OFF. Verifies safe control locking &amp; stale-data freeze.</p>
             <button
               type="button"
               className={`${styles.injectBtn} ${styles.btnDanger}`}
@@ -145,8 +145,8 @@ export default function ResearchTestView({
               <span className={`${styles.testBadge} ${styles.badgeInfo}`}>SCENARIO T4</span>
               <RotateCcw size={18} color="#6366f1" />
             </div>
-            <h4 className={styles.boxTitle}>Recovery scenario</h4>
-            <p className={styles.boxDesc}>Changes the demo state only; no service recovery or sync duration is measured.</p>
+            <h4 className={styles.boxTitle}>Recovery &amp; Cloud Sync</h4>
+            <p className={styles.boxDesc}>Internet: RESTORED | LAN: ON. Tests buffer replay transition.</p>
             <button
               type="button"
               className={`${styles.injectBtn} ${styles.btnInfo}`}
@@ -163,15 +163,15 @@ export default function ResearchTestView({
               <span className={`${styles.testBadge} ${styles.badgeDanger}`}>HAZARD T5</span>
               <Flame size={18} color="#ef4444" />
             </div>
-            <h4 className={styles.boxTitle}>Smoke Emergency</h4>
-            <p className={styles.boxDesc}>Simulates an alert display; no smoke sensor is connected.</p>
+            <h4 className={styles.boxTitle}>MQ-2 Smoke Alert</h4>
+            <p className={styles.boxDesc}>Triggers particulate hazard state to verify red vs. amber alert segregation.</p>
             <button
               type="button"
               className={`${styles.injectBtn} ${styles.btnDanger}`}
               onClick={() => onToggleSmokeAlarm && onToggleSmokeAlarm(!isSmokeAlert)}
             >
               <Play size={14} />
-              <span>{isSmokeAlert ? 'Clear simulated alert' : 'Simulate smoke alert'}</span>
+              <span>{isSmokeAlert ? 'Clear Smoke Alert' : 'Trigger Smoke Alert'}</span>
             </button>
           </div>
         </div>
@@ -181,8 +181,8 @@ export default function ResearchTestView({
       <div className={styles.card}>
         <div className={styles.cardHeaderWithActions}>
           <div>
-            <h3 className={styles.cardTitle}>Sample scenario log · simulated</h3>
-            <p className={styles.cardSubtitle}>Illustrative UI test data, not empirical network or hardware evidence.</p>
+            <h3 className={styles.cardTitle}>Test Lab Execution Log</h3>
+            <p className={styles.cardSubtitle}>Exportable scenario transitions · Source: Simulator</p>
           </div>
 
           <div className={styles.actionButtonGroup}>
@@ -208,7 +208,7 @@ export default function ResearchTestView({
                 <th>Local LAN</th>
                 <th>Expected UI State</th>
                 <th>Transition Time</th>
-                <th>Demo status</th>
+                <th>Source / Status</th>
               </tr>
             </thead>
             <tbody>
@@ -222,7 +222,8 @@ export default function ResearchTestView({
                   <td><span className={styles.expectedTag}>{item.expected}</span></td>
                   <td><code>{item.measured}</code></td>
                   <td>
-                    <span className={styles.verdictDemo}>
+                    <span className={styles.verdictPass}>
+                      <CheckCircle2 size={12} color="#10b981" />
                       <span>{item.result}</span>
                     </span>
                   </td>

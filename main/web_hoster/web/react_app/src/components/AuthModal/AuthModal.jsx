@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import Logo from '../Logo/Logo';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import styles from './AuthModal.module.css';
 
 export default function AuthModal({ authError, needsBootstrap, onSignIn, onClearError }) {
@@ -10,23 +12,15 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
   const dialogRef = useRef(null);
   const usernameInputRef = useRef(null);
 
-  // Layer 3: Lock background scroll while modal is mounted
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, []);
+  // Reference-counted scroll lock
+  useScrollLock(true);
 
-  // Auto-focus username input on mount
   useEffect(() => {
     if (usernameInputRef.current) {
       usernameInputRef.current.focus();
     }
   }, []);
 
-  // Layer 4 & 5: Block Escape key and trap Tab focus within the modal
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -69,6 +63,12 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
     onSignIn(username, password);
   };
 
+  const handleFillAccount = (targetUser, targetPass) => {
+    setUsername(targetUser);
+    setPassword(targetPass);
+    if (onClearError) onClearError();
+  };
+
   return (
     <div
       className={styles.overlay}
@@ -79,15 +79,13 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
       <div className={styles.dialog} ref={dialogRef}>
         {/* Brand Header */}
         <div className={styles.header}>
-          <div className={styles.brandIcon}>
-            <Home size={22} strokeWidth={2.2} />
-          </div>
+          <Logo size="md" />
           <div className={styles.headerText}>
             <h2 id="auth-modal-title" className={styles.title}>
-              Smart Home Access
+              SafeHaven Access
             </h2>
             <p className={styles.subtitle}>
-              Fault-Tolerant IoT Interface · Authentication Required
+              Local-First Smart Home · Authentication Required
             </p>
           </div>
         </div>
@@ -103,7 +101,7 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
               id="auth-username"
               type="text"
               className={styles.input}
-              placeholder="e.g. admin or homeowner_01"
+              placeholder="e.g. admin or visitor"
               autoComplete="username"
               value={username}
               onChange={(e) => {
@@ -152,18 +150,40 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
           )}
 
           <button type="submit" className={styles.submitBtn}>
-            <span>Sign In to Dashboard</span>
+            <span>Sign In to SafeHaven</span>
             <ArrowRight size={16} />
           </button>
         </form>
 
         <div className={styles.footerBox}>
+          <div className={styles.quickAccountsRow}>
+            <span className={styles.quickLabel}>Quick access profiles:</span>
+            <div className={styles.quickBtnGroup}>
+              <button
+                type="button"
+                className={styles.quickRoleBtn}
+                onClick={() => handleFillAccount('admin', 'admin1234')}
+                title="Fill Administrator credentials"
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                className={styles.quickRoleBtn}
+                onClick={() => handleFillAccount('visitor', 'visitor1234')}
+                title="Fill Visitor read-only credentials"
+              >
+                Visitor (Read-Only)
+              </button>
+            </div>
+          </div>
+
           <div className={styles.lockNotice}>
             <ShieldCheck size={14} />
             <span>
               {needsBootstrap
-                ? 'No administrator is set up. Run npm run setup:admin from the local_server folder on this laptop.'
-                : 'Sign in with an existing local administrator or visitor account.'}
+                ? 'Run npm run setup:admin from local_server to provision host credentials.'
+                : 'Sign in with your Administrator or Visitor account to access SafeHaven.'}
             </span>
           </div>
         </div>

@@ -1,0 +1,135 @@
+.splashOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: radial-gradient(circle at 50% 35%, #faf9f5 0%, #efeee7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: var(--font-family);
+  animation: splashFadeIn 0.2s ease-out;
+}
+
+.splashCard {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 36px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 18px;
+}
+
+.logoPulseWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 28px;
+  background-color: var(--accent-primary-bg);
+  border: 1px solid var(--state-normal-border);
+  animation: gentlePulse 1.6s ease-in-out infinite alternate;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eyebrow {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--accent-primary);
+}
+
+.brandHeading {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.progressTrack {
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-card-inner);
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+.progressFill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #285640 0%, #3b7a5c 50%, #285640 100%);
+  border-radius: var(--radius-full);
+  transform-origin: left center;
+  animation: progressFillAnim 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.statusLine {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.pillsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-card-inner);
+  border: 1px solid var(--border-color);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+@keyframes splashFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes gentlePulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.04); }
+}
+
+@keyframes progressFillAnim {
+  0% { transform: scaleX(0.12); }
+  100% { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logoPulseWrap,
+  .progressFill {
+    animation: none;
+  }
+}

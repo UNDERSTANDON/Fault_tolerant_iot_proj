@@ -1,17 +1,20 @@
 .innerCard {
   background-color: var(--bg-card-inner);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   transition: all var(--transition-fast);
 }
 
 .leftMeta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .iconWrap {
@@ -19,10 +22,11 @@
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .iconOn {
-  color: var(--text-primary);
+  color: var(--accent-primary);
 }
 
 .iconOff {
@@ -36,25 +40,31 @@
 .textWrap {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .nameLabel {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stateLabel {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stateLabelOn {
   color: var(--accent-primary);
 }
 
-/* Exact Pill Toggle Switch from Figma */
 .toggleTrack {
   width: 44px;
   height: 24px;
@@ -64,15 +74,16 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+  flex-shrink: 0;
   transition: background-color var(--transition-normal);
 }
 
 .trackOn {
-  background-color: var(--device-on-toggle); /* Exact dark pine green */
+  background-color: var(--device-on-toggle);
 }
 
 .trackOff {
-  background-color: var(--device-off-toggle); /* Exact soft grey */
+  background-color: var(--device-off-toggle);
 }
 
 .toggleThumb {

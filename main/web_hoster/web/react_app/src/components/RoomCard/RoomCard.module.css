@@ -2,10 +2,10 @@
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast);
 }
@@ -23,14 +23,15 @@
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .iconSquare {
   width: 38px;
   height: 38px;
   border-radius: var(--radius-sm);
-  background-color: rgba(40, 86, 64, 0.08); /* Exact soft mint green from Figma */
+  background-color: rgba(40, 86, 64, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,18 +45,22 @@
 .headerText {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .roomName {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .roomSub {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
 }
 
@@ -64,9 +69,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 5px;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .openDetailBtn:hover {
@@ -74,12 +80,11 @@
   background-color: rgba(40, 86, 64, 0.08);
 }
 
-/* Big Temperature Display from Figma */
 .tempRow {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 4px 0 2px;
+  padding: 2px 0;
 }
 
 .tempLeft {
@@ -89,7 +94,7 @@
 }
 
 .tempNum {
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
@@ -97,7 +102,7 @@
 }
 
 .tempUnit {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -106,29 +111,134 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  text-align: right;
 }
 
 .tempLabel {
-  color: var(--text-muted);
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .tempTime {
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.sectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.sectionHeading {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.sourceMiniChip {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-card-inner);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.sensorRows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sensorItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background-color: #f8f7f3;
+  border: 1px solid var(--border-light);
+  font-size: 0.72rem;
+}
+
+.sensorItemAlert {
+  background-color: var(--state-unavailable-bg);
+  border-color: var(--state-unavailable-border);
+  color: var(--state-unavailable);
+}
+
+.sensorItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sensorItemName {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sensorModelPill {
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background-color: var(--accent-primary-bg);
+  color: var(--accent-primary);
+  border: 1px solid var(--state-normal-border);
+  flex-shrink: 0;
+}
+
+.sensorItemVal {
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.iconTemp {
+  color: #f97316;
+  flex-shrink: 0;
+}
+
+.iconHumidity {
+  color: #0284c7;
+  flex-shrink: 0;
+}
+
+.iconNormal {
+  color: var(--accent-primary);
+  flex-shrink: 0;
 }
 
 .smokeRow {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.iconNormal {
-  color: var(--accent-primary);
+  font-weight: 600;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background-color: var(--state-unavailable-bg);
 }
 
 .smokeAlert {
@@ -138,6 +248,7 @@
 
 .iconAlert {
   color: var(--state-unavailable);
+  flex-shrink: 0;
   animation: pulse 1s infinite alternate;
 }
 
@@ -150,14 +261,15 @@
 .deviceList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .cardFooter {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: var(--text-muted);
   line-height: 1.35;
-  padding-top: 4px;
+  padding-top: 2px;
+  margin-top: auto;
 }
 
 @keyframes pulse {

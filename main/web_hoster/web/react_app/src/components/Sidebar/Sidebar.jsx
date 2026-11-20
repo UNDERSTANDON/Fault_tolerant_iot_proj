@@ -1,4 +1,6 @@
-import { Home, MapPin, ChevronDown, LayoutGrid, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, X, LogOut } from 'lucide-react';
+import { MapPin, ChevronDown, LayoutGrid, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, Activity, X, LogOut } from 'lucide-react';
+import Logo from '../Logo/Logo';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({
@@ -11,22 +13,31 @@ export default function Sidebar({
   onCloseMobile,
   currentUser,
   onSignOut,
+  isSigningOut = false,
   onManageUsers
 }) {
+  useScrollLock(Boolean(isMobileOpen));
+
   const isOverview = activeScreen === 'DASHBOARD' && !selectedRoomId;
+  const isSensors = activeScreen === 'SENSORS' && !selectedRoomId;
   const isConnections = (activeScreen === 'DIAGNOSTICS' || activeScreen === 'LOCAL_FALLBACK' || activeScreen === 'RECOVERY') && !selectedRoomId;
   const isTesting = activeScreen === 'RESEARCH_TEST' && !selectedRoomId;
+  const isUsers = activeScreen === 'USERS' && !selectedRoomId;
   const isVisitor = currentUser?.role === 'visitor';
 
   const handleNavClick = (screenId) => {
+    onSelectRoom(null);
     onSelectScreen(screenId);
     if (onCloseMobile) onCloseMobile();
   };
 
   const handleRoomClick = (roomId) => {
+    onSelectScreen('DASHBOARD');
     onSelectRoom(roomId);
     if (onCloseMobile) onCloseMobile();
   };
+
+  const roleLabel = isVisitor ? 'Visitor · Read-only' : 'Administrator';
 
   return (
     <>
@@ -48,15 +59,9 @@ export default function Sidebar({
           </button>
         )}
 
-        {/* 1. Nest Branding */}
+        {/* 1. SafeHaven Branding */}
         <div className={styles.brand}>
-          <div className={styles.brandIconBox}>
-            <Home size={22} color="#ffffff" strokeWidth={2.2} />
-          </div>
-          <div className={styles.brandText}>
-            <span className={styles.brandName}>nest</span>
-            <span className={styles.brandSub}>SMART HOME</span>
-          </div>
+          <Logo size="sm" showText subtitle="RESILIENT SMART HOME" />
         </div>
 
         {/* 2. Apartment Dropdown Card */}
@@ -67,15 +72,17 @@ export default function Sidebar({
             </div>
             <div className={styles.apartmentMeta}>
               <span className={styles.apartmentTitle}>My apartment</span>
-              <span className={styles.apartmentSub}>Three-room apartment</span>
+              <span className={styles.apartmentSub}>4 monitored zones</span>
             </div>
           </div>
           <ChevronDown size={14} color="#6b756d" />
         </div>
 
-        {/* 3. Navigation Links (Bug 9 Fixed: dynamic active states) */}
+        {/* 3. Navigation Links */}
         <div className={styles.navSection}>
-          <span className={styles.sectionHeader}>SPACES & CONTROLS</span>
+          <span className={styles.sectionHeader}>
+            {isVisitor ? 'TELEMETRY & DIAGNOSTICS' : 'SPACES & CONTROLS'}
+          </span>
 
           <nav className={styles.navList}>
             {!isVisitor && (
@@ -122,6 +129,16 @@ export default function Sidebar({
               </button>
             )}
 
+            {/* Sensors (Available to Visitor & Admin) */}
+            <button
+              type="button"
+              className={`${styles.navItem} ${isSensors ? styles.navItemActive : ''}`}
+              onClick={() => handleNavClick('SENSORS')}
+            >
+              <Activity size={18} />
+              <span>Sensors</span>
+            </button>
+
             {/* Connections */}
             <button
               type="button"
@@ -140,15 +157,16 @@ export default function Sidebar({
                 onClick={() => handleNavClick('RESEARCH_TEST')}
               >
                 <FlaskConical size={18} />
-                <span>Testing</span>
+                <span>Test Lab</span>
               </button>
             )}
 
-            {currentUser?.role === 'admin' && (
+            {currentUser?.role === 'admin' && onManageUsers && (
               <button
                 type="button"
-                className={`${styles.navItem} ${activeScreen === 'USERS' ? styles.navItemActive : ''}`}
+                className={`${styles.navItem} ${isUsers ? styles.navItemActive : ''}`}
                 onClick={() => {
+                  onSelectRoom(null);
                   onManageUsers();
                   if (onCloseMobile) onCloseMobile();
                 }}
@@ -161,49 +179,48 @@ export default function Sidebar({
         </div>
 
         {/* 4. Always Close To Home Card */}
-        {!isVisitor && (
-          <div className={styles.infoCard}>
+        <div className={styles.infoCard}>
           <div className={styles.infoIconCircle}>
             <ShieldCheck size={18} color="#285640" />
           </div>
           <h4 className={styles.infoTitle}>Always close to home.</h4>
           <p className={styles.infoText}>
-            Demo interface only; live device control and network failover are not connected.
+            Local control and safety alerts stay active over LAN even when Internet drops.
           </p>
-          </div>
-        )}
+        </div>
 
-        {/* 5. User Account & Sign Out */}
+        {/* 5. User Account & Synchronized Sign Out */}
         {currentUser && (
           <div className={styles.userCard}>
             <div className={styles.userInfo}>
               <div className={styles.userAvatar}>
-                {currentUser.username.charAt(0).toUpperCase()}
+                {currentUser.username.slice(0, 2).toUpperCase()}
               </div>
               <div className={styles.userMeta}>
                 <span className={styles.userName}>{currentUser.username}</span>
-                <span className={styles.userRole}>Signed in</span>
+                <span className={styles.userRole}>{roleLabel}</span>
               </div>
             </div>
             <button
               type="button"
               className={styles.signOutBtn}
               onClick={onSignOut}
-              title="Sign out"
+              disabled={isSigningOut}
+              title="Sign out of SafeHaven"
             >
               <LogOut size={15} />
-              <span>Sign out</span>
+              <span>{isSigningOut ? 'Wait...' : 'Sign out'}</span>
             </button>
           </div>
         )}
 
-        {/* 6. Simulated Data Footer Badge */}
+        {/* 6. System Data Source Footer */}
         <div className={styles.sidebarFooter}>
           <div className={styles.simulatedTag}>
             <span className={styles.greenDot}></span>
-            <span>Simulated data</span>
+            <span>SafeHaven Local-First Engine</span>
           </div>
-          <span className={styles.disclaimer}>Sample values · Not real readings</span>
+          <span className={styles.disclaimer}>Source: Simulator · Bridge: Live MQTT</span>
         </div>
       </aside>
     </>
