@@ -15,6 +15,16 @@ performed locally with `npm run setup:admin`; HTTP bootstrap is disabled.
 Secured few UI evidences in [./log_evidence/Local_user_and_session].
 
 Human review: LGTM but might need a bit more audit.
+Also, I also realize that there is no Access point fallback, which is the core
+promise of mentioned in the project. I might have to add this in when doing
+planning the stage for local controllers.
+
+Also, on a new testing with my teammates, I found a few issue:
+
+1. My teammate installed the ca cert but the cert is intermediate while the
+browser is asking for trusted.
+2. Both of us tried logging the same account (Local_Admin), it appears there
+is no kicking the other person out.
 
 ## Goal
 

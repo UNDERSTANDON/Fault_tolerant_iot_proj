@@ -60,13 +60,19 @@ access must be narrowly scoped to the hotspot network. The initializer refuses
 to overwrite existing local broker configuration or credentials; do not delete
 those files to change the binding without first reviewing and preserving them.
 
-For ESP32 TLS configuration, copy the broker's public CA certificate into the
-ignored firmware path:
+For the ESP32 to verify the broker's TLS certificate, copy the public CA
+certificate into the firmware path:
 
 ```powershell
 Copy-Item "$env:LOCALAPPDATA\FaultTolerantIoT\mosquitto\certs\ca.crt" `
   .\main\mqtt_connectivity\broker_ca.pem
 ```
+
+`broker_ca.pem` is the project-expected filename for the CA certificate: this
+copies `ca.crt` there; it does not create another certificate. The ESP32 embeds
+this PEM file in its firmware when **Trust a local MQTT broker CA certificate**
+is enabled, and uses it to verify the broker. It is public and safe to copy;
+never copy `ca.key` or `server.key` into the project.
 
 Open `idf.py menuconfig`, then under **ESP32 MQTT connectivity demo** set the
 broker URI to `mqtts://<hotspot-host-ip>:8883`, the MQTT username and password
@@ -141,10 +147,21 @@ same active interface:
 This verifies the local server certificate includes the hotspot IP and updates
 ignored local environment files. The browser does not receive a reusable
 bridge token. Instead, the dashboard uses an HttpOnly session cookie issued by
-the local server. Install the public `ca.crt` on the phone as a trusted
-certificate authority before opening `https://<hotspot-host-ip>:5173`; do not
-bypass certificate warnings or copy the private server key to the phone. The CA
-file is `%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\certs\ca.crt`.
+the local server.
+
+Before opening `https://<hotspot-host-ip>:5173`, install the public
+`%LOCALAPPDATA%\FaultTolerantIoT\mosquitto\certs\ca.crt` as a trusted root CA
+on each browser device. Do not import `server.crt`: that is the server's leaf
+certificate, not the CA to trust. In the Windows Certificate Import Wizard,
+select **Current User** and **Place all certificates in the following store**,
+then choose **Trusted Root Certification Authorities**. Do not place this
+self-signed CA in **Intermediate Certification Authorities** or **Other
+People**. The trusted-root entry should be the self-issued **Fault Tolerant IoT
+Local CA** certificate; server certificates issued to `localhost` or the
+hotspot IP are not that CA. Browser-specific or phone certificate stores may
+use different menus, but the CA must be trusted for identifying websites.
+Never copy `ca.key` or `server.key` to a browser device, and do not bypass
+certificate warnings.
 
 Before first login, create the administrator from a terminal on the laptop:
 

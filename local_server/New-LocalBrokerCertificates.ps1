@@ -49,21 +49,15 @@ elseif ((Test-Path $caKey) -or (Test-Path $caCert) -or (Test-Path $serverKey) -o
     throw "Local broker certificate files already exist. Move or remove only these named local files before regenerating them."
 }
 
-$altNames = @(
-    "[alt_names]",
-    "DNS.1 = $BrokerDnsName"
-)
 $ipAddresses = @($BrokerIpAddress) + $AdditionalIpAddresses | Select-Object -Unique
-for ($index = 0; $index -lt $ipAddresses.Count; $index++) {
-    $altNames += "IP.$($index + 1) = $($ipAddresses[$index])"
-}
+$subjectAltNames = @("DNS:$BrokerDnsName") + @($ipAddresses | ForEach-Object { "IP:$_" })
 
 $extensionLines = @(
     "basicConstraints = critical,CA:FALSE",
     "keyUsage = critical,digitalSignature,keyEncipherment",
     "extendedKeyUsage = serverAuth",
-    "subjectAltName = @alt_names"
-) + $altNames
+    "subjectAltName = $($subjectAltNames -join ',')"
+)
 $extensionText = $extensionLines -join "`r`n"
 Set-Content -Path $extensions -Value $extensionText -Encoding Ascii
 
