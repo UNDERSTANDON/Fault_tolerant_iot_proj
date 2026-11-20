@@ -1,0 +1,22 @@
+LAN dashboard stability test: RECOVERED_WITH_INTERRUPTION_OR_CHECK_FAILURES
+Started: 2026-11-17T06:03:14.419Z
+Finished: 2026-11-17T06:33:14.460Z
+Requested duration (minutes): 30
+Completed full duration: true
+Dashboard HTTPS checks: 179
+Monitoring samples: 178
+Dashboard HTTPS failures: 2
+Bridge-disconnected samples: 6
+Broker-unavailable samples: 7
+Invalid browser token rejected: true
+Authenticated bridge sessions: 5
+Allowed topic confirmed: true
+Bridge reconnects: 10
+Broker connected status observed: true
+ESP32 connectivity-test messages received: 56
+Stale samples after 70s warm-up: 0
+Last monitor error code: websocket_connection_error
+Final bridge/broker/message state healthy: true
+Phone UI state and phone certificate trust are not observable by this laptop-side monitor.
+The test validates only the connectivity-test topic; it does not exercise sensors, commands, or unintended-network isolation.
+CSV report: C:\Users\aheng\AppData\Local\FaultTolerantIoT\test-runs\lan-stability-2026-11-17T06-03-14-419Z.csv

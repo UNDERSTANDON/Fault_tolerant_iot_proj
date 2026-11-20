@@ -24,7 +24,7 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Recent activity</h3>
-          <span className={styles.badgeConfirmed}>Confirmed · Live</span>
+          <span className={styles.badgeConfirmed}>Simulated actions · live MQTT tests</span>
         </div>
 
         <div className={styles.activityList}>
@@ -49,7 +49,7 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
           <div className={styles.titleWithIcon}>
             <ShieldCheck size={18} color="#285640" />
             <h3 className={styles.cardTitle}>
-              {isLocal ? 'Local control stays ready' : 'Local connection first'}
+              {isLocal ? 'Simulated local mode' : 'Local-first demo preview'}
             </h3>
           </div>
         </div>
@@ -64,8 +64,8 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
 
         <p className={styles.cardDesc}>
           {isLocal
-            ? 'Available: lights, fan and sensors over LAN. Paused: remote access and cloud sync.'
-            : 'Lights, fan and sensors connect over LAN. Home control works without Internet.'}
+            ? 'Simulated local mode only. Device controls and room readings are mock data; no hardware commands are connected.'
+            : 'Demo only: device controls and room readings are simulated. The MQTT link carries connectivity-test messages only.'}
         </p>
 
         <div className={styles.cardDivider}></div>

@@ -149,7 +149,7 @@ not the complete smart-home integration.
   `127.0.0.1:1883` observes that separate broker, not the ESP's Docker broker.
   An independent host subscriber pointed at `192.168.137.1:1883` connected to
   Docker and received an ESP test publication; see
-  [esp32-docker-broker-subscriber-2026-11-09.txt](log_evidence/esp32-docker-broker-subscriber-2026-11-09.txt).
+  [esp32-docker-broker-subscriber-2026-11-09.txt](log_evidence/mqtt-connectivity_evidences/esp32-docker-broker-subscriber-2026-11-09.txt).
   This listener is for an isolated demo only; authentication and TLS must be
   configured before using a broker on an untrusted network. The ESP32 must
   join a station network that can route to the Docker host's LAN address;
@@ -169,20 +169,20 @@ not the complete smart-home integration.
   address as the ESP (`192.168.137.1:1883`) received device
   `14c19f3bd6a8`, sequence 79. This is ordinary live delivery, not
   post-interruption evidence. See
-  [esp32-docker-broker-subscriber-2026-11-09.txt](log_evidence/esp32-docker-broker-subscriber-2026-11-09.txt).
+  [esp32-docker-broker-subscriber-2026-11-09.txt](log_evidence/mqtt-connectivity_evidences/esp32-docker-broker-subscriber-2026-11-09.txt).
   A paired post-Wi-Fi-recovery sample was captured at
   08:51:30 local time; see
-  [esp32-mqtt-recovery-serial-live-2026-11-09.txt](log_evidence/esp32-mqtt-recovery-serial-live-2026-11-09.txt)
+  [esp32-mqtt-recovery-serial-live-2026-11-09.txt](log_evidence/mqtt-connectivity_evidences/esp32-mqtt-recovery-serial-live-2026-11-09.txt)
   and
-  [esp32-mqtt-post-reconnect-subscriber-2026-11-09.txt](log_evidence/esp32-mqtt-post-reconnect-subscriber-2026-11-09.txt).
+  [esp32-mqtt-post-reconnect-subscriber-2026-11-09.txt](log_evidence/mqtt-connectivity_evidences/esp32-mqtt-post-reconnect-subscriber-2026-11-09.txt).
   Earlier serial evidence in
-  [esp32-mqtt-serial-log.txt](log_evidence/esp32-mqtt-serial-log.txt) records
+  [esp32-mqtt-serial-log.txt](log_evidence/mqtt-connectivity_evidences/esp32-mqtt-serial-log.txt) records
   Wi-Fi disconnect at 08:42:20, station IP recovery at 08:42:51, and MQTT
   reconnection at 08:43:00.
   The broker-outage serial capture
-  [esp32-broker-outage-serial.txt](log_evidence/esp32-broker-outage-serial.txt)
+  [esp32-broker-outage-serial.txt](log_evidence/mqtt-connectivity_evidences/esp32-broker-outage-serial.txt)
   and independent host subscriber capture
-  [esp32-broker-outage-subscriber-live-2026-11-09.txt](log_evidence/esp32-broker-outage-subscriber-live-2026-11-09.txt)
+  [esp32-broker-outage-subscriber-live-2026-11-09.txt](log_evidence/mqtt-connectivity_evidences/esp32-broker-outage-subscriber-live-2026-11-09.txt)
   provide paired broker-interruption evidence. Subscriber timestamps are UTC
   and converted here to local time. At 10:10:22, the subscriber went offline;
   it received `ECONNREFUSED` from the configured Docker host endpoint at
@@ -198,13 +198,13 @@ not the complete smart-home integration.
   Wi-Fi disconnect starts later at 10:12:31; events after that time are not
   counted as broker-only recovery evidence.
   An earlier attempt
-  [esp32-broker-outage-subscriber.txt](log_evidence/esp32-broker-outage-subscriber.txt)
+  [esp32-broker-outage-subscriber.txt](log_evidence/mqtt-connectivity_evidences/esp32-broker-outage-subscriber.txt)
   was run inside the broker container and also cannot provide post-recovery
   evidence because stopping that container stops its subscriber.
   The earlier standalone publication capture
-  [esp32-mqtt-subscriber-log-2026-11-09.txt](log_evidence/esp32-mqtt-subscriber-log-2026-11-09.txt)
+  [esp32-mqtt-subscriber-log-2026-11-09.txt](log_evidence/mqtt-connectivity_evidences/esp32-mqtt-subscriber-log-2026-11-09.txt)
   is sequence 31 and is not the paired recovery sample. The Docker log
-  [docker-logs-2026-11-09T00-45-36.431Z.csv](log_evidence/docker-logs-2026-11-09T00-45-36.431Z.csv)
+  [docker-logs-2026-11-09T00-45-36.431Z.csv](log_evidence/mqtt-connectivity_evidences/docker-logs-2026-11-09T00-45-36.431Z.csv)
   is separate connection evidence and shows the broker accepting connections
   from `ESP32_3bD6A8`. Mosquitto's info-level log does not include published
   payloads; use the subscriber capture for delivery evidence.

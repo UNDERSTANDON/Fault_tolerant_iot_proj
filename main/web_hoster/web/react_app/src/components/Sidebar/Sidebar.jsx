@@ -1,4 +1,4 @@
-import { Home, MapPin, ChevronDown, LayoutGrid, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, X, LogOut } from 'lucide-react';
+import { Home, MapPin, ChevronDown, LayoutGrid, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, X, LogOut } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({
@@ -10,11 +10,13 @@ export default function Sidebar({
   isMobileOpen,
   onCloseMobile,
   currentUser,
-  onSignOut
+  onSignOut,
+  onManageUsers
 }) {
   const isOverview = activeScreen === 'DASHBOARD' && !selectedRoomId;
   const isConnections = (activeScreen === 'DIAGNOSTICS' || activeScreen === 'LOCAL_FALLBACK' || activeScreen === 'RECOVERY') && !selectedRoomId;
   const isTesting = activeScreen === 'RESEARCH_TEST' && !selectedRoomId;
+  const isVisitor = currentUser?.role === 'visitor';
 
   const handleNavClick = (screenId) => {
     onSelectScreen(screenId);
@@ -76,45 +78,49 @@ export default function Sidebar({
           <span className={styles.sectionHeader}>SPACES & CONTROLS</span>
 
           <nav className={styles.navList}>
-            {/* Overview */}
-            <button
-              type="button"
-              className={`${styles.navItem} ${isOverview ? styles.navItemActive : ''}`}
-              onClick={() => handleNavClick('DASHBOARD')}
-            >
-              <LayoutGrid size={18} />
-              <span>Overview</span>
-            </button>
+            {!isVisitor && (
+              <button
+                type="button"
+                className={`${styles.navItem} ${isOverview ? styles.navItemActive : ''}`}
+                onClick={() => handleNavClick('DASHBOARD')}
+              >
+                <LayoutGrid size={18} />
+                <span>Overview</span>
+              </button>
+            )}
 
-            {/* Living room */}
-            <button
-              type="button"
-              className={`${styles.navItem} ${selectedRoomId === 'living_room' ? styles.navItemActive : ''}`}
-              onClick={() => handleRoomClick('living_room')}
-            >
-              <Sofa size={18} />
-              <span>Living room</span>
-            </button>
+            {!isVisitor && (
+              <button
+                type="button"
+                className={`${styles.navItem} ${selectedRoomId === 'living_room' ? styles.navItemActive : ''}`}
+                onClick={() => handleRoomClick('living_room')}
+              >
+                <Sofa size={18} />
+                <span>Living room</span>
+              </button>
+            )}
 
-            {/* Kitchen */}
-            <button
-              type="button"
-              className={`${styles.navItem} ${selectedRoomId === 'kitchen' ? styles.navItemActive : ''}`}
-              onClick={() => handleRoomClick('kitchen')}
-            >
-              <Utensils size={18} />
-              <span>Kitchen</span>
-            </button>
+            {!isVisitor && (
+              <button
+                type="button"
+                className={`${styles.navItem} ${selectedRoomId === 'kitchen' ? styles.navItemActive : ''}`}
+                onClick={() => handleRoomClick('kitchen')}
+              >
+                <Utensils size={18} />
+                <span>Kitchen</span>
+              </button>
+            )}
 
-            {/* Bedroom */}
-            <button
-              type="button"
-              className={`${styles.navItem} ${selectedRoomId === 'bedroom' ? styles.navItemActive : ''}`}
-              onClick={() => handleRoomClick('bedroom')}
-            >
-              <Bed size={18} />
-              <span>Bedroom</span>
-            </button>
+            {!isVisitor && (
+              <button
+                type="button"
+                className={`${styles.navItem} ${selectedRoomId === 'bedroom' ? styles.navItemActive : ''}`}
+                onClick={() => handleRoomClick('bedroom')}
+              >
+                <Bed size={18} />
+                <span>Bedroom</span>
+              </button>
+            )}
 
             {/* Connections */}
             <button
@@ -127,28 +133,45 @@ export default function Sidebar({
               {currentMode === 'LOCAL' && <span className={styles.localBadge}>LOCAL</span>}
             </button>
 
-            {/* Testing */}
-            <button
-              type="button"
-              className={`${styles.navItem} ${isTesting ? styles.navItemActive : ''}`}
-              onClick={() => handleNavClick('RESEARCH_TEST')}
-            >
-              <FlaskConical size={18} />
-              <span>Testing</span>
-            </button>
+            {!isVisitor && (
+              <button
+                type="button"
+                className={`${styles.navItem} ${isTesting ? styles.navItemActive : ''}`}
+                onClick={() => handleNavClick('RESEARCH_TEST')}
+              >
+                <FlaskConical size={18} />
+                <span>Testing</span>
+              </button>
+            )}
+
+            {currentUser?.role === 'admin' && (
+              <button
+                type="button"
+                className={`${styles.navItem} ${activeScreen === 'USERS' ? styles.navItemActive : ''}`}
+                onClick={() => {
+                  onManageUsers();
+                  if (onCloseMobile) onCloseMobile();
+                }}
+              >
+                <Users size={18} />
+                <span>User accounts</span>
+              </button>
+            )}
           </nav>
         </div>
 
         {/* 4. Always Close To Home Card */}
-        <div className={styles.infoCard}>
+        {!isVisitor && (
+          <div className={styles.infoCard}>
           <div className={styles.infoIconCircle}>
             <ShieldCheck size={18} color="#285640" />
           </div>
           <h4 className={styles.infoTitle}>Always close to home.</h4>
           <p className={styles.infoText}>
-            Local control stays available without Internet.
+            Demo interface only; live device control and network failover are not connected.
           </p>
-        </div>
+          </div>
+        )}
 
         {/* 5. User Account & Sign Out */}
         {currentUser && (

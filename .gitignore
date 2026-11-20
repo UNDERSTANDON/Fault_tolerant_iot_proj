@@ -12,3 +12,11 @@
 /managed_components/
 /main/output/
 /ESP_specs.txt
+/.env
+**/.env
+*.pem
+**/node_modules/
+/local_server/mosquitto/secrets/
+/local_server/mosquitto/private/
+/local_server/mosquitto/data/
+*.key

@@ -222,8 +222,8 @@
   color: var(--text-muted);
 }
 
-.consoleResult {
-  color: var(--state-normal);
+.bridgeError {
+  color: var(--state-unavailable);
   font-weight: 700;
 }
 

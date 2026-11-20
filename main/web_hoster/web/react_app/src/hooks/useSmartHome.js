@@ -1,32 +1,296 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { INITIAL_ROOMS_DATA, INITIAL_NETWORK_STATE, NETWORK_MODES } from '../data/initialMockData';
 
+const TEST_TOPIC = 'demo/esp32-mqtt-connectivity/test';
+const TEST_MESSAGE_STALE_AFTER_MS = 70000;
+
+function getBridgeSecurityMode(url) {
+  if (!url) {
+    return { isRemote: false, usesTls: false };
+  }
+
+  try {
+    const parsedUrl = new URL(url, window.location.href);
+    const host = parsedUrl.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+    const isLoopback = host === 'localhost'
+      || host === '::1'
+      || /^127(?:\.\d{1,3}){3}$/.test(host);
+    return { isRemote: !isLoopback, usesTls: parsedUrl.protocol === 'wss:' };
+  } catch {
+    return { isRemote: true, usesTls: false };
+  }
+}
+
+function isConnectivityTestPayload(topic, payload) {
+  return topic === TEST_TOPIC
+    && payload !== null
+    && typeof payload === 'object'
+    && !Array.isArray(payload)
+    && payload.schema_version === 1
+    && payload.kind === 'connectivity_test'
+    && typeof payload.device_id === 'string'
+    && /^[0-9a-f]{12}$/i.test(payload.device_id)
+    && Number.isSafeInteger(payload.sequence)
+    && payload.sequence > 0;
+}
+
 export function useSmartHome() {
+  const localBridgeUrl = import.meta.env.VITE_LAN_BRIDGE_URL || '';
+  const bridgeSecurity = getBridgeSecurityMode(localBridgeUrl);
   const [rooms, setRooms] = useState(INITIAL_ROOMS_DATA);
   const [networkState, setNetworkState] = useState(INITIAL_NETWORK_STATE);
+  const [bridgeConnectAttempt, setBridgeConnectAttempt] = useState(0);
+  const [bridgeState, setBridgeState] = useState({
+    status: !localBridgeUrl ? 'not-configured' : 'connecting',
+    lastMessageAt: null,
+    lastMessage: null,
+    messageStale: false,
+    requiresAuthentication: false,
+    error: !localBridgeUrl ? 'Local MQTT bridge is not configured.' : null
+  });
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [isSmokeAlert, setIsSmokeAlert] = useState(false);
+
+  const connectBridge = useCallback(() => {
+    setBridgeConnectAttempt((attempt) => attempt + 1);
+    setBridgeState((current) => ({
+      ...current,
+      status: 'connecting',
+      error: null
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (!localBridgeUrl) {
+      return undefined;
+    }
+
+    if (bridgeSecurity.isRemote && !bridgeSecurity.usesTls) {
+      setBridgeState((current) => ({
+        ...current,
+        status: 'unavailable',
+        error: 'Remote dashboard connections require a WSS bridge URL.'
+      }));
+      return undefined;
+    }
+
+    let socket;
+    let isActive = true;
+    let reconnectTimer;
+    let reconnectAttempt = 0;
+    let authenticationRejected = false;
+
+    const scheduleReconnect = () => {
+      if (!isActive || reconnectTimer) {
+        return;
+      }
+
+      const delay = Math.min(1000 * (2 ** reconnectAttempt), 5000);
+      reconnectAttempt += 1;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = undefined;
+        openSocket();
+      }, delay);
+    };
+
+    const openSocket = () => {
+      try {
+        socket = new WebSocket(localBridgeUrl);
+      } catch {
+        setBridgeState((current) => ({
+          ...current,
+          status: 'unavailable',
+          error: 'Could not open the local bridge connection; check its URL and browser WebSocket support.'
+        }));
+        return;
+      }
+
+      socket.addEventListener('open', () => {
+        if (!isActive) {
+          return;
+        }
+
+        reconnectAttempt = 0;
+        setBridgeState((current) => ({
+          ...current,
+          status: 'connecting',
+          error: null
+        }));
+        socket.send(JSON.stringify({ type: 'subscribe', topics: [TEST_TOPIC] }));
+      });
+
+      socket.addEventListener('message', (event) => {
+        if (!isActive) {
+          return;
+        }
+
+        try {
+          const message = JSON.parse(event.data);
+
+          if (message.type === 'authenticated') {
+            socket.send(JSON.stringify({ type: 'subscribe', topics: [TEST_TOPIC] }));
+            return;
+          }
+
+          if (message.type === 'authentication-error') {
+            authenticationRejected = true;
+            setBridgeState((current) => ({
+              ...current,
+              status: 'unauthorized',
+              error: 'Bridge authentication failed. Sign in to the local dashboard again and retry.'
+            }));
+            socket.close();
+            return;
+          }
+
+          if (message.type === 'status') {
+            if (!['connected', 'reconnecting', 'unavailable'].includes(message.state)) {
+              setBridgeState((current) => ({
+                ...current,
+                error: 'The local bridge returned an unrecognized connection status.'
+              }));
+              return;
+            }
+
+            setBridgeState((current) => ({
+              ...current,
+              status: message.state,
+              error: message.state === 'unavailable'
+                ? 'The local bridge cannot reach the MQTT broker.'
+                : null
+            }));
+            return;
+          }
+
+          if (message.type === 'mqtt-message') {
+            if (!isConnectivityTestPayload(message.topic, message.payload)) {
+              setBridgeState((current) => ({
+                ...current,
+                error: 'The bridge received an invalid or unexpected MQTT test message.'
+              }));
+              return;
+            }
+
+            const receivedAt = new Date().toISOString();
+            setBridgeState((current) => ({
+              ...current,
+              status: 'connected',
+              lastMessageAt: receivedAt,
+              lastMessage: message.payload,
+              messageStale: false,
+              error: null
+            }));
+            setRecentActivity((previous) => [
+              {
+                id: `bridge-${Date.now()}`,
+                title: 'ESP32 connectivity test received',
+                sub: `Test data · sequence ${message.payload.sequence} · not an acknowledgement`,
+                time: new Date(receivedAt).toLocaleTimeString('en-US'),
+                type: 'network'
+              },
+              ...previous.slice(0, 5)
+            ]);
+            return;
+          }
+
+          if (message.type === 'error') {
+            setBridgeState((current) => ({
+              ...current,
+              error: 'The local bridge rejected a browser message.'
+            }));
+            return;
+          }
+
+          setBridgeState((current) => ({
+            ...current,
+            error: 'The local bridge returned an unsupported message.'
+          }));
+        } catch (error) {
+          setBridgeState((current) => ({
+            ...current,
+            error: 'The local bridge returned malformed data.'
+          }));
+        }
+      });
+
+      socket.addEventListener('close', () => {
+        if (!isActive) {
+          return;
+        }
+
+        if (authenticationRejected) {
+          return;
+        }
+
+        setBridgeState((current) => ({
+          ...current,
+          status: 'reconnecting',
+          error: 'Connection to the local bridge was lost; retrying.'
+        }));
+        scheduleReconnect();
+      });
+
+      socket.addEventListener('error', () => {
+        if (!isActive) {
+          return;
+        }
+
+        setBridgeState((current) => ({
+          ...current,
+          status: 'reconnecting',
+          error: 'Unable to reach the local bridge; retrying.'
+        }));
+        socket.close();
+      });
+    };
+
+    openSocket();
+
+    return () => {
+      isActive = false;
+      clearTimeout(reconnectTimer);
+      if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+        socket.close();
+      }
+    };
+  }, [bridgeConnectAttempt, bridgeSecurity.isRemote, bridgeSecurity.usesTls, localBridgeUrl]);
+
+  useEffect(() => {
+    if (!bridgeState.lastMessageAt || bridgeState.messageStale) {
+      return undefined;
+    }
+
+    const elapsed = Date.now() - new Date(bridgeState.lastMessageAt).getTime();
+    const staleDelay = Math.max(0, TEST_MESSAGE_STALE_AFTER_MS - elapsed);
+    const timer = setTimeout(() => {
+      setBridgeState((current) => current.lastMessageAt === bridgeState.lastMessageAt
+        ? { ...current, messageStale: true }
+        : current);
+    }, staleDelay);
+
+    return () => clearTimeout(timer);
+  }, [bridgeState.lastMessageAt, bridgeState.messageStale]);
 
   // Bug 5 Fix: Dynamic Recent Activity List
   const [recentActivity, setRecentActivity] = useState([
     {
       id: 'act-1',
-      title: 'Living room light turned on',
-      sub: 'ACK received · ON',
+      title: 'Simulated living room light toggle',
+      sub: 'Demo only · no device command sent',
       time: '10:23:42',
       type: 'light'
     },
     {
       id: 'act-2',
-      title: 'Living room fan turned off',
-      sub: 'ACK received · OFF',
+      title: 'Simulated living room fan toggle',
+      sub: 'Demo only · no device command sent',
       time: '10:23:10',
       type: 'fan'
     },
     {
       id: 'act-3',
-      title: 'Local connection stable',
-      sub: 'NORMAL · All devices ready',
+      title: 'Simulated network status',
+      sub: 'Demo state · not a live network measurement',
       time: '10:22:05',
       type: 'network'
     }
@@ -34,18 +298,18 @@ export function useSmartHome() {
 
   // Bug 3 Fix: Dynamic Research Experiment History
   const [experimentLogs, setExperimentLogs] = useState([
-    { id: 'EXP-101', time: '10:20:10', test: 'T1: Normal Baseline', internet: 'ON', lan: 'ON', expected: 'NORMAL', measured: '18 ms', result: 'PASS' },
-    { id: 'EXP-102', time: '10:21:40', test: 'T2: Internet Partition', internet: 'OFF', lan: 'ON', expected: 'LOCAL', measured: '320 ms', result: 'PASS' },
-    { id: 'EXP-103', time: '10:22:05', test: 'T3: LAN Router Failure', internet: 'OFF', lan: 'OFF', expected: 'UNAVAILABLE', measured: '12 ms', result: 'PASS' },
-    { id: 'EXP-104', time: '10:23:15', test: 'T4: Carrier Recovery', internet: 'RESTORED', lan: 'ON', expected: 'NORMAL', measured: '780 ms', result: 'PASS' }
+    { id: 'EXP-101', time: '10:20:10', test: 'SIMULATED: Normal Baseline', internet: 'ON', lan: 'ON', expected: 'NORMAL', measured: '18 ms', result: 'SIMULATED' },
+    { id: 'EXP-102', time: '10:21:40', test: 'SIMULATED: Internet Partition', internet: 'OFF', lan: 'ON', expected: 'LOCAL', measured: '320 ms', result: 'SIMULATED' },
+    { id: 'EXP-103', time: '10:22:05', test: 'SIMULATED: LAN Router Failure', internet: 'OFF', lan: 'OFF', expected: 'UNAVAILABLE', measured: '12 ms', result: 'SIMULATED' },
+    { id: 'EXP-104', time: '10:23:15', test: 'SIMULATED: Recovery', internet: 'RESTORED', lan: 'ON', expected: 'NORMAL', measured: '780 ms', result: 'SIMULATED' }
   ]);
 
   const [notifications, setNotifications] = useState([
     {
       id: 'init-1',
       type: 'info',
-      title: 'Smart Home System Ready',
-      message: '4 domestic zones initialized and operating in Normal Mode.',
+      title: 'Demo dashboard ready',
+      message: 'Room and device values are simulated. MQTT connectivity-test messages appear only when the local bridge is configured.',
       time: new Date().toLocaleTimeString('en-US')
     }
   ]);
@@ -53,8 +317,7 @@ export function useSmartHome() {
   const [metrics, setMetrics] = useState({
     fallbackTimeMs: 0,
     avgResponseTimeMs: 24,
-    commandsTotal: 0,
-    commandsSuccess: 0
+    commandsTotal: 0
   });
 
   const transitionTimerRef = useRef(null);
@@ -118,7 +381,7 @@ export function useSmartHome() {
     }, 4500);
   }, []);
 
-  // Toggle Smoke Hazard Alarm
+  // Toggle the simulated smoke-alert display.
   const toggleSmokeAlarm = useCallback((triggerAlert) => {
     setIsSmokeAlert(triggerAlert);
     const nowTime = new Date().toLocaleTimeString('en-US');
@@ -143,8 +406,8 @@ export function useSmartHome() {
     setRecentActivity((prev) => [
       {
         id: `act-${Date.now()}`,
-        title: triggerAlert ? 'Smoke Hazard Alarm Triggered' : 'Smoke Alarm Reset to Normal',
-        sub: triggerAlert ? 'ALERT · Particulate detected' : 'NORMAL · Air clear',
+        title: triggerAlert ? 'Simulated smoke alert' : 'Simulated smoke state cleared',
+        sub: 'Demo only · no physical sensor or safety action',
         time: nowTime,
         type: 'network'
       },
@@ -153,20 +416,20 @@ export function useSmartHome() {
 
     if (triggerAlert) {
       addNotification({
-        type: 'error',
-        title: 'CRITICAL HAZARD: Smoke Detected!',
-        message: 'Kitchen and Living Room MQ-2 sensors detected smoke particulates. Automated safety alert engaged.'
+        type: 'warning',
+        title: 'Simulated smoke alert',
+        message: 'Demo only: no physical smoke sensor was read and no safety action was triggered.'
       });
     } else {
       addNotification({
-        type: 'success',
-        title: 'Hazard Cleared: Normal Air Quality',
-        message: 'Smoke particulate levels returned to safe atmospheric limits.'
+        type: 'info',
+        title: 'Simulated smoke state cleared',
+        message: 'Demo only: this does not report real air quality or a physical sensor state.'
       });
     }
   }, [addNotification]);
 
-  // Handle device toggle command
+  // Simulate a device-state toggle without sending a hardware command.
   const toggleDevice = useCallback((deviceId, targetState) => {
     const startTime = performance.now();
     const nowTime = new Date().toLocaleTimeString('en-US');
@@ -179,8 +442,8 @@ export function useSmartHome() {
       }));
       addNotification({
         type: 'error',
-        title: 'Command Execution Rejected',
-        message: 'System is UNAVAILABLE. Local LAN and ESP32 Gateway are unreachable.'
+        title: 'Demo toggle paused',
+        message: 'The simulated scenario is unavailable. No live network check or device command was attempted.'
       });
       return false;
     }
@@ -210,15 +473,12 @@ export function useSmartHome() {
 
     const elapsed = Math.round(performance.now() - startTime + (networkState.mode === 'LOCAL' ? 12 : 25));
 
-    // Update research metrics
     setMetrics((prev) => {
       const newTotal = prev.commandsTotal + 1;
-      const newSuccess = prev.commandsSuccess + 1;
       const newAvg = Math.round((prev.avgResponseTimeMs * prev.commandsTotal + elapsed) / newTotal);
       return {
         ...prev,
         commandsTotal: newTotal,
-        commandsSuccess: newSuccess,
         avgResponseTimeMs: newAvg
       };
     });
@@ -229,30 +489,26 @@ export function useSmartHome() {
     }));
 
     const stateAction = isLockType
-      ? (targetState ? 'Unlocked' : 'Locked')
-      : (targetState ? 'turned ON' : 'turned OFF');
-    const routeName = networkState.mode === 'LOCAL' ? 'via Local LAN' : 'via Cloud/Internet';
+      ? (targetState ? 'Unlock' : 'Lock')
+      : (targetState ? 'Turn on' : 'Turn off');
 
     // Bug 5 Fix: Add to dynamic Recent Activity
     setRecentActivity((prev) => [
       {
         id: `act-${Date.now()}`,
-        title: `${changedDeviceName || 'Device'} ${stateAction}`,
-        sub: `ACK received · ${isLockType ? (targetState ? 'UNLOCKED' : 'LOCKED') : (targetState ? 'ON' : 'OFF')} (${networkState.mode})`,
+        title: `Simulated ${stateAction.toLowerCase()}: ${changedDeviceName || 'device'}`,
+        sub: 'Demo only · no device command sent',
         time: nowTime,
         type: deviceType
       },
       ...prev.slice(0, 5)
     ]);
 
-    // Trigger success notification
     addNotification({
-      type: 'success',
-      title: `Command Executed (${routeName})`,
-      message: `Successfully ${stateAction} ${changedDeviceName || 'device'}.`
+      type: 'info',
+      title: 'Demo state changed (simulation)',
+      message: `Updated the mock state for ${changedDeviceName || 'device'} only. No command was sent to the ESP32 or hardware.`
     });
-
-    return true;
   }, [networkState.mode, addNotification]);
 
   // Simulate network fault scenarios
@@ -275,8 +531,8 @@ export function useSmartHome() {
 
       addNotification({
         type: 'warning',
-        title: 'Internet Disconnection Detected',
-        message: 'Establishing failover routing to Local Area Network (LAN)...'
+        title: 'Simulated internet outage',
+        message: 'Changing the demo network state only; no live network check or route change is performed.'
       });
 
       // Step 2: After 400ms route resolved -> LOCAL MODE
@@ -302,8 +558,8 @@ export function useSmartHome() {
         setRecentActivity((prev) => [
           {
             id: `act-${Date.now()}`,
-            title: 'Switched to local control',
-            sub: 'LOCAL · LAN & MQTT available',
+            title: 'Simulated local mode',
+            sub: 'Demo state only · LAN and MQTT availability not implied',
             time: resolvedTime,
             type: 'network'
           },
@@ -315,29 +571,28 @@ export function useSmartHome() {
           {
             id: `EXP-${Date.now().toString().slice(-4)}`,
             time: resolvedTime,
-            test: 'T2: Internet Partition',
+            test: 'SIMULATED: Internet Partition',
             internet: 'OFF',
             lan: 'ON',
             expected: 'LOCAL',
             measured: `${fallbackDuration} ms`,
-            result: 'PASS'
+            result: 'SIMULATED'
           },
           ...prev
         ]);
 
         addNotification({
-          type: 'warning',
-          title: 'LOCAL MODE ACTIVATED (Fallback Mode)',
-          message: `Failover completed in ${fallbackDuration}ms. Local domestic switches are fully operational!`
+          type: 'info',
+          title: 'Simulated local mode',
+          message: `The demo transition took ${fallbackDuration}ms; no network failover or device control was tested.`
         });
       }, 400);
     } else if (faultType === 'LAN_DOWN') {
-      // Full LAN failure -> UNAVAILABLE
+      // Simulated full network failure.
       setNetworkState({
         mode: NETWORK_MODES.UNAVAILABLE,
         internet: false,
         localLan: false,
-        mqttBroker: false,
         latencyMs: 0,
         lastUpdated: nowTime
       });
@@ -347,12 +602,12 @@ export function useSmartHome() {
         {
           id: `EXP-${Date.now().toString().slice(-4)}`,
           time: nowTime,
-          test: 'T3: Total Network Outage',
+          test: 'SIMULATED: Total Network Outage',
           internet: 'OFF',
           lan: 'OFF',
           expected: 'UNAVAILABLE',
           measured: '12 ms',
-          result: 'PASS'
+          result: 'SIMULATED'
         },
         ...prev
       ]);
@@ -361,8 +616,8 @@ export function useSmartHome() {
       setRecentActivity((prev) => [
         {
           id: `act-${Date.now()}`,
-          title: 'Complete Network Outage',
-          sub: 'UNAVAILABLE · Controls locked',
+          title: 'Simulated network outage',
+          sub: 'Demo controls paused · no live reachability check',
           time: nowTime,
           type: 'network'
         },
@@ -371,8 +626,8 @@ export function useSmartHome() {
 
       addNotification({
         type: 'error',
-        title: 'COMPLETE NETWORK OUTAGE',
-        message: 'Both Local LAN and ESP32 Gateway are unreachable. Controls are locked temporarily.'
+        title: 'Simulated network outage',
+        message: 'Demo controls are paused. Live ESP32 and LAN availability are not known.'
       });
     } else if (faultType === 'SIMULATE_RECOVERY') {
       // Step 1: RECONNECTING
@@ -385,8 +640,8 @@ export function useSmartHome() {
 
       addNotification({
         type: 'info',
-        title: 'Internet Connection Re-acquired',
-        message: 'Synchronizing local telemetry buffers with cloud server...'
+        title: 'Simulated recovery started',
+        message: 'This demo does not connect to a cloud service or replay telemetry.'
       });
 
       // Step 2: After 800ms restored to NORMAL
@@ -396,7 +651,6 @@ export function useSmartHome() {
           mode: NETWORK_MODES.NORMAL,
           internet: true,
           localLan: true,
-          mqttBroker: true,
           latencyMs: 22,
           lastUpdated: recoveredTime
         });
@@ -406,12 +660,12 @@ export function useSmartHome() {
           {
             id: `EXP-${Date.now().toString().slice(-4)}`,
             time: recoveredTime,
-            test: 'T4: Carrier Recovery & Sync',
+            test: 'SIMULATED: Carrier Recovery',
             internet: 'RESTORED',
             lan: 'ON',
             expected: 'NORMAL',
             measured: '790 ms',
-            result: 'PASS'
+            result: 'SIMULATED'
           },
           ...prev
         ]);
@@ -420,8 +674,8 @@ export function useSmartHome() {
         setRecentActivity((prev) => [
           {
             id: `act-${Date.now()}`,
-            title: 'Cloud connection restored',
-            sub: 'NORMAL · Synchronized with broker',
+            title: 'Simulated recovery complete',
+            sub: 'Demo state only · no cloud or broker sync performed',
             time: recoveredTime,
             type: 'network'
           },
@@ -429,9 +683,9 @@ export function useSmartHome() {
         ]);
 
         addNotification({
-          type: 'success',
-          title: 'NORMAL MODE RESTORED',
-          message: 'Cloud connection re-established. Domestic telemetry fully synchronized.'
+          type: 'info',
+          title: 'Simulated recovery complete',
+          message: 'The demo state was reset; no cloud connection or telemetry synchronization occurred.'
         });
       }, 800);
     }
@@ -451,12 +705,12 @@ export function useSmartHome() {
       {
         id: `EXP-${Date.now().toString().slice(-4)}`,
         time: nowTime,
-        test: 'T1: Normal Baseline Engaged',
+        test: 'SIMULATED: Normal Baseline',
         internet: 'ON',
         lan: 'ON',
         expected: 'NORMAL',
         measured: '18 ms',
-        result: 'PASS'
+        result: 'SIMULATED'
       },
       ...prev
     ]);
@@ -465,8 +719,8 @@ export function useSmartHome() {
     setRecentActivity((prev) => [
       {
         id: `act-${Date.now()}`,
-        title: 'Reset to Normal baseline',
-        sub: 'NORMAL · Dual-path active',
+        title: 'Simulated baseline restored',
+        sub: 'Demo state only · live network state unchanged',
         time: nowTime,
         type: 'network'
       },
@@ -474,15 +728,17 @@ export function useSmartHome() {
     ]);
 
     addNotification({
-      type: 'success',
-      title: 'Normal Mode Restored',
-      message: 'Internet, Local LAN, and all connected devices are fully online.'
+      type: 'info',
+      title: 'Simulated baseline restored',
+      message: 'Demo network state reset. Live internet, LAN, and device states were not checked.'
     });
   }, [addNotification]);
 
   return {
     rooms,
     networkState,
+    bridgeState,
+    connectBridge,
     metrics,
     selectedRoomId,
     setSelectedRoomId,

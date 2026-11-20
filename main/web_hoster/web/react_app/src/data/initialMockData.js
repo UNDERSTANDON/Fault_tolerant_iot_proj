@@ -18,7 +18,7 @@ export const INITIAL_ROOMS_DATA = [
   {
     id: 'living_room',
     name: 'Living Room',
-    description: 'Central hub & ESP32 AP Gateway',
+    description: 'ESP32 demo host; no device API connected',
     devices: [
       { id: 'living_light', name: 'Ceiling Light', type: 'light', state: true, available: true },
       { id: 'living_fan', name: 'Ventilation Fan', type: 'fan', state: false, available: true }
@@ -26,7 +26,7 @@ export const INITIAL_ROOMS_DATA = [
     sensors: [
       { id: 'living_temp', name: 'Ambient Temp', value: 28.4, unit: '°C', type: 'temperature' },
       { id: 'living_smoke', name: 'Smoke Detector', value: 'Clear', type: 'smoke', status: 'NORMAL' },
-      { id: 'living_ap', name: 'ESP32 AP Gateway', value: 'Active', type: 'gateway', status: 'ONLINE' }
+      { id: 'living_ap', name: 'ESP32 demo host', value: 'Simulated', type: 'gateway', status: 'SIMULATED' }
     ]
   },
   {
@@ -68,7 +68,6 @@ export const INITIAL_NETWORK_STATE = {
   mode: NETWORK_MODES.NORMAL,
   internet: true,
   localLan: true,
-  mqttBroker: true,
   latencyMs: 18,
   lastUpdated: new Date().toLocaleTimeString('en-US')
 };

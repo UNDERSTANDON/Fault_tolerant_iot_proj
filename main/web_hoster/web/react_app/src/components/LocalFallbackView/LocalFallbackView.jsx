@@ -1,4 +1,4 @@
-import { ArrowLeft, ShieldAlert, CheckCircle2, WifiOff, HardDrive, Cpu, Power } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, WifiOff, HardDrive, Cpu, Power } from 'lucide-react';
 import styles from './LocalFallbackView.module.css';
 
 export default function LocalFallbackView({ networkState, rooms, onToggleDevice, onBackToDashboard }) {
@@ -20,13 +20,13 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
           <ArrowLeft size={18} />
           <span>Back to Dashboard</span>
         </button>
-        <div className={styles.screenTag}>Screen S4: Local Fallback Monitor</div>
+        <div className={styles.screenTag}>Simulated local fallback</div>
       </div>
 
       <div className={styles.titleSection}>
-        <h2 className={styles.title}>Autonomous Local Fallback Architecture</h2>
+        <h2 className={styles.title}>Local fallback demo scenario</h2>
         <p className={styles.subtitle}>
-          Core research implementation for Topic 6.1: Zero-cloud domestic resilience under network partitioning.
+          This screen changes simulated UI state only. It does not test network failover or connect to devices.
         </p>
       </div>
 
@@ -39,14 +39,14 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
           <div>
             <div className={styles.heroTitleRow}>
               <h3 className={styles.heroTitle}>
-                {isLocalActive ? 'LOCAL FALLBACK MODE IS CURRENTLY ENGAGED' : 'LOCAL FALLBACK SUBSYSTEM STANDBY'}
+                {isLocalActive ? 'SIMULATED LOCAL MODE' : 'SIMULATED BASELINE'}
               </h3>
-              <span className={styles.heroBadge}>{isLocalActive ? 'ENGAGED' : 'MONITORING'}</span>
+              <span className={styles.heroBadge}>DEMO ONLY</span>
             </div>
             <p className={styles.heroDesc}>
               {isLocalActive
-                ? 'External Internet path is severed. The interface has seamlessly switched routing to the domestic ESP32 Gateway. Commands execute via Local LAN with sub-20ms latency.'
-                : 'Full Internet is currently active. The local fallback watchdog continually polls Gateway 192.168.1.1, prepared to engage instant failover within 400ms of any cloud disconnection.'}
+                ? 'The dashboard is showing its local-mode scenario. No internet path was severed, no ESP32 route was tested, and no device commands are available.'
+                : 'The displayed baseline is simulated. No watchdog, gateway polling, or automatic failover is implemented here.'}
             </p>
           </div>
         </div>
@@ -58,7 +58,7 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
           <HardDrive size={22} className={styles.pillarIcon} />
           <h4 className={styles.pillarTitle}>1. Local State Cache</h4>
           <p className={styles.pillarText}>
-            Device states and room configurations are cached in client memory and ESP32 non-volatile storage, preventing state loss during outages.
+            Persistent device-state caching is planned but not implemented. Values on this screen are mock data.
           </p>
         </div>
 
@@ -66,7 +66,7 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
           <Cpu size={22} className={styles.pillarIcon} />
           <h4 className={styles.pillarTitle}>2. P2P Gateway Protocol</h4>
           <p className={styles.pillarText}>
-            Direct WebSocket communication between the React web interface and ESP32 access point bypasses public DNS and external CDNs.
+            A React-to-ESP32 device API is not connected. The only live integration currently shown is the MQTT connectivity-test path.
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
           <CheckCircle2 size={22} className={styles.pillarIcon} />
           <h4 className={styles.pillarTitle}>3. Non-Blocking UX</h4>
           <p className={styles.pillarText}>
-            Adheres to UI_RULES Article 8: Domestic switches and controls are never greyed out or locked while the Local LAN remains reachable.
+            Demo controls only change mock state. Hardware command acknowledgements and safety behavior are not implemented.
           </p>
         </div>
       </div>
@@ -82,8 +82,8 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
       {/* Local Reachability Matrix & Direct Controls */}
       <div className={styles.matrixCard}>
         <div className={styles.matrixHeader}>
-          <h3 className={styles.matrixTitle}>Domestic LAN Device Reachability Matrix</h3>
-          <span className={styles.matrixCount}>{allDevices.length} Local Endpoints Verified</span>
+          <h3 className={styles.matrixTitle}>Simulated device-state list</h3>
+          <span className={styles.matrixCount}>No device endpoints verified</span>
         </div>
 
         <div className={styles.tableWrapper}>
@@ -94,8 +94,8 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
                 <th>Monitored Zone</th>
                 <th>Type</th>
                 <th>Current State</th>
-                <th>LAN Path</th>
-                <th>Direct Control</th>
+                <th>Hardware connection</th>
+                <th>Demo action</th>
               </tr>
             </thead>
             <tbody>
@@ -114,14 +114,11 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
                     </td>
                     <td>
                       <span className={`${styles.stateBadge} ${isOn ? styles.stateOn : styles.stateOff}`}>
-                        {device.type === 'lock' ? (isOn ? 'Unlocked' : 'Locked') : (isOn ? 'ON' : 'OFF')}
+                        SIM {device.type === 'lock' ? (isOn ? 'Unlocked' : 'Locked') : (isOn ? 'ON' : 'OFF')}
                       </span>
                     </td>
                     <td>
-                      <span className={styles.routeTag}>
-                        <CheckCircle2 size={12} color="#10b981" />
-                        <code>ws://192.168.1.1/{device.id}</code>
-                      </span>
+                      <span className={styles.naText}>Not connected</span>
                     </td>
                     <td>
                       {isSwitchable ? (
@@ -129,10 +126,10 @@ export default function LocalFallbackView({ networkState, rooms, onToggleDevice,
                           type="button"
                           className={`${styles.quickToggleBtn} ${isOn ? styles.btnOn : styles.btnOff}`}
                           onClick={() => onToggleDevice(device.id, !isOn)}
-                          title={`Toggle ${device.name}`}
+                          title={`Demo only: simulate ${device.name}; no hardware command is sent`}
                         >
                           <Power size={13} />
-                          <span>{isOn ? 'Turn OFF' : 'Turn ON'}</span>
+                          <span>Simulate {isOn ? 'OFF' : 'ON'}</span>
                         </button>
                       ) : (
                         <span className={styles.naText}>Telemetry only</span>

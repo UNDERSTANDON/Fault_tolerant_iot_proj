@@ -34,7 +34,7 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
           </div>
           <div className={styles.headerText}>
             <h3 className={styles.roomName}>{name}</h3>
-            <span className={styles.roomSub}>Devices available</span>
+            <span className={styles.roomSub}>Demo device state</span>
           </div>
         </div>
 
@@ -58,8 +58,8 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
             <span className={styles.tempUnit}>{tempSensor.unit}</span>
           </div>
           <div className={styles.tempRight}>
-            <span className={styles.tempLabel}>Room temperature</span>
-            <span className={styles.tempTime}>10:24:00</span>
+            <span className={styles.tempLabel}>Simulated room temperature</span>
+            <span className={styles.tempTime}>Not a live reading</span>
           </div>
         </div>
       ) : (
@@ -68,8 +68,8 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
             <span className={styles.tempNum}>Zone</span>
           </div>
           <div className={styles.tempRight}>
-            <span className={styles.tempLabel}>Entrance Gateway</span>
-            <span className={styles.tempTime}>Active</span>
+            <span className={styles.tempLabel}>Entrance status</span>
+            <span className={styles.tempTime}>Simulated</span>
           </div>
         </div>
       )}
@@ -80,18 +80,18 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
           isSmokeAlert ? (
             <>
               <Flame size={15} className={styles.iconAlert} />
-              <span>Smoke alert · Critical hazard detected!</span>
+              <span>Simulated smoke alert · not a sensor reading</span>
             </>
           ) : (
             <>
               <ShieldCheck size={15} className={styles.iconNormal} />
-              <span>Smoke normal · No smoke detected</span>
+              <span>Simulated smoke status · not a sensor reading</span>
             </>
           )
         ) : (
           <>
             <ShieldCheck size={15} className={styles.iconNormal} />
-            <span>Zone perimeter · NFC & UPS active</span>
+            <span>Perimeter status · NFC & UPS not connected</span>
           </>
         )}
       </div>
@@ -112,7 +112,7 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
 
       {/* 5. Footer Note */}
       <div className={styles.cardFooter}>
-        <span>Device-confirmed state. Control over the local network.</span>
+        <span>Demo only: simulated devices and sensor values; not connected to hardware.</span>
       </div>
     </div>
   );

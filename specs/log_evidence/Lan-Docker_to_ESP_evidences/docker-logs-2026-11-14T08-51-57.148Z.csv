@@ -1,0 +1,638 @@
+﻿timestamp,object,message
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Info: running mosquitto as user: mosquitto.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: mosquitto version 2.1.2 starting
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Config loaded from /mosquitto/config/mosquitto.conf.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Bridge support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Persistence support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: TLS support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: TLS-PSK support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Websockets support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Opening ipv4 listen socket on port 1883.
+2026-11-09T02:55:07.555Z,eloquent_moser,1794192907: Opening ipv6 listen socket on port 1883.
+2026-11-09T02:55:07.559Z,eloquent_moser,1794192907: Opening http api listen socket on port 9883.
+2026-11-09T02:55:07.559Z,eloquent_moser,1794192907: Using http_dir /usr/share/mosquitto/dashboard/
+2026-11-09T02:55:07.559Z,eloquent_moser,1794192907: mosquitto version 2.1.2 running
+2026-11-09T02:55:14.201Z,eloquent_moser,1794192914: mosquitto version 2.1.2 terminating
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Info: running mosquitto as user: mosquitto.
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 base messages
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 retained messages
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 clients
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 subscriptions
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 client messages
+2026-11-13T07:26:58.594Z,local_server/mosquitto,1794554818: New connection from 172.18.0.1:58964 on port 8883.
+2026-11-13T07:26:58.594Z,local_server/mosquitto,1794554818: New connection from 172.18.0.1:51784 on port 8084.
+2026-11-13T07:26:58.594Z,local_server/mosquitto,1794554818: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:26:58.594Z,local_server/mosquitto,1794554818: Client 172.18.0.1 [172.18.0.1:58964] disconnected: Protocol error.
+2026-11-13T07:26:58.595Z,local_server/mosquitto,1794554818: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:26:58.595Z,local_server/mosquitto,1794554818: Client 172.18.0.1 [172.18.0.1:51784] disconnected: Protocol error.
+2026-11-13T07:27:01.863Z,local_server/mosquitto,1794554821: New connection from 172.18.0.1:58968 on port 8883.
+2026-11-13T07:27:01.868Z,local_server/mosquitto,1794554821: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:27:01.868Z,local_server/mosquitto,1794554821: Client 172.18.0.1 [172.18.0.1:58968] disconnected: Protocol error.
+2026-11-13T07:27:01.877Z,local_server/mosquitto,1794554821: New connection from 172.18.0.1:51792 on port 8084.
+2026-11-13T07:27:01.877Z,local_server/mosquitto,1794554821: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:27:01.877Z,local_server/mosquitto,1794554821: Client 172.18.0.1 [172.18.0.1:51792] disconnected: Protocol error.
+2026-11-13T07:36:05.289Z,local_server/mosquitto,1794555365: New connection from 172.18.0.1:58420 on port 8883.
+2026-11-13T07:36:06.000Z,local_server/mosquitto,"1794555365: New client connected from 172.18.0.1:58420 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:36:06.000Z,local_server/mosquitto,1794555365: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-13T07:36:21.845Z,local_server/mosquitto,1794555381: New connection from 172.18.0.1:37646 on port 8883.
+2026-11-13T07:36:21.871Z,local_server/mosquitto,1794555381: Client mqttjs_49d081aa [172.18.0.1:37646] disconnected: not authorised.
+2026-11-13T07:36:21.882Z,local_server/mosquitto,1794555381: New connection from 172.18.0.1:38178 on port 8084.
+2026-11-13T07:36:21.937Z,local_server/mosquitto,1794555381: Client mqttjs_46cfec7c [172.18.0.1:38178] disconnected: not authorised.
+2026-11-13T07:36:21.941Z,local_server/mosquitto,1794555381: New connection from 172.18.0.1:37658 on port 8883.
+2026-11-13T07:36:21.947Z,local_server/mosquitto,"1794555381: New client connected from 172.18.0.1:37658 as mqttjs_3d4e5426 (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:36:21.947Z,local_server/mosquitto,1794555381: Client mqttjs_3d4e5426 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:36:22.748Z,local_server/mosquitto,1794555382: Client mqttjs_3d4e5426 [172.18.0.1:37658] disconnected.
+2026-11-13T07:36:22.754Z,local_server/mosquitto,1794555382: New connection from 172.18.0.1:38180 on port 8084.
+2026-11-13T07:36:22.802Z,local_server/mosquitto,"1794555382: New client connected from 172.18.0.1:38180 as mqttjs_bf1e84f8 (p4, c1, k60, u'dashboard_bridge')."
+2026-11-13T07:36:22.803Z,local_server/mosquitto,1794555382: Client mqttjs_bf1e84f8 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:36:23.558Z,local_server/mosquitto,1794555383: Client mqttjs_bf1e84f8 [172.18.0.1:38180] disconnected.
+2026-11-13T07:36:23.562Z,local_server/mosquitto,1794555383: New connection from 172.18.0.1:38182 on port 8084.
+2026-11-13T07:36:23.609Z,local_server/mosquitto,"1794555383: New client connected from 172.18.0.1:38182 as mqttjs_881e8738 (p4, c1, k60, u'dashboard_bridge')."
+2026-11-13T07:36:23.609Z,local_server/mosquitto,1794555383: Client mqttjs_881e8738 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:36:23.614Z,local_server/mosquitto,1794555383: New connection from 172.18.0.1:37668 on port 8883.
+2026-11-13T07:36:23.618Z,local_server/mosquitto,"1794555383: New client connected from 172.18.0.1:37668 as mqttjs_aed6c87c (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:36:23.618Z,local_server/mosquitto,1794555383: Client mqttjs_aed6c87c negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:36:23.662Z,local_server/mosquitto,1794555383: Client mqttjs_aed6c87c [172.18.0.1:37668] disconnected.
+2026-11-13T07:36:23.663Z,local_server/mosquitto,1794555383: Client mqttjs_881e8738 [172.18.0.1:38182] disconnected.
+2026-11-13T07:36:37.160Z,local_server/mosquitto,1794555397: New connection from 172.18.0.1:44642 on port 8883.
+2026-11-13T07:36:37.169Z,local_server/mosquitto,"1794555397: New client connected from 172.18.0.1:44642 as mqttjs_2d0ac199 (p4, c1, k60, u'dashboard_bridge')."
+2026-11-13T07:36:37.169Z,local_server/mosquitto,1794555397: Client mqttjs_2d0ac199 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:37:02.015Z,local_server/mosquitto,1794555422: New connection from 172.18.0.1:41630 on port 8883.
+2026-11-13T07:37:02.727Z,local_server/mosquitto,1794555422: Client ESP32_3bD6A8 [172.18.0.1:58420] disconnected: session taken over.
+2026-11-13T07:37:02.727Z,local_server/mosquitto,"1794555422: New client connected from 172.18.0.1:41630 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:37:02.727Z,local_server/mosquitto,1794555422: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-13T07:38:14.917Z,local_server/mosquitto,1794555494: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:38:14.917Z,local_server/mosquitto,1794555494: Client mqttjs_2d0ac199 [172.18.0.1:44642] disconnected: connection closed by client.
+2026-11-13T07:40:54.470Z,local_server/mosquitto,1794555654: New connection from 172.18.0.1:46824 on port 8084.
+2026-11-13T07:40:54.527Z,local_server/mosquitto,"1794555654: New client connected from 172.18.0.1:46824 as local-bridge-1794555654423 (p4, c1, k30, u'dashboard_bridge')."
+2026-11-13T07:40:54.527Z,local_server/mosquitto,1794555654: Client local-bridge-1794555654423 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:41:02.853Z,local_server/mosquitto,1794555662: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:41:02.853Z,local_server/mosquitto,1794555662: Client local-bridge-1794555654423 [172.18.0.1:46824] disconnected: connection closed by client.
+2026-11-13T07:46:53.671Z,local_server/mosquitto,1794556013: New connection from 172.18.0.1:45664 on port 8883.
+2026-11-13T07:46:54.282Z,local_server/mosquitto,1794556014: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:46:54.282Z,local_server/mosquitto,1794556014: Client ESP32_3bD6A8 [172.18.0.1:41630] disconnected: connection closed by client.
+2026-11-13T07:46:54.494Z,local_server/mosquitto,"1794556014: New client connected from 172.18.0.1:45664 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:46:54.494Z,local_server/mosquitto,1794556014: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-13T08:20:45.856Z,local_server/mosquitto,1794558045: Client ESP32_3bD6A8 [172.18.0.1:45664] disconnected: exceeded timeout.
+2026-11-14T06:40:57.840Z,local_server/mosquitto,1794638457: Info: running mosquitto as user: mosquitto.
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 base messages
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 retained messages
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 clients
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 subscriptions
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 client messages
+2026-11-14T06:44:10.772Z,local_server/mosquitto,1794638650: New connection from 172.18.0.1:45426 on port 8883.
+2026-11-14T06:44:11.712Z,local_server/mosquitto,"1794638651: New client connected from 172.18.0.1:45426 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-14T06:44:11.712Z,local_server/mosquitto,1794638651: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-14T07:02:14.634Z,local_server/mosquitto,1794639734: New connection from 172.18.0.1:45678 on port 8883.
+2026-11-14T07:02:14.643Z,local_server/mosquitto,1794639734: Client mqttjs_00c99bea [172.18.0.1:45678] disconnected: not authorised.
+2026-11-14T07:02:14.650Z,local_server/mosquitto,1794639734: New connection from 172.18.0.1:56368 on port 8084.
+2026-11-14T07:02:14.701Z,local_server/mosquitto,1794639734: Client mqttjs_009f6f25 [172.18.0.1:56368] disconnected: not authorised.
+2026-11-14T07:02:14.705Z,local_server/mosquitto,1794639734: New connection from 172.18.0.1:45694 on port 8883.
+2026-11-14T07:02:14.709Z,local_server/mosquitto,"1794639734: New client connected from 172.18.0.1:45694 as mqttjs_13d8cb2c (p4, c1, k60, u'esp32_test')."
+2026-11-14T07:02:14.709Z,local_server/mosquitto,1794639734: Client mqttjs_13d8cb2c negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-14T07:02:15.508Z,local_server/mosquitto,1794639735: Client mqttjs_13d8cb2c [172.18.0.1:45694] disconnected.
+2026-11-14T07:02:15.513Z,local_server/mosquitto,1794639735: New connection from 172.18.0.1:56374 on port 8084.
+2026-11-14T07:02:15.560Z,local_server/mosquitto,"1794639735: New client connected from 172.18.0.1:56374 as mqttjs_96702ed7 (p4, c1, k60, u'dashboard_bridge')."
+2026-11-14T07:02:15.560Z,local_server/mosquitto,1794639735: Client mqttjs_96702ed7 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-14T07:02:16.319Z,local_server/mosquitto,1794639736: Client mqttjs_96702ed7 [172.18.0.1:56374] disconnected.
+2026-11-14T07:02:16.324Z,local_server/mosquitto,1794639736: New connection from 172.18.0.1:56376 on port 8084.
+2026-11-14T07:02:16.372Z,local_server/mosquitto,"1794639736: New client connected from 172.18.0.1:56376 as mqttjs_e36538b1 (p4, c1, k60, u'dashboard_bridge')."
+2026-11-14T07:02:16.372Z,local_server/mosquitto,1794639736: Client mqttjs_e36538b1 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-14T07:02:16.376Z,local_server/mosquitto,1794639736: New connection from 172.18.0.1:45696 on port 8883.
+2026-11-14T07:02:16.381Z,local_server/mosquitto,"1794639736: New client connected from 172.18.0.1:45696 as mqttjs_7a7f2626 (p4, c1, k60, u'esp32_test')."
+2026-11-14T07:02:16.382Z,local_server/mosquitto,1794639736: Client mqttjs_7a7f2626 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-14T07:02:16.425Z,local_server/mosquitto,1794639736: Client mqttjs_7a7f2626 [172.18.0.1:45696] disconnected.
+2026-11-14T07:02:16.426Z,local_server/mosquitto,1794639736: Client mqttjs_e36538b1 [172.18.0.1:56376] disconnected.
+2026-11-14T07:04:08.285Z,local_server/mosquitto,1794639848: New connection from 172.18.0.1:43772 on port 8084.
+2026-11-14T07:04:08.340Z,local_server/mosquitto,"1794639848: New client connected from 172.18.0.1:43772 as local-bridge-1794639848246 (p4, c1, k30, u'dashboard_bridge')."
+2026-11-14T07:04:08.340Z,local_server/mosquitto,1794639848: Client local-bridge-1794639848246 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-14T07:04:58.053Z,local_server/mosquitto,1794639898: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-14T07:04:58.053Z,local_server/mosquitto,1794639898: Client local-bridge-1794639848246 [172.18.0.1:43772] disconnected: connection closed by client.
+2026-11-14T07:11:44.149Z,local_server/mosquitto,1794640304: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-14T07:11:44.149Z,local_server/mosquitto,1794640304: Client ESP32_3bD6A8 [172.18.0.1:45426] disconnected: connection closed by client.
+2026-11-14T07:28:13.157Z,local_server/mosquitto,1794641293: New connection from 172.18.0.1:49276 on port 8883.
+2026-11-14T07:28:13.246Z,local_server/mosquitto,1794641293: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:28:13.247Z,local_server/mosquitto,1794641293: Client 172.18.0.1 [172.18.0.1:49276] disconnected: Protocol error.
+2026-11-14T07:28:16.227Z,local_server/mosquitto,1794641296: New connection from 172.18.0.1:49288 on port 8883.
+2026-11-14T07:28:16.307Z,local_server/mosquitto,1794641296: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:28:16.307Z,local_server/mosquitto,1794641296: Client 172.18.0.1 [172.18.0.1:49288] disconnected: Protocol error.
+2026-11-14T07:28:31.365Z,local_server/mosquitto,1794641311: New connection from 172.18.0.1:49590 on port 8883.
+2026-11-14T07:28:31.457Z,local_server/mosquitto,1794641311: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:28:31.457Z,local_server/mosquitto,1794641311: Client 172.18.0.1 [172.18.0.1:49590] disconnected: Protocol error.
+2026-11-14T07:28:41.499Z,local_server/mosquitto,1794641321: New connection from 172.18.0.1:49884 on port 8883.
+2026-11-14T07:28:41.596Z,local_server/mosquitto,1794641321: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:28:41.596Z,local_server/mosquitto,1794641321: Client 172.18.0.1 [172.18.0.1:49884] disconnected: Protocol error.
+2026-11-14T07:28:51.639Z,local_server/mosquitto,1794641331: New connection from 172.18.0.1:34452 on port 8883.
+2026-11-14T07:28:51.738Z,local_server/mosquitto,1794641331: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:28:51.738Z,local_server/mosquitto,1794641331: Client 172.18.0.1 [172.18.0.1:34452] disconnected: Protocol error.
+2026-11-14T07:29:06.790Z,local_server/mosquitto,1794641346: New connection from 172.18.0.1:47260 on port 8883.
+2026-11-14T07:29:06.891Z,local_server/mosquitto,1794641346: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:29:06.891Z,local_server/mosquitto,1794641346: Client 172.18.0.1 [172.18.0.1:47260] disconnected: Protocol error.
+2026-11-14T07:29:21.947Z,local_server/mosquitto,1794641361: New connection from 172.18.0.1:55358 on port 8883.
+2026-11-14T07:29:22.046Z,local_server/mosquitto,1794641362: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:29:22.046Z,local_server/mosquitto,1794641362: Client 172.18.0.1 [172.18.0.1:55358] disconnected: Protocol error.
+2026-11-14T07:29:32.085Z,local_server/mosquitto,1794641372: New connection from 172.18.0.1:54900 on port 8883.
+2026-11-14T07:29:32.187Z,local_server/mosquitto,1794641372: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:29:32.187Z,local_server/mosquitto,1794641372: Client 172.18.0.1 [172.18.0.1:54900] disconnected: Protocol error.
+2026-11-14T07:29:42.229Z,local_server/mosquitto,1794641382: New connection from 172.18.0.1:37558 on port 8883.
+2026-11-14T07:29:42.322Z,local_server/mosquitto,1794641382: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:29:42.322Z,local_server/mosquitto,1794641382: Client 172.18.0.1 [172.18.0.1:37558] disconnected: Protocol error.
+2026-11-14T07:29:52.371Z,local_server/mosquitto,1794641392: New connection from 172.18.0.1:52246 on port 8883.
+2026-11-14T07:29:52.459Z,local_server/mosquitto,1794641392: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:29:52.459Z,local_server/mosquitto,1794641392: Client 172.18.0.1 [172.18.0.1:52246] disconnected: Protocol error.
+2026-11-14T07:30:02.497Z,local_server/mosquitto,1794641402: New connection from 172.18.0.1:51716 on port 8883.
+2026-11-14T07:30:02.595Z,local_server/mosquitto,1794641402: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:30:02.595Z,local_server/mosquitto,1794641402: Client 172.18.0.1 [172.18.0.1:51716] disconnected: Protocol error.
+2026-11-14T07:30:17.652Z,local_server/mosquitto,1794641417: New connection from 172.18.0.1:60144 on port 8883.
+2026-11-14T07:30:17.751Z,local_server/mosquitto,1794641417: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:30:17.751Z,local_server/mosquitto,1794641417: Client 172.18.0.1 [172.18.0.1:60144] disconnected: Protocol error.
+2026-11-14T07:30:27.788Z,local_server/mosquitto,1794641427: New connection from 172.18.0.1:44630 on port 8883.
+2026-11-14T07:30:27.886Z,local_server/mosquitto,1794641427: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:30:27.886Z,local_server/mosquitto,1794641427: Client 172.18.0.1 [172.18.0.1:44630] disconnected: Protocol error.
+2026-11-14T07:30:37.933Z,local_server/mosquitto,1794641437: New connection from 172.18.0.1:49454 on port 8883.
+2026-11-14T07:30:38.028Z,local_server/mosquitto,1794641438: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:30:38.028Z,local_server/mosquitto,1794641438: Client 172.18.0.1 [172.18.0.1:49454] disconnected: Protocol error.
+2026-11-14T07:30:48.067Z,local_server/mosquitto,1794641448: New connection from 172.18.0.1:44548 on port 8883.
+2026-11-14T07:30:48.168Z,local_server/mosquitto,1794641448: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:30:48.168Z,local_server/mosquitto,1794641448: Client 172.18.0.1 [172.18.0.1:44548] disconnected: Protocol error.
+2026-11-14T07:30:58.205Z,local_server/mosquitto,1794641458: New connection from 172.18.0.1:58796 on port 8883.
+2026-11-14T07:30:58.303Z,local_server/mosquitto,1794641458: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:30:58.303Z,local_server/mosquitto,1794641458: Client 172.18.0.1 [172.18.0.1:58796] disconnected: Protocol error.
+2026-11-14T07:31:08.351Z,local_server/mosquitto,1794641468: New connection from 172.18.0.1:36812 on port 8883.
+2026-11-14T07:31:08.441Z,local_server/mosquitto,1794641468: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:31:08.441Z,local_server/mosquitto,1794641468: Client 172.18.0.1 [172.18.0.1:36812] disconnected: Protocol error.
+2026-11-14T07:31:18.527Z,local_server/mosquitto,1794641478: New connection from 172.18.0.1:45372 on port 8883.
+2026-11-14T07:31:18.685Z,local_server/mosquitto,1794641478: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:31:18.685Z,local_server/mosquitto,1794641478: Client 172.18.0.1 [172.18.0.1:45372] disconnected: Protocol error.
+2026-11-14T07:31:28.962Z,local_server/mosquitto,1794641488: New connection from 172.18.0.1:54090 on port 8883.
+2026-11-14T07:31:29.136Z,local_server/mosquitto,1794641489: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:31:29.136Z,local_server/mosquitto,1794641489: Client 172.18.0.1 [172.18.0.1:54090] disconnected: Protocol error.
+2026-11-14T07:31:44.196Z,local_server/mosquitto,1794641504: New connection from 172.18.0.1:52874 on port 8883.
+2026-11-14T07:31:44.495Z,local_server/mosquitto,1794641504: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:31:44.495Z,local_server/mosquitto,1794641504: Client 172.18.0.1 [172.18.0.1:52874] disconnected: Protocol error.
+2026-11-14T07:31:59.540Z,local_server/mosquitto,1794641519: New connection from 172.18.0.1:46716 on port 8883.
+2026-11-14T07:31:59.847Z,local_server/mosquitto,1794641519: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:31:59.847Z,local_server/mosquitto,1794641519: Client 172.18.0.1 [172.18.0.1:46716] disconnected: Protocol error.
+2026-11-14T07:32:09.922Z,local_server/mosquitto,1794641529: New connection from 172.18.0.1:38388 on port 8883.
+2026-11-14T07:32:10.354Z,local_server/mosquitto,1794641530: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:32:10.354Z,local_server/mosquitto,1794641530: Client 172.18.0.1 [172.18.0.1:38388] disconnected: Protocol error.
+2026-11-14T07:32:20.397Z,local_server/mosquitto,1794641540: New connection from 172.18.0.1:33824 on port 8883.
+2026-11-14T07:32:20.744Z,local_server/mosquitto,1794641540: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:32:20.744Z,local_server/mosquitto,1794641540: Client 172.18.0.1 [172.18.0.1:33824] disconnected: Protocol error.
+2026-11-14T07:32:35.848Z,local_server/mosquitto,1794641555: New connection from 172.18.0.1:34682 on port 8883.
+2026-11-14T07:32:36.140Z,local_server/mosquitto,1794641556: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:32:36.140Z,local_server/mosquitto,1794641556: Client 172.18.0.1 [172.18.0.1:34682] disconnected: Protocol error.
+2026-11-14T07:32:51.192Z,local_server/mosquitto,1794641571: New connection from 172.18.0.1:34130 on port 8883.
+2026-11-14T07:32:51.361Z,local_server/mosquitto,1794641571: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:32:51.361Z,local_server/mosquitto,1794641571: Client 172.18.0.1 [172.18.0.1:34130] disconnected: Protocol error.
+2026-11-14T07:33:01.442Z,local_server/mosquitto,1794641581: New connection from 172.18.0.1:48644 on port 8883.
+2026-11-14T07:33:01.899Z,local_server/mosquitto,1794641581: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:33:01.899Z,local_server/mosquitto,1794641581: Client 172.18.0.1 [172.18.0.1:48644] disconnected: Protocol error.
+2026-11-14T07:33:19.733Z,local_server/mosquitto,1794641599: New connection from 172.18.0.1:51364 on port 8883.
+2026-11-14T07:33:20.073Z,local_server/mosquitto,1794641600: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:33:20.073Z,local_server/mosquitto,1794641600: Client 172.18.0.1 [172.18.0.1:51364] disconnected: Protocol error.
+2026-11-14T07:33:30.115Z,local_server/mosquitto,1794641610: New connection from 172.18.0.1:44008 on port 8883.
+2026-11-14T07:33:30.497Z,local_server/mosquitto,1794641610: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:33:30.497Z,local_server/mosquitto,1794641610: Client 172.18.0.1 [172.18.0.1:44008] disconnected: Protocol error.
+2026-11-14T07:33:40.615Z,local_server/mosquitto,1794641620: New connection from 172.18.0.1:37684 on port 8883.
+2026-11-14T07:33:40.915Z,local_server/mosquitto,1794641620: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:33:40.915Z,local_server/mosquitto,1794641620: Client 172.18.0.1 [172.18.0.1:37684] disconnected: Protocol error.
+2026-11-14T07:33:55.983Z,local_server/mosquitto,1794641635: New connection from 172.18.0.1:46382 on port 8883.
+2026-11-14T07:33:56.275Z,local_server/mosquitto,1794641636: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:33:56.275Z,local_server/mosquitto,1794641636: Client 172.18.0.1 [172.18.0.1:46382] disconnected: Protocol error.
+2026-11-14T07:34:06.361Z,local_server/mosquitto,1794641646: New connection from 172.18.0.1:58130 on port 8883.
+2026-11-14T07:34:06.732Z,local_server/mosquitto,1794641646: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:34:06.732Z,local_server/mosquitto,1794641646: Client 172.18.0.1 [172.18.0.1:58130] disconnected: Protocol error.
+2026-11-14T07:34:16.835Z,local_server/mosquitto,1794641656: New connection from 172.18.0.1:48630 on port 8883.
+2026-11-14T07:34:17.206Z,local_server/mosquitto,1794641657: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:34:17.206Z,local_server/mosquitto,1794641657: Client 172.18.0.1 [172.18.0.1:48630] disconnected: Protocol error.
+2026-11-14T07:34:32.257Z,local_server/mosquitto,1794641672: New connection from 172.18.0.1:43284 on port 8883.
+2026-11-14T07:34:32.528Z,local_server/mosquitto,1794641672: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:34:32.528Z,local_server/mosquitto,1794641672: Client 172.18.0.1 [172.18.0.1:43284] disconnected: Protocol error.
+2026-11-14T07:34:42.595Z,local_server/mosquitto,1794641682: New connection from 172.18.0.1:51370 on port 8883.
+2026-11-14T07:34:42.971Z,local_server/mosquitto,1794641682: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:34:42.971Z,local_server/mosquitto,1794641682: Client 172.18.0.1 [172.18.0.1:51370] disconnected: Protocol error.
+2026-11-14T07:34:53.029Z,local_server/mosquitto,1794641693: New connection from 172.18.0.1:34406 on port 8883.
+2026-11-14T07:34:53.418Z,local_server/mosquitto,1794641693: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:34:53.418Z,local_server/mosquitto,1794641693: Client 172.18.0.1 [172.18.0.1:34406] disconnected: Protocol error.
+2026-11-14T07:35:08.505Z,local_server/mosquitto,1794641708: New connection from 172.18.0.1:55966 on port 8883.
+2026-11-14T07:35:08.676Z,local_server/mosquitto,1794641708: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:35:08.677Z,local_server/mosquitto,1794641708: Client 172.18.0.1 [172.18.0.1:55966] disconnected: Protocol error.
+2026-11-14T07:35:18.794Z,local_server/mosquitto,1794641718: New connection from 172.18.0.1:33702 on port 8883.
+2026-11-14T07:35:19.023Z,local_server/mosquitto,1794641719: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:35:19.024Z,local_server/mosquitto,1794641719: Client 172.18.0.1 [172.18.0.1:33702] disconnected: Protocol error.
+2026-11-14T07:35:29.068Z,local_server/mosquitto,1794641729: New connection from 172.18.0.1:51548 on port 8883.
+2026-11-14T07:35:29.172Z,local_server/mosquitto,1794641729: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:35:29.172Z,local_server/mosquitto,1794641729: Client 172.18.0.1 [172.18.0.1:51548] disconnected: Protocol error.
+2026-11-14T07:35:44.230Z,local_server/mosquitto,1794641744: New connection from 172.18.0.1:53894 on port 8883.
+2026-11-14T07:35:44.315Z,local_server/mosquitto,1794641744: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:35:44.315Z,local_server/mosquitto,1794641744: Client 172.18.0.1 [172.18.0.1:53894] disconnected: Protocol error.
+2026-11-14T07:35:59.363Z,local_server/mosquitto,1794641759: New connection from 172.18.0.1:46546 on port 8883.
+2026-11-14T07:35:59.466Z,local_server/mosquitto,1794641759: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:35:59.466Z,local_server/mosquitto,1794641759: Client 172.18.0.1 [172.18.0.1:46546] disconnected: Protocol error.
+2026-11-14T07:36:14.518Z,local_server/mosquitto,1794641774: New connection from 172.18.0.1:51150 on port 8883.
+2026-11-14T07:36:14.618Z,local_server/mosquitto,1794641774: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:36:14.618Z,local_server/mosquitto,1794641774: Client 172.18.0.1 [172.18.0.1:51150] disconnected: Protocol error.
+2026-11-14T07:36:24.666Z,local_server/mosquitto,1794641784: New connection from 172.18.0.1:53200 on port 8883.
+2026-11-14T07:36:24.755Z,local_server/mosquitto,1794641784: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:36:24.755Z,local_server/mosquitto,1794641784: Client 172.18.0.1 [172.18.0.1:53200] disconnected: Protocol error.
+2026-11-14T07:36:34.805Z,local_server/mosquitto,1794641794: New connection from 172.18.0.1:34990 on port 8883.
+2026-11-14T07:36:34.894Z,local_server/mosquitto,1794641794: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:36:34.894Z,local_server/mosquitto,1794641794: Client 172.18.0.1 [172.18.0.1:34990] disconnected: Protocol error.
+2026-11-14T07:36:57.028Z,local_server/mosquitto,1794641817: New connection from 172.18.0.1:45722 on port 8883.
+2026-11-14T07:36:57.130Z,local_server/mosquitto,1794641817: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:36:57.130Z,local_server/mosquitto,1794641817: Client 172.18.0.1 [172.18.0.1:45722] disconnected: Protocol error.
+2026-11-14T07:36:59.983Z,local_server/mosquitto,1794641819: New connection from 172.18.0.1:45728 on port 8883.
+2026-11-14T07:37:00.077Z,local_server/mosquitto,1794641820: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:37:00.077Z,local_server/mosquitto,1794641820: Client 172.18.0.1 [172.18.0.1:45728] disconnected: Protocol error.
+2026-11-14T07:37:15.142Z,local_server/mosquitto,1794641835: New connection from 172.18.0.1:36692 on port 8883.
+2026-11-14T07:37:15.237Z,local_server/mosquitto,1794641835: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:37:15.237Z,local_server/mosquitto,1794641835: Client 172.18.0.1 [172.18.0.1:36692] disconnected: Protocol error.
+2026-11-14T07:37:30.295Z,local_server/mosquitto,1794641850: New connection from 172.18.0.1:48690 on port 8883.
+2026-11-14T07:37:30.396Z,local_server/mosquitto,1794641850: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:37:30.396Z,local_server/mosquitto,1794641850: Client 172.18.0.1 [172.18.0.1:48690] disconnected: Protocol error.
+2026-11-14T07:37:40.437Z,local_server/mosquitto,1794641860: New connection from 172.18.0.1:35804 on port 8883.
+2026-11-14T07:37:40.534Z,local_server/mosquitto,1794641860: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:37:40.534Z,local_server/mosquitto,1794641860: Client 172.18.0.1 [172.18.0.1:35804] disconnected: Protocol error.
+2026-11-14T07:37:55.596Z,local_server/mosquitto,1794641875: New connection from 172.18.0.1:35462 on port 8883.
+2026-11-14T07:37:55.696Z,local_server/mosquitto,1794641875: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:37:55.696Z,local_server/mosquitto,1794641875: Client 172.18.0.1 [172.18.0.1:35462] disconnected: Protocol error.
+2026-11-14T07:38:05.726Z,local_server/mosquitto,1794641885: New connection from 172.18.0.1:34088 on port 8883.
+2026-11-14T07:38:05.826Z,local_server/mosquitto,1794641885: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:38:05.826Z,local_server/mosquitto,1794641885: Client 172.18.0.1 [172.18.0.1:34088] disconnected: Protocol error.
+2026-11-14T07:38:15.870Z,local_server/mosquitto,1794641895: New connection from 172.18.0.1:51692 on port 8883.
+2026-11-14T07:38:15.961Z,local_server/mosquitto,1794641895: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:38:15.961Z,local_server/mosquitto,1794641895: Client 172.18.0.1 [172.18.0.1:51692] disconnected: Protocol error.
+2026-11-14T07:38:26.008Z,local_server/mosquitto,1794641906: New connection from 172.18.0.1:38678 on port 8883.
+2026-11-14T07:38:26.105Z,local_server/mosquitto,1794641906: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:38:26.105Z,local_server/mosquitto,1794641906: Client 172.18.0.1 [172.18.0.1:38678] disconnected: Protocol error.
+2026-11-14T07:38:41.160Z,local_server/mosquitto,1794641921: New connection from 172.18.0.1:43626 on port 8883.
+2026-11-14T07:38:41.270Z,local_server/mosquitto,1794641921: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:38:41.270Z,local_server/mosquitto,1794641921: Client 172.18.0.1 [172.18.0.1:43626] disconnected: Protocol error.
+2026-11-14T07:38:51.299Z,local_server/mosquitto,1794641931: New connection from 172.18.0.1:40216 on port 8883.
+2026-11-14T07:38:51.396Z,local_server/mosquitto,1794641931: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:38:51.396Z,local_server/mosquitto,1794641931: Client 172.18.0.1 [172.18.0.1:40216] disconnected: Protocol error.
+2026-11-14T07:39:01.433Z,local_server/mosquitto,1794641941: New connection from 172.18.0.1:39982 on port 8883.
+2026-11-14T07:39:01.532Z,local_server/mosquitto,1794641941: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:39:01.532Z,local_server/mosquitto,1794641941: Client 172.18.0.1 [172.18.0.1:39982] disconnected: Protocol error.
+2026-11-14T07:39:16.594Z,local_server/mosquitto,1794641956: New connection from 172.18.0.1:35460 on port 8883.
+2026-11-14T07:39:16.690Z,local_server/mosquitto,1794641956: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:39:16.690Z,local_server/mosquitto,1794641956: Client 172.18.0.1 [172.18.0.1:35460] disconnected: Protocol error.
+2026-11-14T07:39:26.732Z,local_server/mosquitto,1794641966: New connection from 172.18.0.1:44666 on port 8883.
+2026-11-14T07:39:26.826Z,local_server/mosquitto,1794641966: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:39:26.826Z,local_server/mosquitto,1794641966: Client 172.18.0.1 [172.18.0.1:44666] disconnected: Protocol error.
+2026-11-14T07:39:36.867Z,local_server/mosquitto,1794641976: New connection from 172.18.0.1:52318 on port 8883.
+2026-11-14T07:39:36.961Z,local_server/mosquitto,1794641976: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:39:36.961Z,local_server/mosquitto,1794641976: Client 172.18.0.1 [172.18.0.1:52318] disconnected: Protocol error.
+2026-11-14T07:39:47.002Z,local_server/mosquitto,1794641987: New connection from 172.18.0.1:43318 on port 8883.
+2026-11-14T07:39:47.101Z,local_server/mosquitto,1794641987: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:39:47.101Z,local_server/mosquitto,1794641987: Client 172.18.0.1 [172.18.0.1:43318] disconnected: Protocol error.
+2026-11-14T07:40:02.157Z,local_server/mosquitto,1794642002: New connection from 172.18.0.1:54754 on port 8883.
+2026-11-14T07:40:02.257Z,local_server/mosquitto,1794642002: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:40:02.257Z,local_server/mosquitto,1794642002: Client 172.18.0.1 [172.18.0.1:54754] disconnected: Protocol error.
+2026-11-14T07:40:12.301Z,local_server/mosquitto,1794642012: New connection from 172.18.0.1:55994 on port 8883.
+2026-11-14T07:40:12.404Z,local_server/mosquitto,1794642012: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:40:12.404Z,local_server/mosquitto,1794642012: Client 172.18.0.1 [172.18.0.1:55994] disconnected: Protocol error.
+2026-11-14T07:40:27.455Z,local_server/mosquitto,1794642027: New connection from 172.18.0.1:54650 on port 8883.
+2026-11-14T07:40:27.555Z,local_server/mosquitto,1794642027: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:40:27.555Z,local_server/mosquitto,1794642027: Client 172.18.0.1 [172.18.0.1:54650] disconnected: Protocol error.
+2026-11-14T07:40:42.606Z,local_server/mosquitto,1794642042: New connection from 172.18.0.1:55388 on port 8883.
+2026-11-14T07:40:42.707Z,local_server/mosquitto,1794642042: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:40:42.707Z,local_server/mosquitto,1794642042: Client 172.18.0.1 [172.18.0.1:55388] disconnected: Protocol error.
+2026-11-14T07:40:52.747Z,local_server/mosquitto,1794642052: New connection from 172.18.0.1:50060 on port 8883.
+2026-11-14T07:40:52.847Z,local_server/mosquitto,1794642052: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:40:52.847Z,local_server/mosquitto,1794642052: Client 172.18.0.1 [172.18.0.1:50060] disconnected: Protocol error.
+2026-11-14T07:41:02.891Z,local_server/mosquitto,1794642062: New connection from 172.18.0.1:60592 on port 8883.
+2026-11-14T07:41:02.977Z,local_server/mosquitto,1794642062: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:41:02.977Z,local_server/mosquitto,1794642062: Client 172.18.0.1 [172.18.0.1:60592] disconnected: Protocol error.
+2026-11-14T07:41:13.022Z,local_server/mosquitto,1794642073: New connection from 172.18.0.1:54302 on port 8883.
+2026-11-14T07:41:13.119Z,local_server/mosquitto,1794642073: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:41:13.119Z,local_server/mosquitto,1794642073: Client 172.18.0.1 [172.18.0.1:54302] disconnected: Protocol error.
+2026-11-14T07:41:28.178Z,local_server/mosquitto,1794642088: New connection from 172.18.0.1:40280 on port 8883.
+2026-11-14T07:41:28.277Z,local_server/mosquitto,1794642088: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:41:28.277Z,local_server/mosquitto,1794642088: Client 172.18.0.1 [172.18.0.1:40280] disconnected: Protocol error.
+2026-11-14T07:41:38.312Z,local_server/mosquitto,1794642098: New connection from 172.18.0.1:58592 on port 8883.
+2026-11-14T07:41:38.410Z,local_server/mosquitto,1794642098: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:41:38.410Z,local_server/mosquitto,1794642098: Client 172.18.0.1 [172.18.0.1:58592] disconnected: Protocol error.
+2026-11-14T07:41:48.454Z,local_server/mosquitto,1794642108: New connection from 172.18.0.1:37744 on port 8883.
+2026-11-14T07:41:48.555Z,local_server/mosquitto,1794642108: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:41:48.555Z,local_server/mosquitto,1794642108: Client 172.18.0.1 [172.18.0.1:37744] disconnected: Protocol error.
+2026-11-14T07:42:03.619Z,local_server/mosquitto,1794642123: New connection from 172.18.0.1:37258 on port 8883.
+2026-11-14T07:42:03.704Z,local_server/mosquitto,1794642123: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:42:03.705Z,local_server/mosquitto,1794642123: Client 172.18.0.1 [172.18.0.1:37258] disconnected: Protocol error.
+2026-11-14T07:42:13.743Z,local_server/mosquitto,1794642133: New connection from 172.18.0.1:37440 on port 8883.
+2026-11-14T07:42:13.843Z,local_server/mosquitto,1794642133: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:42:13.843Z,local_server/mosquitto,1794642133: Client 172.18.0.1 [172.18.0.1:37440] disconnected: Protocol error.
+2026-11-14T07:42:28.899Z,local_server/mosquitto,1794642148: New connection from 172.18.0.1:33610 on port 8883.
+2026-11-14T07:42:29.000Z,local_server/mosquitto,1794642149: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:42:29.000Z,local_server/mosquitto,1794642149: Client 172.18.0.1 [172.18.0.1:33610] disconnected: Protocol error.
+2026-11-14T07:42:39.037Z,local_server/mosquitto,1794642159: New connection from 172.18.0.1:57710 on port 8883.
+2026-11-14T07:42:39.136Z,local_server/mosquitto,1794642159: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:42:39.136Z,local_server/mosquitto,1794642159: Client 172.18.0.1 [172.18.0.1:57710] disconnected: Protocol error.
+2026-11-14T07:42:49.175Z,local_server/mosquitto,1794642169: New connection from 172.18.0.1:53642 on port 8883.
+2026-11-14T07:42:49.273Z,local_server/mosquitto,1794642169: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:42:49.273Z,local_server/mosquitto,1794642169: Client 172.18.0.1 [172.18.0.1:53642] disconnected: Protocol error.
+2026-11-14T07:42:59.323Z,local_server/mosquitto,1794642179: New connection from 172.18.0.1:36236 on port 8883.
+2026-11-14T07:42:59.411Z,local_server/mosquitto,1794642179: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:42:59.411Z,local_server/mosquitto,1794642179: Client 172.18.0.1 [172.18.0.1:36236] disconnected: Protocol error.
+2026-11-14T07:43:14.467Z,local_server/mosquitto,1794642194: New connection from 172.18.0.1:43244 on port 8883.
+2026-11-14T07:43:14.570Z,local_server/mosquitto,1794642194: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:43:14.570Z,local_server/mosquitto,1794642194: Client 172.18.0.1 [172.18.0.1:43244] disconnected: Protocol error.
+2026-11-14T07:43:24.635Z,local_server/mosquitto,1794642204: New connection from 172.18.0.1:48916 on port 8883.
+2026-11-14T07:43:24.926Z,local_server/mosquitto,1794642204: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:43:24.926Z,local_server/mosquitto,1794642204: Client 172.18.0.1 [172.18.0.1:48916] disconnected: Protocol error.
+2026-11-14T07:43:34.946Z,local_server/mosquitto,1794642214: New connection from 172.18.0.1:33050 on port 8883.
+2026-11-14T07:43:35.047Z,local_server/mosquitto,1794642215: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:43:35.047Z,local_server/mosquitto,1794642215: Client 172.18.0.1 [172.18.0.1:33050] disconnected: Protocol error.
+2026-11-14T07:43:50.104Z,local_server/mosquitto,1794642230: New connection from 172.18.0.1:33450 on port 8883.
+2026-11-14T07:43:50.200Z,local_server/mosquitto,1794642230: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:43:50.201Z,local_server/mosquitto,1794642230: Client 172.18.0.1 [172.18.0.1:33450] disconnected: Protocol error.
+2026-11-14T07:44:00.249Z,local_server/mosquitto,1794642240: New connection from 172.18.0.1:57944 on port 8883.
+2026-11-14T07:44:00.336Z,local_server/mosquitto,1794642240: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:44:00.336Z,local_server/mosquitto,1794642240: Client 172.18.0.1 [172.18.0.1:57944] disconnected: Protocol error.
+2026-11-14T07:44:15.397Z,local_server/mosquitto,1794642255: New connection from 172.18.0.1:44416 on port 8883.
+2026-11-14T07:44:15.490Z,local_server/mosquitto,1794642255: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:44:15.490Z,local_server/mosquitto,1794642255: Client 172.18.0.1 [172.18.0.1:44416] disconnected: Protocol error.
+2026-11-14T07:44:25.549Z,local_server/mosquitto,1794642265: New connection from 172.18.0.1:37756 on port 8883.
+2026-11-14T07:44:25.631Z,local_server/mosquitto,1794642265: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:44:25.631Z,local_server/mosquitto,1794642265: Client 172.18.0.1 [172.18.0.1:37756] disconnected: Protocol error.
+2026-11-14T07:44:35.664Z,local_server/mosquitto,1794642275: New connection from 172.18.0.1:52108 on port 8883.
+2026-11-14T07:44:35.767Z,local_server/mosquitto,1794642275: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:44:35.767Z,local_server/mosquitto,1794642275: Client 172.18.0.1 [172.18.0.1:52108] disconnected: Protocol error.
+2026-11-14T07:44:50.845Z,local_server/mosquitto,1794642290: New connection from 172.18.0.1:33662 on port 8883.
+2026-11-14T07:44:50.945Z,local_server/mosquitto,1794642290: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:44:50.945Z,local_server/mosquitto,1794642290: Client 172.18.0.1 [172.18.0.1:33662] disconnected: Protocol error.
+2026-11-14T07:45:05.977Z,local_server/mosquitto,1794642305: New connection from 172.18.0.1:36092 on port 8883.
+2026-11-14T07:45:06.079Z,local_server/mosquitto,1794642306: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:45:06.080Z,local_server/mosquitto,1794642306: Client 172.18.0.1 [172.18.0.1:36092] disconnected: Protocol error.
+2026-11-14T07:45:16.126Z,local_server/mosquitto,1794642316: New connection from 172.18.0.1:49534 on port 8883.
+2026-11-14T07:45:16.216Z,local_server/mosquitto,1794642316: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:45:16.216Z,local_server/mosquitto,1794642316: Client 172.18.0.1 [172.18.0.1:49534] disconnected: Protocol error.
+2026-11-14T07:45:31.289Z,local_server/mosquitto,1794642331: New connection from 172.18.0.1:37496 on port 8883.
+2026-11-14T07:45:31.371Z,local_server/mosquitto,1794642331: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:45:31.371Z,local_server/mosquitto,1794642331: Client 172.18.0.1 [172.18.0.1:37496] disconnected: Protocol error.
+2026-11-14T07:45:41.415Z,local_server/mosquitto,1794642341: New connection from 172.18.0.1:60286 on port 8883.
+2026-11-14T07:45:41.511Z,local_server/mosquitto,1794642341: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:45:41.511Z,local_server/mosquitto,1794642341: Client 172.18.0.1 [172.18.0.1:60286] disconnected: Protocol error.
+2026-11-14T07:45:56.614Z,local_server/mosquitto,1794642356: New connection from 172.18.0.1:49790 on port 8883.
+2026-11-14T07:45:56.976Z,local_server/mosquitto,1794642356: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:45:56.976Z,local_server/mosquitto,1794642356: Client 172.18.0.1 [172.18.0.1:49790] disconnected: Protocol error.
+2026-11-14T07:46:07.015Z,local_server/mosquitto,1794642367: New connection from 172.18.0.1:40432 on port 8883.
+2026-11-14T07:46:07.111Z,local_server/mosquitto,1794642367: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:46:07.111Z,local_server/mosquitto,1794642367: Client 172.18.0.1 [172.18.0.1:40432] disconnected: Protocol error.
+2026-11-14T07:46:22.172Z,local_server/mosquitto,1794642382: New connection from 172.18.0.1:55740 on port 8883.
+2026-11-14T07:46:22.266Z,local_server/mosquitto,1794642382: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:46:22.266Z,local_server/mosquitto,1794642382: Client 172.18.0.1 [172.18.0.1:55740] disconnected: Protocol error.
+2026-11-14T07:46:32.309Z,local_server/mosquitto,1794642392: New connection from 172.18.0.1:55382 on port 8883.
+2026-11-14T07:46:32.398Z,local_server/mosquitto,1794642392: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:46:32.398Z,local_server/mosquitto,1794642392: Client 172.18.0.1 [172.18.0.1:55382] disconnected: Protocol error.
+2026-11-14T07:46:42.441Z,local_server/mosquitto,1794642402: New connection from 172.18.0.1:45702 on port 8883.
+2026-11-14T07:46:42.552Z,local_server/mosquitto,1794642402: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:46:42.552Z,local_server/mosquitto,1794642402: Client 172.18.0.1 [172.18.0.1:45702] disconnected: Protocol error.
+2026-11-14T07:46:57.596Z,local_server/mosquitto,1794642417: New connection from 172.18.0.1:41686 on port 8883.
+2026-11-14T07:46:57.698Z,local_server/mosquitto,1794642417: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:46:57.698Z,local_server/mosquitto,1794642417: Client 172.18.0.1 [172.18.0.1:41686] disconnected: Protocol error.
+2026-11-14T07:47:07.741Z,local_server/mosquitto,1794642427: New connection from 172.18.0.1:53980 on port 8883.
+2026-11-14T07:47:07.833Z,local_server/mosquitto,1794642427: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:47:07.833Z,local_server/mosquitto,1794642427: Client 172.18.0.1 [172.18.0.1:53980] disconnected: Protocol error.
+2026-11-14T07:47:17.872Z,local_server/mosquitto,1794642437: New connection from 172.18.0.1:41630 on port 8883.
+2026-11-14T07:47:17.970Z,local_server/mosquitto,1794642437: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:47:17.970Z,local_server/mosquitto,1794642437: Client 172.18.0.1 [172.18.0.1:41630] disconnected: Protocol error.
+2026-11-14T07:47:33.036Z,local_server/mosquitto,1794642453: New connection from 172.18.0.1:59310 on port 8883.
+2026-11-14T07:47:33.437Z,local_server/mosquitto,1794642453: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:47:33.437Z,local_server/mosquitto,1794642453: Client 172.18.0.1 [172.18.0.1:59310] disconnected: Protocol error.
+2026-11-14T07:47:43.477Z,local_server/mosquitto,1794642463: New connection from 172.18.0.1:49202 on port 8883.
+2026-11-14T07:47:43.570Z,local_server/mosquitto,1794642463: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:47:43.570Z,local_server/mosquitto,1794642463: Client 172.18.0.1 [172.18.0.1:49202] disconnected: Protocol error.
+2026-11-14T07:47:53.609Z,local_server/mosquitto,1794642473: New connection from 172.18.0.1:59012 on port 8883.
+2026-11-14T07:47:53.712Z,local_server/mosquitto,1794642473: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:47:53.712Z,local_server/mosquitto,1794642473: Client 172.18.0.1 [172.18.0.1:59012] disconnected: Protocol error.
+2026-11-14T07:48:08.771Z,local_server/mosquitto,1794642488: New connection from 172.18.0.1:55334 on port 8883.
+2026-11-14T07:48:08.870Z,local_server/mosquitto,1794642488: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:48:08.870Z,local_server/mosquitto,1794642488: Client 172.18.0.1 [172.18.0.1:55334] disconnected: Protocol error.
+2026-11-14T07:48:23.921Z,local_server/mosquitto,1794642503: New connection from 172.18.0.1:42424 on port 8883.
+2026-11-14T07:48:24.020Z,local_server/mosquitto,1794642504: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:48:24.020Z,local_server/mosquitto,1794642504: Client 172.18.0.1 [172.18.0.1:42424] disconnected: Protocol error.
+2026-11-14T07:48:34.060Z,local_server/mosquitto,1794642514: New connection from 172.18.0.1:50702 on port 8883.
+2026-11-14T07:48:34.161Z,local_server/mosquitto,1794642514: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:48:34.161Z,local_server/mosquitto,1794642514: Client 172.18.0.1 [172.18.0.1:50702] disconnected: Protocol error.
+2026-11-14T07:48:44.197Z,local_server/mosquitto,1794642524: New connection from 172.18.0.1:49502 on port 8883.
+2026-11-14T07:48:44.297Z,local_server/mosquitto,1794642524: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:48:44.297Z,local_server/mosquitto,1794642524: Client 172.18.0.1 [172.18.0.1:49502] disconnected: Protocol error.
+2026-11-14T07:48:54.339Z,local_server/mosquitto,1794642534: New connection from 172.18.0.1:47384 on port 8883.
+2026-11-14T07:48:54.437Z,local_server/mosquitto,1794642534: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:48:54.437Z,local_server/mosquitto,1794642534: Client 172.18.0.1 [172.18.0.1:47384] disconnected: Protocol error.
+2026-11-14T07:49:04.471Z,local_server/mosquitto,1794642544: New connection from 172.18.0.1:56610 on port 8883.
+2026-11-14T07:49:04.580Z,local_server/mosquitto,1794642544: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:49:04.580Z,local_server/mosquitto,1794642544: Client 172.18.0.1 [172.18.0.1:56610] disconnected: Protocol error.
+2026-11-14T07:49:14.648Z,local_server/mosquitto,1794642554: New connection from 172.18.0.1:41402 on port 8883.
+2026-11-14T07:49:14.809Z,local_server/mosquitto,1794642554: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:49:14.809Z,local_server/mosquitto,1794642554: Client 172.18.0.1 [172.18.0.1:41402] disconnected: Protocol error.
+2026-11-14T07:49:24.921Z,local_server/mosquitto,1794642564: New connection from 172.18.0.1:32832 on port 8883.
+2026-11-14T07:49:25.260Z,local_server/mosquitto,1794642565: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:49:25.260Z,local_server/mosquitto,1794642565: Client 172.18.0.1 [172.18.0.1:32832] disconnected: Protocol error.
+2026-11-14T07:49:40.321Z,local_server/mosquitto,1794642580: New connection from 172.18.0.1:33978 on port 8883.
+2026-11-14T07:49:40.617Z,local_server/mosquitto,1794642580: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:49:40.617Z,local_server/mosquitto,1794642580: Client 172.18.0.1 [172.18.0.1:33978] disconnected: Protocol error.
+2026-11-14T07:49:55.784Z,local_server/mosquitto,1794642595: New connection from 172.18.0.1:45090 on port 8883.
+2026-11-14T07:49:56.364Z,local_server/mosquitto,1794642596: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:49:56.364Z,local_server/mosquitto,1794642596: Client 172.18.0.1 [172.18.0.1:45090] disconnected: Protocol error.
+2026-11-14T07:50:06.362Z,local_server/mosquitto,1794642606: New connection from 172.18.0.1:60924 on port 8883.
+2026-11-14T07:50:06.753Z,local_server/mosquitto,1794642606: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:50:06.753Z,local_server/mosquitto,1794642606: Client 172.18.0.1 [172.18.0.1:60924] disconnected: Protocol error.
+2026-11-14T07:50:16.773Z,local_server/mosquitto,1794642616: New connection from 172.18.0.1:41668 on port 8883.
+2026-11-14T07:50:16.871Z,local_server/mosquitto,1794642616: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:50:16.871Z,local_server/mosquitto,1794642616: Client 172.18.0.1 [172.18.0.1:41668] disconnected: Protocol error.
+2026-11-14T07:50:26.923Z,local_server/mosquitto,1794642626: New connection from 172.18.0.1:34710 on port 8883.
+2026-11-14T07:50:27.391Z,local_server/mosquitto,1794642627: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:50:27.391Z,local_server/mosquitto,1794642627: Client 172.18.0.1 [172.18.0.1:34710] disconnected: Protocol error.
+2026-11-14T07:50:37.759Z,local_server/mosquitto,1794642637: New connection from 172.18.0.1:51224 on port 8883.
+2026-11-14T07:50:38.452Z,local_server/mosquitto,1794642638: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:50:38.452Z,local_server/mosquitto,1794642638: Client 172.18.0.1 [172.18.0.1:51224] disconnected: Protocol error.
+2026-11-14T07:50:48.492Z,local_server/mosquitto,1794642648: New connection from 172.18.0.1:46938 on port 8883.
+2026-11-14T07:50:48.836Z,local_server/mosquitto,1794642648: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:50:48.836Z,local_server/mosquitto,1794642648: Client 172.18.0.1 [172.18.0.1:46938] disconnected: Protocol error.
+2026-11-14T07:50:58.905Z,local_server/mosquitto,1794642658: New connection from 172.18.0.1:39884 on port 8883.
+2026-11-14T07:50:59.227Z,local_server/mosquitto,1794642659: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:50:59.227Z,local_server/mosquitto,1794642659: Client 172.18.0.1 [172.18.0.1:39884] disconnected: Protocol error.
+2026-11-14T07:51:09.314Z,local_server/mosquitto,1794642669: New connection from 172.18.0.1:39514 on port 8883.
+2026-11-14T07:51:09.672Z,local_server/mosquitto,1794642669: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:51:09.672Z,local_server/mosquitto,1794642669: Client 172.18.0.1 [172.18.0.1:39514] disconnected: Protocol error.
+2026-11-14T07:51:24.773Z,local_server/mosquitto,1794642684: New connection from 172.18.0.1:55396 on port 8883.
+2026-11-14T07:51:25.026Z,local_server/mosquitto,1794642685: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:51:25.026Z,local_server/mosquitto,1794642685: Client 172.18.0.1 [172.18.0.1:55396] disconnected: Protocol error.
+2026-11-14T07:51:35.143Z,local_server/mosquitto,1794642695: New connection from 172.18.0.1:53786 on port 8883.
+2026-11-14T07:51:35.948Z,local_server/mosquitto,1794642695: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:51:35.948Z,local_server/mosquitto,1794642695: Client 172.18.0.1 [172.18.0.1:53786] disconnected: Protocol error.
+2026-11-14T07:51:46.045Z,local_server/mosquitto,1794642706: New connection from 172.18.0.1:43650 on port 8883.
+2026-11-14T07:51:46.316Z,local_server/mosquitto,1794642706: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:51:46.316Z,local_server/mosquitto,1794642706: Client 172.18.0.1 [172.18.0.1:43650] disconnected: Protocol error.
+2026-11-14T07:51:56.358Z,local_server/mosquitto,1794642716: New connection from 172.18.0.1:38830 on port 8883.
+2026-11-14T07:51:56.724Z,local_server/mosquitto,1794642716: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:51:56.724Z,local_server/mosquitto,1794642716: Client 172.18.0.1 [172.18.0.1:38830] disconnected: Protocol error.
+2026-11-14T07:52:11.840Z,local_server/mosquitto,1794642731: New connection from 172.18.0.1:33428 on port 8883.
+2026-11-14T07:52:12.140Z,local_server/mosquitto,1794642732: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:52:12.140Z,local_server/mosquitto,1794642732: Client 172.18.0.1 [172.18.0.1:33428] disconnected: Protocol error.
+2026-11-14T07:52:27.166Z,local_server/mosquitto,1794642747: New connection from 172.18.0.1:43658 on port 8883.
+2026-11-14T07:52:27.440Z,local_server/mosquitto,1794642747: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:52:27.440Z,local_server/mosquitto,1794642747: Client 172.18.0.1 [172.18.0.1:43658] disconnected: Protocol error.
+2026-11-14T07:52:42.558Z,local_server/mosquitto,1794642762: New connection from 172.18.0.1:49576 on port 8883.
+2026-11-14T07:52:42.789Z,local_server/mosquitto,1794642762: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:52:42.789Z,local_server/mosquitto,1794642762: Client 172.18.0.1 [172.18.0.1:49576] disconnected: Protocol error.
+2026-11-14T07:52:52.891Z,local_server/mosquitto,1794642772: New connection from 172.18.0.1:44284 on port 8883.
+2026-11-14T07:52:53.241Z,local_server/mosquitto,1794642773: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:52:53.241Z,local_server/mosquitto,1794642773: Client 172.18.0.1 [172.18.0.1:44284] disconnected: Protocol error.
+2026-11-14T07:53:03.348Z,local_server/mosquitto,1794642783: New connection from 172.18.0.1:59872 on port 8883.
+2026-11-14T07:53:03.676Z,local_server/mosquitto,1794642783: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:53:03.676Z,local_server/mosquitto,1794642783: Client 172.18.0.1 [172.18.0.1:59872] disconnected: Protocol error.
+2026-11-14T07:53:18.739Z,local_server/mosquitto,1794642798: New connection from 172.18.0.1:37564 on port 8883.
+2026-11-14T07:53:18.838Z,local_server/mosquitto,1794642798: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:53:18.838Z,local_server/mosquitto,1794642798: Client 172.18.0.1 [172.18.0.1:37564] disconnected: Protocol error.
+2026-11-14T07:53:33.890Z,local_server/mosquitto,1794642813: New connection from 172.18.0.1:56804 on port 8883.
+2026-11-14T07:53:33.995Z,local_server/mosquitto,1794642813: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:53:33.995Z,local_server/mosquitto,1794642813: Client 172.18.0.1 [172.18.0.1:56804] disconnected: Protocol error.
+2026-11-14T07:53:49.047Z,local_server/mosquitto,1794642829: New connection from 172.18.0.1:57598 on port 8883.
+2026-11-14T07:53:49.146Z,local_server/mosquitto,1794642829: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:53:49.146Z,local_server/mosquitto,1794642829: Client 172.18.0.1 [172.18.0.1:57598] disconnected: Protocol error.
+2026-11-14T07:53:59.183Z,local_server/mosquitto,1794642839: New connection from 172.18.0.1:58526 on port 8883.
+2026-11-14T07:53:59.281Z,local_server/mosquitto,1794642839: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:53:59.281Z,local_server/mosquitto,1794642839: Client 172.18.0.1 [172.18.0.1:58526] disconnected: Protocol error.
+2026-11-14T07:54:09.315Z,local_server/mosquitto,1794642849: New connection from 172.18.0.1:53574 on port 8883.
+2026-11-14T07:54:09.417Z,local_server/mosquitto,1794642849: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:54:09.417Z,local_server/mosquitto,1794642849: Client 172.18.0.1 [172.18.0.1:53574] disconnected: Protocol error.
+2026-11-14T07:54:19.458Z,local_server/mosquitto,1794642859: New connection from 172.18.0.1:47192 on port 8883.
+2026-11-14T07:54:19.556Z,local_server/mosquitto,1794642859: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:54:19.556Z,local_server/mosquitto,1794642859: Client 172.18.0.1 [172.18.0.1:47192] disconnected: Protocol error.
+2026-11-14T07:54:29.595Z,local_server/mosquitto,1794642869: New connection from 172.18.0.1:42086 on port 8883.
+2026-11-14T07:54:29.693Z,local_server/mosquitto,1794642869: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:54:29.693Z,local_server/mosquitto,1794642869: Client 172.18.0.1 [172.18.0.1:42086] disconnected: Protocol error.
+2026-11-14T07:54:39.731Z,local_server/mosquitto,1794642879: New connection from 172.18.0.1:57318 on port 8883.
+2026-11-14T07:54:39.831Z,local_server/mosquitto,1794642879: OpenSSL Error while trying to get the error[0]: error:0A000419:SSL routines::tlsv1 alert access denied
+2026-11-14T07:54:39.831Z,local_server/mosquitto,1794642879: Client 172.18.0.1 [172.18.0.1:57318] disconnected: Protocol error.
+2026-11-14T07:56:05.961Z,local_server/mosquitto,1794642965: New connection from 172.18.0.1:40260 on port 8883.
+2026-11-14T07:56:08.732Z,local_server/mosquitto,1794642968: New connection from 172.18.0.1:40270 on port 8883.
+2026-11-14T07:56:08.976Z,local_server/mosquitto,1794642968: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-14T07:56:08.976Z,local_server/mosquitto,1794642968: Client 172.18.0.1 [172.18.0.1:40260] disconnected: connection closed by client.
+2026-11-14T07:56:09.486Z,local_server/mosquitto,"1794642969: New client connected from 172.18.0.1:40270 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-14T07:56:09.487Z,local_server/mosquitto,1794642969: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-14T07:59:55.615Z,local_server/mosquitto,1794643195: New connection from 172.18.0.1:44852 on port 8883.
+2026-11-14T07:59:55.634Z,local_server/mosquitto,1794643195: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T07:59:55.635Z,local_server/mosquitto,1794643195: Client 172.18.0.1 [172.18.0.1:44852] disconnected: Protocol error.
+2026-11-14T08:00:02.273Z,local_server/mosquitto,1794643202: New connection from 172.18.0.1:48024 on port 8883.
+2026-11-14T08:00:02.279Z,local_server/mosquitto,1794643202: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:00:02.279Z,local_server/mosquitto,1794643202: Client 172.18.0.1 [172.18.0.1:48024] disconnected: Protocol error.
+2026-11-14T08:00:02.282Z,local_server/mosquitto,1794643202: New connection from 172.18.0.1:48038 on port 8883.
+2026-11-14T08:00:02.290Z,local_server/mosquitto,1794643202: Client 172.18.0.1 [172.18.0.1:48038] disconnected: protocol error.
+2026-11-14T08:00:03.362Z,local_server/mosquitto,1794643203: New connection from 172.18.0.1:48044 on port 8883.
+2026-11-14T08:00:03.367Z,local_server/mosquitto,1794643203: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:00:03.368Z,local_server/mosquitto,1794643203: Client 172.18.0.1 [172.18.0.1:48044] disconnected: Protocol error.
+2026-11-14T08:00:03.369Z,local_server/mosquitto,1794643203: New connection from 172.18.0.1:48054 on port 8883.
+2026-11-14T08:00:03.377Z,local_server/mosquitto,1794643203: Client 172.18.0.1 [172.18.0.1:48054] disconnected: protocol error.
+2026-11-14T08:08:54.639Z,local_server/mosquitto,1794643734: New connection from 172.18.0.1:33228 on port 8084.
+2026-11-14T08:08:54.744Z,local_server/mosquitto,"1794643734: New client connected from 172.18.0.1:33228 as local-bridge-1794643733795 (p4, c1, k30, u'dashboard_bridge')."
+2026-11-14T08:08:54.744Z,local_server/mosquitto,1794643734: Client local-bridge-1794643733795 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-14T08:09:09.692Z,local_server/mosquitto,1794643749: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-14T08:09:09.692Z,local_server/mosquitto,1794643749: Client local-bridge-1794643733795 [172.18.0.1:33228] disconnected: connection closed by client.
+2026-11-14T08:38:41.843Z,local_server/mosquitto,1794645521: New connection from 172.18.0.1:43908 on port 8084.
+2026-11-14T08:38:41.929Z,local_server/mosquitto,"1794645521: New client connected from 172.18.0.1:43908 as local-bridge-1794645521724 (p4, c1, k30, u'dashboard_bridge')."
+2026-11-14T08:38:41.929Z,local_server/mosquitto,1794645521: Client local-bridge-1794645521724 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-14T08:39:33.889Z,local_server/mosquitto,1794645573: New connection from 172.18.0.1:59076 on port 8084.
+2026-11-14T08:39:33.904Z,local_server/mosquitto,1794645573: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:39:33.904Z,local_server/mosquitto,1794645573: Client 172.18.0.1 [172.18.0.1:59076] disconnected: Protocol error.
+2026-11-14T08:39:33.933Z,local_server/mosquitto,1794645573: New connection from 172.18.0.1:59084 on port 8084.
+2026-11-14T08:39:33.939Z,local_server/mosquitto,1794645573: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:39:33.939Z,local_server/mosquitto,1794645573: Client 172.18.0.1 [172.18.0.1:59084] disconnected: Protocol error.
+2026-11-14T08:39:33.960Z,local_server/mosquitto,1794645573: New connection from 172.18.0.1:59100 on port 8084.
+2026-11-14T08:39:33.970Z,local_server/mosquitto,1794645573: Client 172.18.0.1 [172.18.0.1:59100] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:39:35.301Z,local_server/mosquitto,1794645575: New connection from 172.18.0.1:59104 on port 8084.
+2026-11-14T08:39:35.305Z,local_server/mosquitto,1794645575: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:39:35.305Z,local_server/mosquitto,1794645575: Client 172.18.0.1 [172.18.0.1:59104] disconnected: Protocol error.
+2026-11-14T08:39:35.335Z,local_server/mosquitto,1794645575: New connection from 172.18.0.1:59120 on port 8084.
+2026-11-14T08:39:35.338Z,local_server/mosquitto,1794645575: Client 172.18.0.1 [172.18.0.1:59120] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:39:37.378Z,local_server/mosquitto,1794645577: New connection from 172.18.0.1:59130 on port 8084.
+2026-11-14T08:39:37.405Z,local_server/mosquitto,1794645577: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:39:37.405Z,local_server/mosquitto,1794645577: Client 172.18.0.1 [172.18.0.1:59130] disconnected: Protocol error.
+2026-11-14T08:39:37.428Z,local_server/mosquitto,1794645577: New connection from 172.18.0.1:59136 on port 8084.
+2026-11-14T08:39:37.451Z,local_server/mosquitto,1794645577: Client 172.18.0.1 [172.18.0.1:59136] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:39:41.468Z,local_server/mosquitto,1794645581: New connection from 172.18.0.1:59146 on port 8084.
+2026-11-14T08:39:41.471Z,local_server/mosquitto,1794645581: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:39:41.471Z,local_server/mosquitto,1794645581: Client 172.18.0.1 [172.18.0.1:59146] disconnected: Protocol error.
+2026-11-14T08:39:41.487Z,local_server/mosquitto,1794645581: New connection from 172.18.0.1:59152 on port 8084.
+2026-11-14T08:39:41.494Z,local_server/mosquitto,1794645581: Client 172.18.0.1 [172.18.0.1:59152] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:39:46.521Z,local_server/mosquitto,1794645586: New connection from 172.18.0.1:51800 on port 8084.
+2026-11-14T08:39:46.524Z,local_server/mosquitto,1794645586: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:39:46.525Z,local_server/mosquitto,1794645586: Client 172.18.0.1 [172.18.0.1:51800] disconnected: Protocol error.
+2026-11-14T08:39:46.544Z,local_server/mosquitto,1794645586: New connection from 172.18.0.1:51806 on port 8084.
+2026-11-14T08:39:46.562Z,local_server/mosquitto,1794645586: Client 172.18.0.1 [172.18.0.1:51806] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:39:51.580Z,local_server/mosquitto,1794645591: New connection from 172.18.0.1:51822 on port 8084.
+2026-11-14T08:39:51.585Z,local_server/mosquitto,1794645591: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:39:51.585Z,local_server/mosquitto,1794645591: Client 172.18.0.1 [172.18.0.1:51822] disconnected: Protocol error.
+2026-11-14T08:39:51.612Z,local_server/mosquitto,1794645591: New connection from 172.18.0.1:51836 on port 8084.
+2026-11-14T08:39:51.614Z,local_server/mosquitto,1794645591: Client 172.18.0.1 [172.18.0.1:51836] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:39:56.624Z,local_server/mosquitto,1794645596: New connection from 172.18.0.1:52274 on port 8084.
+2026-11-14T08:39:56.626Z,local_server/mosquitto,1794645596: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:39:56.626Z,local_server/mosquitto,1794645596: Client 172.18.0.1 [172.18.0.1:52274] disconnected: Protocol error.
+2026-11-14T08:39:56.647Z,local_server/mosquitto,1794645596: New connection from 172.18.0.1:52284 on port 8084.
+2026-11-14T08:39:56.659Z,local_server/mosquitto,1794645596: Client 172.18.0.1 [172.18.0.1:52284] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:40:01.666Z,local_server/mosquitto,1794645601: New connection from 172.18.0.1:52290 on port 8084.
+2026-11-14T08:40:01.668Z,local_server/mosquitto,1794645601: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:40:01.668Z,local_server/mosquitto,1794645601: Client 172.18.0.1 [172.18.0.1:52290] disconnected: Protocol error.
+2026-11-14T08:40:01.695Z,local_server/mosquitto,1794645601: New connection from 172.18.0.1:52296 on port 8084.
+2026-11-14T08:40:01.700Z,local_server/mosquitto,1794645601: Client 172.18.0.1 [172.18.0.1:52296] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:40:06.714Z,local_server/mosquitto,1794645606: New connection from 172.18.0.1:57460 on port 8084.
+2026-11-14T08:40:06.722Z,local_server/mosquitto,1794645606: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:40:06.722Z,local_server/mosquitto,1794645606: Client 172.18.0.1 [172.18.0.1:57460] disconnected: Protocol error.
+2026-11-14T08:40:06.747Z,local_server/mosquitto,1794645606: New connection from 172.18.0.1:57468 on port 8084.
+2026-11-14T08:40:06.752Z,local_server/mosquitto,1794645606: Client 172.18.0.1 [172.18.0.1:57468] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:40:11.764Z,local_server/mosquitto,1794645611: New connection from 172.18.0.1:57474 on port 8084.
+2026-11-14T08:40:11.766Z,local_server/mosquitto,1794645611: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:40:11.766Z,local_server/mosquitto,1794645611: Client 172.18.0.1 [172.18.0.1:57474] disconnected: Protocol error.
+2026-11-14T08:40:11.795Z,local_server/mosquitto,1794645611: New connection from 172.18.0.1:57478 on port 8084.
+2026-11-14T08:40:11.800Z,local_server/mosquitto,1794645611: Client 172.18.0.1 [172.18.0.1:57478] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:40:16.819Z,local_server/mosquitto,1794645616: New connection from 172.18.0.1:33170 on port 8084.
+2026-11-14T08:40:16.826Z,local_server/mosquitto,1794645616: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:40:16.826Z,local_server/mosquitto,1794645616: Client 172.18.0.1 [172.18.0.1:33170] disconnected: Protocol error.
+2026-11-14T08:40:16.845Z,local_server/mosquitto,1794645616: New connection from 172.18.0.1:33174 on port 8084.
+2026-11-14T08:40:16.861Z,local_server/mosquitto,1794645616: Client 172.18.0.1 [172.18.0.1:33174] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:40:19.426Z,local_server/mosquitto,1794645619: New connection from 172.18.0.1:33190 on port 8084.
+2026-11-14T08:40:19.428Z,local_server/mosquitto,1794645619: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-14T08:40:19.428Z,local_server/mosquitto,1794645619: Client 172.18.0.1 [172.18.0.1:33190] disconnected: Protocol error.
+2026-11-14T08:40:19.448Z,local_server/mosquitto,1794645619: New connection from 172.18.0.1:33198 on port 8084.
+2026-11-14T08:40:19.454Z,local_server/mosquitto,1794645619: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:40:19.455Z,local_server/mosquitto,1794645619: Client 172.18.0.1 [172.18.0.1:33198] disconnected: Protocol error.
+2026-11-14T08:40:19.482Z,local_server/mosquitto,1794645619: New connection from 172.18.0.1:33208 on port 8084.
+2026-11-14T08:40:19.488Z,local_server/mosquitto,1794645619: Client 172.18.0.1 [172.18.0.1:33208] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:40:20.505Z,local_server/mosquitto,1794645620: New connection from 172.18.0.1:33210 on port 8084.
+2026-11-14T08:40:20.515Z,local_server/mosquitto,1794645620: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:40:20.515Z,local_server/mosquitto,1794645620: Client 172.18.0.1 [172.18.0.1:33210] disconnected: Protocol error.
+2026-11-14T08:40:20.544Z,local_server/mosquitto,1794645620: New connection from 172.18.0.1:33216 on port 8084.
+2026-11-14T08:40:20.551Z,local_server/mosquitto,1794645620: Client 172.18.0.1 [172.18.0.1:33216] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:40:22.559Z,local_server/mosquitto,1794645622: New connection from 172.18.0.1:34584 on port 8084.
+2026-11-14T08:40:22.567Z,local_server/mosquitto,1794645622: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:40:22.567Z,local_server/mosquitto,1794645622: Client 172.18.0.1 [172.18.0.1:34584] disconnected: Protocol error.
+2026-11-14T08:40:22.587Z,local_server/mosquitto,1794645622: New connection from 172.18.0.1:34598 on port 8084.
+2026-11-14T08:40:22.590Z,local_server/mosquitto,1794645622: Client 172.18.0.1 [172.18.0.1:34598] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:40:26.609Z,local_server/mosquitto,1794645626: New connection from 172.18.0.1:34604 on port 8084.
+2026-11-14T08:40:26.612Z,local_server/mosquitto,1794645626: OpenSSL Error while trying to get the error[0]: error:0A000416:SSL routines::ssl/tls alert certificate unknown
+2026-11-14T08:40:26.612Z,local_server/mosquitto,1794645626: Client 172.18.0.1 [172.18.0.1:34604] disconnected: Protocol error.
+2026-11-14T08:40:26.640Z,local_server/mosquitto,1794645626: New connection from 172.18.0.1:34612 on port 8084.
+2026-11-14T08:40:26.644Z,local_server/mosquitto,1794645626: Client 172.18.0.1 [172.18.0.1:34612] disconnected: bad socket read/write: Unknown error
+2026-11-14T08:42:49.944Z,local_server/mosquitto,1794645769: New connection from 172.18.0.1:46780 on port 8883.
+2026-11-14T08:42:50.743Z,local_server/mosquitto,1794645770: Client ESP32_3bD6A8 [172.18.0.1:40270] disconnected: session taken over.
+2026-11-14T08:42:50.744Z,local_server/mosquitto,"1794645770: New client connected from 172.18.0.1:46780 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-14T08:42:50.744Z,local_server/mosquitto,1794645770: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-14T08:43:08.962Z,local_server/mosquitto,1794645788: New connection from 172.18.0.1:34784 on port 8883.
+2026-11-14T08:43:09.678Z,local_server/mosquitto,1794645789: Client ESP32_3bD6A8 [172.18.0.1:46780] disconnected: session taken over.
+2026-11-14T08:43:09.678Z,local_server/mosquitto,"1794645789: New client connected from 172.18.0.1:34784 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-14T08:43:09.678Z,local_server/mosquitto,1794645789: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-14T08:43:16.433Z,local_server/mosquitto,1794645796: New connection from 172.18.0.1:36424 on port 8883.
+2026-11-14T08:43:17.150Z,local_server/mosquitto,1794645797: Client ESP32_3bD6A8 [172.18.0.1:34784] disconnected: session taken over.
+2026-11-14T08:43:17.150Z,local_server/mosquitto,"1794645797: New client connected from 172.18.0.1:36424 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-14T08:43:17.150Z,local_server/mosquitto,1794645797: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-14T08:44:32.336Z,local_server/mosquitto,1794645872: New connection from 172.18.0.1:37574 on port 8883.
+2026-11-14T08:44:32.920Z,local_server/mosquitto,1794645872: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-14T08:44:32.920Z,local_server/mosquitto,1794645872: Client ESP32_3bD6A8 [172.18.0.1:36424] disconnected: connection closed by client.
+2026-11-14T08:44:33.024Z,local_server/mosquitto,"1794645873: New client connected from 172.18.0.1:37574 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-14T08:44:33.024Z,local_server/mosquitto,1794645873: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-14T08:46:47.487Z,local_server/mosquitto,1794646007: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-14T08:46:47.487Z,local_server/mosquitto,1794646007: Client local-bridge-1794645521724 [172.18.0.1:43908] disconnected: connection closed by client.

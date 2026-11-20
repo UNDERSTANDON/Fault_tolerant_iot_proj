@@ -1,0 +1,85 @@
+﻿timestamp,object,message
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Info: running mosquitto as user: mosquitto.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: mosquitto version 2.1.2 starting
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Config loaded from /mosquitto/config/mosquitto.conf.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Bridge support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Persistence support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: TLS support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: TLS-PSK support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Websockets support available.
+2026-11-09T02:55:07.548Z,eloquent_moser,1794192907: Opening ipv4 listen socket on port 1883.
+2026-11-09T02:55:07.555Z,eloquent_moser,1794192907: Opening ipv6 listen socket on port 1883.
+2026-11-09T02:55:07.559Z,eloquent_moser,1794192907: Opening http api listen socket on port 9883.
+2026-11-09T02:55:07.559Z,eloquent_moser,1794192907: Using http_dir /usr/share/mosquitto/dashboard/
+2026-11-09T02:55:07.559Z,eloquent_moser,1794192907: mosquitto version 2.1.2 running
+2026-11-09T02:55:14.201Z,eloquent_moser,1794192914: mosquitto version 2.1.2 terminating
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Info: running mosquitto as user: mosquitto.
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 base messages
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 retained messages
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 clients
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 subscriptions
+2026-11-13T07:26:58.288Z,local_server/mosquitto,1794554818: Restored 0 client messages
+2026-11-13T07:26:58.594Z,local_server/mosquitto,1794554818: New connection from 172.18.0.1:58964 on port 8883.
+2026-11-13T07:26:58.594Z,local_server/mosquitto,1794554818: New connection from 172.18.0.1:51784 on port 8084.
+2026-11-13T07:26:58.594Z,local_server/mosquitto,1794554818: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:26:58.594Z,local_server/mosquitto,1794554818: Client 172.18.0.1 [172.18.0.1:58964] disconnected: Protocol error.
+2026-11-13T07:26:58.595Z,local_server/mosquitto,1794554818: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:26:58.595Z,local_server/mosquitto,1794554818: Client 172.18.0.1 [172.18.0.1:51784] disconnected: Protocol error.
+2026-11-13T07:27:01.863Z,local_server/mosquitto,1794554821: New connection from 172.18.0.1:58968 on port 8883.
+2026-11-13T07:27:01.868Z,local_server/mosquitto,1794554821: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:27:01.868Z,local_server/mosquitto,1794554821: Client 172.18.0.1 [172.18.0.1:58968] disconnected: Protocol error.
+2026-11-13T07:27:01.877Z,local_server/mosquitto,1794554821: New connection from 172.18.0.1:51792 on port 8084.
+2026-11-13T07:27:01.877Z,local_server/mosquitto,1794554821: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:27:01.877Z,local_server/mosquitto,1794554821: Client 172.18.0.1 [172.18.0.1:51792] disconnected: Protocol error.
+2026-11-13T07:36:05.289Z,local_server/mosquitto,1794555365: New connection from 172.18.0.1:58420 on port 8883.
+2026-11-13T07:36:06.000Z,local_server/mosquitto,"1794555365: New client connected from 172.18.0.1:58420 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:36:06.000Z,local_server/mosquitto,1794555365: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-13T07:36:21.845Z,local_server/mosquitto,1794555381: New connection from 172.18.0.1:37646 on port 8883.
+2026-11-13T07:36:21.871Z,local_server/mosquitto,1794555381: Client mqttjs_49d081aa [172.18.0.1:37646] disconnected: not authorised.
+2026-11-13T07:36:21.882Z,local_server/mosquitto,1794555381: New connection from 172.18.0.1:38178 on port 8084.
+2026-11-13T07:36:21.937Z,local_server/mosquitto,1794555381: Client mqttjs_46cfec7c [172.18.0.1:38178] disconnected: not authorised.
+2026-11-13T07:36:21.941Z,local_server/mosquitto,1794555381: New connection from 172.18.0.1:37658 on port 8883.
+2026-11-13T07:36:21.947Z,local_server/mosquitto,"1794555381: New client connected from 172.18.0.1:37658 as mqttjs_3d4e5426 (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:36:21.947Z,local_server/mosquitto,1794555381: Client mqttjs_3d4e5426 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:36:22.748Z,local_server/mosquitto,1794555382: Client mqttjs_3d4e5426 [172.18.0.1:37658] disconnected.
+2026-11-13T07:36:22.754Z,local_server/mosquitto,1794555382: New connection from 172.18.0.1:38180 on port 8084.
+2026-11-13T07:36:22.802Z,local_server/mosquitto,"1794555382: New client connected from 172.18.0.1:38180 as mqttjs_bf1e84f8 (p4, c1, k60, u'dashboard_bridge')."
+2026-11-13T07:36:22.803Z,local_server/mosquitto,1794555382: Client mqttjs_bf1e84f8 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:36:23.558Z,local_server/mosquitto,1794555383: Client mqttjs_bf1e84f8 [172.18.0.1:38180] disconnected.
+2026-11-13T07:36:23.562Z,local_server/mosquitto,1794555383: New connection from 172.18.0.1:38182 on port 8084.
+2026-11-13T07:36:23.609Z,local_server/mosquitto,"1794555383: New client connected from 172.18.0.1:38182 as mqttjs_881e8738 (p4, c1, k60, u'dashboard_bridge')."
+2026-11-13T07:36:23.609Z,local_server/mosquitto,1794555383: Client mqttjs_881e8738 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:36:23.614Z,local_server/mosquitto,1794555383: New connection from 172.18.0.1:37668 on port 8883.
+2026-11-13T07:36:23.618Z,local_server/mosquitto,"1794555383: New client connected from 172.18.0.1:37668 as mqttjs_aed6c87c (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:36:23.618Z,local_server/mosquitto,1794555383: Client mqttjs_aed6c87c negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:36:23.662Z,local_server/mosquitto,1794555383: Client mqttjs_aed6c87c [172.18.0.1:37668] disconnected.
+2026-11-13T07:36:23.663Z,local_server/mosquitto,1794555383: Client mqttjs_881e8738 [172.18.0.1:38182] disconnected.
+2026-11-13T07:36:37.160Z,local_server/mosquitto,1794555397: New connection from 172.18.0.1:44642 on port 8883.
+2026-11-13T07:36:37.169Z,local_server/mosquitto,"1794555397: New client connected from 172.18.0.1:44642 as mqttjs_2d0ac199 (p4, c1, k60, u'dashboard_bridge')."
+2026-11-13T07:36:37.169Z,local_server/mosquitto,1794555397: Client mqttjs_2d0ac199 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:37:02.015Z,local_server/mosquitto,1794555422: New connection from 172.18.0.1:41630 on port 8883.
+2026-11-13T07:37:02.727Z,local_server/mosquitto,1794555422: Client ESP32_3bD6A8 [172.18.0.1:58420] disconnected: session taken over.
+2026-11-13T07:37:02.727Z,local_server/mosquitto,"1794555422: New client connected from 172.18.0.1:41630 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:37:02.727Z,local_server/mosquitto,1794555422: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-13T07:38:14.917Z,local_server/mosquitto,1794555494: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:38:14.917Z,local_server/mosquitto,1794555494: Client mqttjs_2d0ac199 [172.18.0.1:44642] disconnected: connection closed by client.
+2026-11-13T07:40:54.470Z,local_server/mosquitto,1794555654: New connection from 172.18.0.1:46824 on port 8084.
+2026-11-13T07:40:54.527Z,local_server/mosquitto,"1794555654: New client connected from 172.18.0.1:46824 as local-bridge-1794555654423 (p4, c1, k30, u'dashboard_bridge')."
+2026-11-13T07:40:54.527Z,local_server/mosquitto,1794555654: Client local-bridge-1794555654423 negotiated TLSv1.3 cipher TLS_AES_256_GCM_SHA384
+2026-11-13T07:41:02.853Z,local_server/mosquitto,1794555662: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:41:02.853Z,local_server/mosquitto,1794555662: Client local-bridge-1794555654423 [172.18.0.1:46824] disconnected: connection closed by client.
+2026-11-13T07:46:53.671Z,local_server/mosquitto,1794556013: New connection from 172.18.0.1:45664 on port 8883.
+2026-11-13T07:46:54.282Z,local_server/mosquitto,1794556014: OpenSSL Error while trying to get the error[0]: error:0A000126:SSL routines::unexpected eof while reading
+2026-11-13T07:46:54.282Z,local_server/mosquitto,1794556014: Client ESP32_3bD6A8 [172.18.0.1:41630] disconnected: connection closed by client.
+2026-11-13T07:46:54.494Z,local_server/mosquitto,"1794556014: New client connected from 172.18.0.1:45664 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-13T07:46:54.494Z,local_server/mosquitto,1794556014: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384
+2026-11-13T08:20:45.856Z,local_server/mosquitto,1794558045: Client ESP32_3bD6A8 [172.18.0.1:45664] disconnected: exceeded timeout.
+2026-11-14T06:40:57.840Z,local_server/mosquitto,1794638457: Info: running mosquitto as user: mosquitto.
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 base messages
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 retained messages
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 clients
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 subscriptions
+2026-11-14T06:40:57.841Z,local_server/mosquitto,1794638457: Restored 0 client messages
+2026-11-14T06:44:10.772Z,local_server/mosquitto,1794638650: New connection from 172.18.0.1:45426 on port 8883.
+2026-11-14T06:44:11.712Z,local_server/mosquitto,"1794638651: New client connected from 172.18.0.1:45426 as ESP32_3bD6A8 (p4, c1, k60, u'esp32_test')."
+2026-11-14T06:44:11.712Z,local_server/mosquitto,1794638651: Client ESP32_3bD6A8 negotiated TLSv1.2 cipher ECDHE-RSA-AES256-GCM-SHA384

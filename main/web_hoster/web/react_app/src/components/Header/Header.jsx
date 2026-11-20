@@ -48,7 +48,7 @@ export default function Header({ networkMode, activeScreenName = 'Overview', onO
           </span>
           <div className={`${styles.localFirstTag} ${isLocal ? styles.tagLocal : ''}`}>
             <span className={styles.dot}></span>
-            <span>{isLocal ? 'Local connection' : 'Local-first'}</span>
+            <span>{isLocal ? 'Simulated local mode' : 'Local-first demo'}</span>
           </div>
           <div className={styles.avatarCircle} title="User Profile">
             AN
@@ -59,40 +59,40 @@ export default function Header({ networkMode, activeScreenName = 'Overview', onO
       {/* 2. Main Title Row with Status Badge */}
       <div className={styles.titleRow}>
         <div className={styles.titleLeft}>
-          <span className={styles.eyebrow}>YOUR HOME</span>
-          <h1 className={styles.pageTitle}>Home overview</h1>
-          <p className={styles.pageSubtitle}>Peace of mind. Every control, right here.</p>
+          <span className={styles.eyebrow}>SMART-HOME DEMO</span>
+          <h1 className={styles.pageTitle}>System overview</h1>
+          <p className={styles.pageSubtitle}>Device controls and room readings are simulated; MQTT connectivity tests are shown separately.</p>
         </div>
 
         <div className={styles.titleRight}>
           {networkMode === 'NORMAL' && (
             <div className={styles.badgeNormal}>
               <span className={styles.dotGreen}></span>
-              <span>ONLINE · Normal Mode</span>
+              <span>SIMULATED · Normal scenario</span>
             </div>
           )}
           {networkMode === 'LOCAL' && (
             <div className={styles.badgeLocal}>
               <span className={styles.dotAmber}></span>
-              <span>LOCAL · Local Mode</span>
+              <span>SIMULATED · Local scenario</span>
             </div>
           )}
           {networkMode === 'SWITCHING' && (
             <div className={styles.badgeSwitching}>
               <span className={styles.dotBlue}></span>
-              <span>SWITCHING · Resolving Local</span>
+              <span>SIMULATED · Switching scenario</span>
             </div>
           )}
           {networkMode === 'RECONNECTING' && (
             <div className={styles.badgeReconnecting}>
               <span className={styles.dotIndigo}></span>
-              <span>RECONNECTING · Restoring</span>
+              <span>SIMULATED · Recovery scenario</span>
             </div>
           )}
           {networkMode === 'UNAVAILABLE' && (
             <div className={styles.badgeUnavailable}>
               <span className={styles.dotRed}></span>
-              <span>UNAVAILABLE · Controls Locked</span>
+              <span>SIMULATED · Unavailable scenario</span>
             </div>
           )}
         </div>

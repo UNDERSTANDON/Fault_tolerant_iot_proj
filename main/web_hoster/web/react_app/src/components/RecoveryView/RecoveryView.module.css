@@ -69,12 +69,12 @@
   transition: all var(--transition-fast);
 }
 
-.statusSynced {
+.statusDemo {
   background-color: var(--bg-surface);
   border-color: rgba(16, 185, 129, 0.4);
 }
 
-.statusSynced .statusIcon {
+.statusDemo .statusIcon {
   color: var(--state-normal);
   background-color: var(--state-normal-bg);
 }
@@ -303,14 +303,14 @@
   color: #e2e8f0;
 }
 
-.syncBadge {
+.sampleBadge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--state-normal);
-  background-color: var(--state-normal-bg);
+  color: var(--text-secondary);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
 }

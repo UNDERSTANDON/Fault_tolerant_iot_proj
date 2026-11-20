@@ -1,0 +1,148 @@
+.page {
+  display: grid;
+  gap: var(--spacing-lg);
+  padding: 28px 0;
+  max-width: 760px;
+}
+
+.header h1,
+.panel h2 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.header p {
+  margin: var(--spacing-xs) 0 0;
+  color: var(--text-secondary);
+}
+
+.panel {
+  display: grid;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel h2 {
+  font-size: 1rem;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.field {
+  display: grid;
+  gap: var(--spacing-xs);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.field input {
+  min-width: 0;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  align-self: end;
+  min-height: 40px;
+  padding: 8px 14px;
+  color: #fff;
+  background: var(--accent-primary);
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submit:hover {
+  background: var(--accent-primary-hover);
+}
+
+.error,
+.message,
+.muted {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.error {
+  color: var(--state-unavailable);
+}
+
+.message {
+  color: var(--state-normal);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.userList {
+  display: grid;
+  gap: var(--spacing-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.userList li {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 12px;
+  background: var(--bg-base);
+  border-radius: var(--radius-sm);
+}
+
+.stateButton {
+  margin-left: auto;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xs);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stateButton:hover {
+  border-color: var(--border-focus);
+}
+
+.role,
+.disabled {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary-bg);
+  color: var(--accent-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.disabled {
+  background: var(--state-unavailable-bg);
+  color: var(--state-unavailable);
+}
+
+@media (max-width: 640px) {
+  .form {
+    grid-template-columns: 1fr;
+  }
+}
