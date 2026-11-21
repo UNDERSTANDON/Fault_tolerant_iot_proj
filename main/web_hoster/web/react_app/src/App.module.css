@@ -15,20 +15,23 @@
 
 .mainWrapper {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 40px 140px 40px; /* Bug 7 Fix: Increased clearance for bottom drawer */
+  padding: 0 28px 110px 28px;
   overflow-y: auto;
   max-width: 1440px;
 }
 
 .inlineError {
-  margin: 12px 0;
+  margin-bottom: var(--spacing-md);
   padding: 10px 14px;
-  border: 1px solid var(--status-error, #e5484d);
-  border-radius: 8px;
-  color: var(--status-error, #b42318);
-  background: var(--bg-surface, #fff);
+  border: 1px solid var(--state-unavailable-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--state-unavailable-bg);
+  color: var(--state-unavailable);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .spacesHeader {
@@ -51,24 +54,25 @@
   color: var(--text-secondary);
 }
 
-/* Bug 6 Fix: Balanced 4-room grid (4x1 on desktop, 2x2 on tablet) */
+/* 4-column grid with minmax(0, 1fr) so cards never overflow the viewport */
 .spacesGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-lg);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
 }
 
-@media (max-width: 1380px) {
+@media (max-width: 1320px) {
   .spacesGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
   .mainWrapper {
-    padding: 16px 16px 140px 16px;
+    padding: 16px 16px 120px 16px;
   }
   .spacesGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }

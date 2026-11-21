@@ -1,28 +1,53 @@
 .innerCard {
   background-color: var(--bg-card-inner);
-  border-radius: var(--radius-md);
-  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   transition: all var(--transition-fast);
+}
+
+.innerCard:hover:not(.disabled) {
+  border-color: var(--border-color);
+  background-color: #efeee8;
+}
+
+.cardActive {
+  background-color: #edf3ec;
+  border-color: rgba(40, 86, 64, 0.18);
 }
 
 .leftMeta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .iconWrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.iconWrapActive {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(31, 48, 39, 0.08);
 }
 
 .iconOn {
-  color: var(--text-primary);
+  color: var(--accent-primary);
 }
 
 .iconOff {
@@ -36,25 +61,37 @@
 .textWrap {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .nameLabel {
-  font-size: 0.85rem;
+  font-size: 0.81rem;
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stateLabel {
-  font-size: 0.7rem;
+  font-size: 0.67rem;
   font-weight: 600;
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stateLabelOn {
   color: var(--accent-primary);
 }
 
-/* Exact Pill Toggle Switch from Figma */
+.statePending {
+  color: var(--state-local);
+  font-style: italic;
+}
+
 .toggleTrack {
   width: 44px;
   height: 24px;
@@ -64,15 +101,20 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  transition: background-color var(--transition-normal);
+  flex-shrink: 0;
+  transition: background-color var(--transition-normal), opacity var(--transition-fast);
 }
 
 .trackOn {
-  background-color: var(--device-on-toggle); /* Exact dark pine green */
+  background-color: var(--device-on-toggle);
 }
 
 .trackOff {
-  background-color: var(--device-off-toggle); /* Exact soft grey */
+  background-color: var(--device-off-toggle);
+}
+
+.trackPending {
+  opacity: 0.75;
 }
 
 .toggleThumb {
@@ -80,7 +122,7 @@
   height: 20px;
   border-radius: 50%;
   background-color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
   transition: transform var(--transition-normal);
 }
 
@@ -90,6 +132,19 @@
 
 .thumbOff {
   transform: translateX(0);
+}
+
+.upsReadyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background-color: rgba(2, 132, 199, 0.1);
+  color: #0369a1;
+  font-size: 0.66rem;
+  font-weight: 800;
+  flex-shrink: 0;
 }
 
 .disabled {
