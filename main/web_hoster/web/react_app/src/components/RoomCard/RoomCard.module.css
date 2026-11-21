@@ -7,11 +7,18 @@
   flex-direction: column;
   gap: 12px;
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .cardContainer:hover {
-  border-color: #c4cabf;
+  border-color: #bfc7bc;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.cardAlertBorder {
+  border-color: var(--state-unavailable);
+  box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.14);
 }
 
 .cardHeader {
@@ -32,6 +39,7 @@
   height: 38px;
   border-radius: var(--radius-sm);
   background-color: rgba(40, 86, 64, 0.08);
+  border: 1px solid rgba(40, 86, 64, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,7 +61,7 @@
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.25px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -61,16 +69,19 @@
 
 .roomSub {
   font-size: 0.7rem;
+  font-weight: 600;
   color: var(--text-secondary);
 }
 
 .openDetailBtn {
   color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 5px;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
+  border: 1px solid transparent;
   transition: all var(--transition-fast);
   flex-shrink: 0;
 }
@@ -78,32 +89,40 @@
 .openDetailBtn:hover {
   color: var(--accent-primary);
   background-color: rgba(40, 86, 64, 0.08);
+  border-color: rgba(40, 86, 64, 0.16);
 }
 
-.tempRow {
+.heroMetricBox {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  padding: 2px 0;
+  gap: 6px;
+  height: 58px;
+  padding: 8px 11px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #faf9f5 0%, #f3f2ec 100%);
+  border: 1px solid var(--border-light);
 }
 
 .tempLeft {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .tempNum {
-  font-size: 2.2rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
-  letter-spacing: -1px;
+  letter-spacing: -0.8px;
+  font-variant-numeric: tabular-nums;
 }
 
 .tempUnit {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: var(--text-secondary);
 }
 
@@ -111,18 +130,28 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 0.72rem;
+  gap: 3px;
   text-align: right;
+  min-width: 0;
 }
 
 .tempLabel {
+  font-size: 0.7rem;
   color: var(--text-primary);
   font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
-.tempTime {
-  color: var(--text-secondary);
-  font-weight: 600;
+.heroModelBadge {
+  font-size: 0.59rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background-color: var(--accent-primary-bg);
+  color: var(--accent-primary);
+  border: 1px solid var(--state-normal-border);
+  white-space: nowrap;
 }
 
 .sectionBlock {
@@ -135,43 +164,33 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
 }
 
 .sectionHeading {
-  font-size: 0.64rem;
+  font-size: 0.63rem;
   font-weight: 800;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.65px;
   color: var(--text-secondary);
   text-transform: uppercase;
-}
-
-.sourceMiniChip {
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: var(--radius-full);
-  background-color: var(--bg-card-inner);
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
 }
 
 .sensorRows {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
+  min-height: 68px;
 }
 
 .sensorItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 4px;
   padding: 6px 8px;
-  border-radius: 6px;
+  border-radius: 7px;
   background-color: #f8f7f3;
   border: 1px solid var(--border-light);
-  font-size: 0.72rem;
+  font-size: 0.69rem;
 }
 
 .sensorItemAlert {
@@ -183,7 +202,7 @@
 .sensorItemLeft {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
   flex: 1;
 }
@@ -196,27 +215,29 @@
   text-overflow: ellipsis;
 }
 
+.sensorItemRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .sensorModelPill {
-  font-size: 0.6rem;
+  font-size: 0.59rem;
   font-weight: 800;
   padding: 1px 5px;
   border-radius: 4px;
-  background-color: var(--accent-primary-bg);
-  color: var(--accent-primary);
-  border: 1px solid var(--state-normal-border);
-  flex-shrink: 0;
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-mono);
 }
 
 .sensorItemVal {
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.iconTemp {
-  color: #f97316;
-  flex-shrink: 0;
 }
 
 .iconHumidity {
@@ -233,7 +254,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.73rem;
+  font-size: 0.72rem;
   color: var(--text-secondary);
   font-weight: 600;
   padding: 6px 8px;
@@ -258,6 +279,13 @@
   margin: 2px 0;
 }
 
+.devicesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+}
+
 .deviceList {
   display: flex;
   flex-direction: column;
@@ -265,11 +293,47 @@
 }
 
 .cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  margin-top: auto;
+  border-top: 1px dashed var(--border-light);
   font-size: 0.66rem;
   color: var(--text-muted);
-  line-height: 1.35;
-  padding-top: 2px;
-  margin-top: auto;
+}
+
+.footerStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.dotOnline {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--state-normal);
+}
+
+.dotOffline {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--state-unavailable);
+}
+
+.sourceMiniChip {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-card-inner);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
 }
 
 @keyframes pulse {

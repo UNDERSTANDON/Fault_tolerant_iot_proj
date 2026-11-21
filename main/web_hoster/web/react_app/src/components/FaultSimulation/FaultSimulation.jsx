@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RotateCcw, AlertTriangle, ShieldCheck, ChevronUp, ChevronDown, Activity, WifiOff, Flame } from 'lucide-react';
+import { RotateCcw, AlertTriangle, ShieldCheck, ChevronUp, ChevronDown, FlaskConical, WifiOff, Flame } from 'lucide-react';
 import styles from './FaultSimulation.module.css';
 
 export default function FaultSimulation({
@@ -14,7 +14,7 @@ export default function FaultSimulation({
 
   return (
     <div className={`${styles.simulationContainer} ${isOpen ? styles.open : styles.collapsed}`}>
-      {/* Toggle Button Bar */}
+      {/* Floating Capsule Dock / Drawer Header */}
       <button
         type="button"
         className={styles.toggleBar}
@@ -22,12 +22,15 @@ export default function FaultSimulation({
         title="Toggle SafeHaven Resilience Test Lab (Administrator Only)"
       >
         <div className={styles.barLeft}>
-          <Activity size={18} className={styles.pulseIcon} />
-          <span className={styles.barTitle}>RESILIENCE TEST LAB (ADMIN) · SOURCE: SIMULATOR</span>
+          <span className={styles.labIconPill}>
+            <FlaskConical size={15} />
+          </span>
+          <span className={styles.barTitle}>Resilience Test Lab</span>
+          <span className={styles.sourceBadge}>Admin · Simulator</span>
         </div>
         <div className={styles.barRight}>
-          <span className={styles.activeModeTag}>Active Mode: <strong>{currentMode}</strong></span>
-          {isOpen ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+          <span className={styles.activeModeTag}>Mode: <strong>{currentMode}</strong></span>
+          {isOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
         </div>
       </button>
 
@@ -43,8 +46,8 @@ export default function FaultSimulation({
                 className={`${styles.testBtn} ${currentMode === 'NORMAL' ? styles.btnActive : ''}`}
                 onClick={() => onRestore()}
               >
-                <ShieldCheck size={16} />
-                <span>T1: Normal Mode (Full Network)</span>
+                <ShieldCheck size={15} />
+                <span>T1: Normal Mode</span>
               </button>
 
               <button
@@ -52,7 +55,7 @@ export default function FaultSimulation({
                 className={`${styles.testBtn} ${styles.btnWarning} ${currentMode === 'LOCAL' ? styles.btnActiveWarning : ''}`}
                 onClick={() => onTriggerFault('INTERNET_DOWN')}
               >
-                <WifiOff size={16} />
+                <WifiOff size={15} />
                 <span>T2: Internet Lost (LAN Fallback)</span>
               </button>
 
@@ -61,7 +64,7 @@ export default function FaultSimulation({
                 className={`${styles.testBtn} ${styles.btnDanger} ${currentMode === 'UNAVAILABLE' ? styles.btnActiveDanger : ''}`}
                 onClick={() => onTriggerFault('LAN_DOWN')}
               >
-                <AlertTriangle size={16} />
+                <AlertTriangle size={15} />
                 <span>T3: Complete LAN Outage</span>
               </button>
 
@@ -70,8 +73,8 @@ export default function FaultSimulation({
                 className={`${styles.testBtn} ${styles.btnInfo}`}
                 onClick={() => onTriggerFault('SIMULATE_RECOVERY')}
               >
-                <RotateCcw size={16} />
-                <span>T4: Cloud Reconnection &amp; Sync</span>
+                <RotateCcw size={15} />
+                <span>T4: Cloud Reconnection</span>
               </button>
 
               <button
@@ -79,7 +82,7 @@ export default function FaultSimulation({
                 className={`${styles.testBtn} ${styles.btnDanger} ${isSmokeAlert ? styles.btnActiveDanger : ''}`}
                 onClick={() => onToggleSmokeAlarm && onToggleSmokeAlarm(!isSmokeAlert)}
               >
-                <Flame size={16} />
+                <Flame size={15} />
                 <span>{isSmokeAlert ? 'Clear MQ-2 Smoke Alert' : 'Trigger MQ-2 Smoke Alert'}</span>
               </button>
             </div>
@@ -90,15 +93,15 @@ export default function FaultSimulation({
             <span className={styles.actionGroupTitle}>2. Test Lab Telemetry Metrics (Source: Simulator):</span>
             <div className={styles.metricsGrid}>
               <div className={styles.metricItem}>
-                <span className={styles.metricLabel}>Failover Transition Time:</span>
+                <span className={styles.metricLabel}>Failover Transition Time</span>
                 <span className={styles.metricValue}>{metrics.fallbackTimeMs} ms</span>
               </div>
               <div className={styles.metricItem}>
-                <span className={styles.metricLabel}>Avg Command Latency:</span>
+                <span className={styles.metricLabel}>Avg Command Latency</span>
                 <span className={styles.metricValue}>{metrics.avgResponseTimeMs} ms</span>
               </div>
               <div className={styles.metricItem}>
-                <span className={styles.metricLabel}>Session Actions Executed:</span>
+                <span className={styles.metricLabel}>Session Actions Executed</span>
                 <span className={styles.metricValue}>{metrics.commandsTotal}</span>
               </div>
             </div>

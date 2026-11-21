@@ -1,4 +1,5 @@
-import { MapPin, ChevronDown, LayoutGrid, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, Activity, X, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, ChevronDown, LayoutGrid, Compass, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, Activity, Cpu, BatteryCharging, X, LogOut } from 'lucide-react';
 import Logo from '../Logo/Logo';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import styles from './Sidebar.module.css';
@@ -17,6 +18,7 @@ export default function Sidebar({
   onManageUsers
 }) {
   useScrollLock(Boolean(isMobileOpen));
+  const [isAptOpen, setIsAptOpen] = useState(false);
 
   const isOverview = activeScreen === 'DASHBOARD' && !selectedRoomId;
   const isSensors = activeScreen === 'SENSORS' && !selectedRoomId;
@@ -64,21 +66,50 @@ export default function Sidebar({
           <Logo size="sm" showText subtitle="RESILIENT SMART HOME" />
         </div>
 
-        {/* 2. Apartment Dropdown Card */}
-        <div className={styles.apartmentCard}>
-          <div className={styles.apartmentLeft}>
-            <div className={styles.pinCircle}>
-              <MapPin size={15} color="#285640" />
+        {/* 2. Interactive Apartment & Gateway Popover Card */}
+        <div className={styles.aptWrapper}>
+          <button
+            type="button"
+            className={`${styles.apartmentCard} ${isAptOpen ? styles.apartmentCardActive : ''}`}
+            onClick={() => setIsAptOpen((prev) => !prev)}
+            aria-expanded={isAptOpen}
+            title="View apartment gateway & zone summary"
+          >
+            <div className={styles.apartmentLeft}>
+              <div className={styles.pinCircle}>
+                <MapPin size={15} color="#285640" />
+              </div>
+              <div className={styles.apartmentMeta}>
+                <span className={styles.apartmentTitle}>My apartment</span>
+                <span className={styles.apartmentSub}>4 zones · 10 sensors</span>
+              </div>
             </div>
-            <div className={styles.apartmentMeta}>
-              <span className={styles.apartmentTitle}>My apartment</span>
-              <span className={styles.apartmentSub}>4 monitored zones</span>
+            <ChevronDown
+              size={14}
+              color="#5c665e"
+              className={isAptOpen ? styles.chevronRotated : styles.chevronNormal}
+            />
+          </button>
+
+          {isAptOpen && (
+            <div className={styles.aptPopover}>
+              <div className={styles.aptRow}>
+                <Cpu size={13} className={styles.aptIcon} />
+                <span>Edge MCU: <strong>ESP32-S3 (v6.1)</strong></span>
+              </div>
+              <div className={styles.aptRow}>
+                <Network size={13} className={styles.aptIcon} />
+                <span>LAN Subnet: <code>192.168.137.1</code></span>
+              </div>
+              <div className={styles.aptRow}>
+                <BatteryCharging size={13} className={styles.aptIcon} />
+                <span>Backup UPS: <strong>100% LiFePO4 (24h)</strong></span>
+              </div>
             </div>
-          </div>
-          <ChevronDown size={14} color="#6b756d" />
+          )}
         </div>
 
-        {/* 3. Navigation Links */}
+        {/* 3. Navigation Links (All 4 Spaces Included) */}
         <div className={styles.navSection}>
           <span className={styles.sectionHeader}>
             {isVisitor ? 'TELEMETRY & DIAGNOSTICS' : 'SPACES & CONTROLS'}
@@ -91,8 +122,19 @@ export default function Sidebar({
                 className={`${styles.navItem} ${isOverview ? styles.navItemActive : ''}`}
                 onClick={() => handleNavClick('DASHBOARD')}
               >
-                <LayoutGrid size={18} />
+                <LayoutGrid size={17} />
                 <span>Overview</span>
+              </button>
+            )}
+
+            {!isVisitor && (
+              <button
+                type="button"
+                className={`${styles.navItem} ${selectedRoomId === 'hallway' ? styles.navItemActive : ''}`}
+                onClick={() => handleRoomClick('hallway')}
+              >
+                <Compass size={17} />
+                <span>Hallway &amp; entrance</span>
               </button>
             )}
 
@@ -102,7 +144,7 @@ export default function Sidebar({
                 className={`${styles.navItem} ${selectedRoomId === 'living_room' ? styles.navItemActive : ''}`}
                 onClick={() => handleRoomClick('living_room')}
               >
-                <Sofa size={18} />
+                <Sofa size={17} />
                 <span>Living room</span>
               </button>
             )}
@@ -113,7 +155,7 @@ export default function Sidebar({
                 className={`${styles.navItem} ${selectedRoomId === 'kitchen' ? styles.navItemActive : ''}`}
                 onClick={() => handleRoomClick('kitchen')}
               >
-                <Utensils size={18} />
+                <Utensils size={17} />
                 <span>Kitchen</span>
               </button>
             )}
@@ -124,7 +166,7 @@ export default function Sidebar({
                 className={`${styles.navItem} ${selectedRoomId === 'bedroom' ? styles.navItemActive : ''}`}
                 onClick={() => handleRoomClick('bedroom')}
               >
-                <Bed size={18} />
+                <Bed size={17} />
                 <span>Bedroom</span>
               </button>
             )}
@@ -135,7 +177,7 @@ export default function Sidebar({
               className={`${styles.navItem} ${isSensors ? styles.navItemActive : ''}`}
               onClick={() => handleNavClick('SENSORS')}
             >
-              <Activity size={18} />
+              <Activity size={17} />
               <span>Sensors</span>
             </button>
 
@@ -145,7 +187,7 @@ export default function Sidebar({
               className={`${styles.navItem} ${isConnections ? styles.navItemActive : ''}`}
               onClick={() => handleNavClick('DIAGNOSTICS')}
             >
-              <Network size={18} />
+              <Network size={17} />
               <span>Connections</span>
               {currentMode === 'LOCAL' && <span className={styles.localBadge}>LOCAL</span>}
             </button>
@@ -156,7 +198,7 @@ export default function Sidebar({
                 className={`${styles.navItem} ${isTesting ? styles.navItemActive : ''}`}
                 onClick={() => handleNavClick('RESEARCH_TEST')}
               >
-                <FlaskConical size={18} />
+                <FlaskConical size={17} />
                 <span>Test Lab</span>
               </button>
             )}
@@ -171,7 +213,7 @@ export default function Sidebar({
                   if (onCloseMobile) onCloseMobile();
                 }}
               >
-                <Users size={18} />
+                <Users size={17} />
                 <span>User accounts</span>
               </button>
             )}

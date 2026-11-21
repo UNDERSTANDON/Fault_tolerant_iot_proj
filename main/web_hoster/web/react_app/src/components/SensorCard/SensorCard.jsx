@@ -2,7 +2,7 @@ import { Thermometer, Droplets, Flame, Wifi, ShieldCheck } from 'lucide-react';
 import styles from './SensorCard.module.css';
 
 export default function SensorCard({ sensor, showSource = false }) {
-  const { name, model, value, unit, type, status, source = 'Simulator' } = sensor;
+  const { name, model, value, unit, type, status = 'NORMAL', source = 'Simulator' } = sensor;
 
   const getSensorIcon = () => {
     switch (type) {
@@ -26,20 +26,32 @@ export default function SensorCard({ sensor, showSource = false }) {
 
   return (
     <div className={`${styles.badge} ${isAlert ? styles.badgeAlert : ''}`}>
-      <div className={styles.iconWrapper}>
-        {getSensorIcon()}
-      </div>
-      <div className={styles.content}>
-        <div className={styles.nameRow}>
-          <span className={styles.sensorName} title={name}>{name}</span>
-          {model && <span className={styles.modelTag}>{model}</span>}
+      <div className={styles.leftGroup}>
+        <div className={styles.iconWrapper}>
+          {getSensorIcon()}
         </div>
-        <div className={styles.valueRow}>
-          <span className={styles.sensorValue}>
-            {value} {unit ? <span className={styles.unit}>{unit}</span> : null}
+        <div className={styles.metaStack}>
+          <div className={styles.nameLine}>
+            <span className={styles.sensorName}>{name}</span>
+            {model && <span className={styles.modelTag}>{model}</span>}
+          </div>
+          <span className={styles.subMeta}>
+            {type === 'temperature' && 'Thermal probe · 20°C–35°C band'}
+            {type === 'humidity' && 'Hygrometer · 50%–70% optimal'}
+            {type === 'smoke' && 'Photoelectric / gas threshold monitor'}
+            {type === 'gateway' && 'Local edge telemetry transceiver'}
+            {showSource ? ` · Source: ${source}` : ''}
           </span>
-          {showSource && <span className={styles.sourceTag}>Source: {source}</span>}
         </div>
+      </div>
+
+      <div className={styles.rightGroup}>
+        <span className={`${styles.sensorValue} ${isAlert ? styles.valueAlert : ''}`}>
+          {value}{unit ? <span className={styles.unit}> {unit}</span> : null}
+        </span>
+        <span className={`${styles.statusPill} ${isAlert ? styles.pillAlert : styles.pillNormal}`}>
+          {isAlert ? 'HAZARD ALERT' : status}
+        </span>
       </div>
     </div>
   );
