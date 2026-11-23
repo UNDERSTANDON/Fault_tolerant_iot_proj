@@ -1,11 +1,11 @@
 .sidebar {
-  width: 250px;
+  width: 254px;
   background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
-  padding: 24px 16px;
+  padding: 22px 16px;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 16px;
   flex-shrink: 0;
   min-height: 100vh;
   position: relative;
@@ -19,37 +19,14 @@
   padding: 0 4px;
 }
 
-.brandIconBox {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background-color: var(--accent-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.brandText {
+.aptWrapper {
   display: flex;
   flex-direction: column;
-}
-
-.brandName {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1.1;
-  letter-spacing: -0.5px;
-}
-
-.brandSub {
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  letter-spacing: 0.8px;
+  gap: 6px;
 }
 
 .apartmentCard {
+  width: 100%;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -60,26 +37,29 @@
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast);
+  text-align: left;
 }
 
-.apartmentCard:hover {
-  border-color: #c4cabf;
+.apartmentCard:hover,
+.apartmentCardActive {
+  border-color: var(--accent-primary);
 }
 
 .apartmentLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
 }
 
 .pinCircle {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: var(--accent-primary-bg);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .apartmentMeta {
@@ -88,25 +68,69 @@
 }
 
 .apartmentTitle {
-  font-size: 0.8rem;
+  font-size: 0.81rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .apartmentSub {
   font-size: 0.68rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
+}
+
+.chevronNormal {
+  transition: transform var(--transition-fast);
+}
+
+.chevronRotated {
+  transform: rotate(180deg);
+  transition: transform var(--transition-fast);
+}
+
+.aptPopover {
+  background-color: #faf9f5;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.aptRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.aptRow strong {
+  color: var(--text-primary);
+}
+
+.aptRow code {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+.aptIcon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
 }
 
 .navSection {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sectionHeader {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.66rem;
+  font-weight: 800;
   letter-spacing: 0.8px;
   color: var(--text-subhead);
   padding-left: 8px;
@@ -115,17 +139,17 @@
 .navList {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .navItem {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   font-weight: 600;
   transition: all var(--transition-fast);
   text-align: left;
@@ -133,18 +157,19 @@
 }
 
 .navItem:hover:not(.navItemActive) {
-  background-color: rgba(36, 54, 45, 0.05);
+  background-color: rgba(31, 48, 39, 0.06);
   color: var(--text-primary);
 }
 
 .navItemActive {
   background-color: var(--accent-primary);
   color: #ffffff;
+  box-shadow: 0 2px 6px rgba(40, 86, 64, 0.22);
 }
 
 .localBadge {
   margin-left: auto;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 800;
   background-color: var(--state-local);
   color: #ffffff;
@@ -154,18 +179,18 @@
 
 .infoCard {
   margin-top: auto;
-  background-color: rgba(232, 239, 231, 0.6);
+  background-color: rgba(232, 239, 231, 0.65);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 14px;
+  padding: 13px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .infoIconCircle {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background-color: #ffffff;
   border: 1px solid var(--border-color);
@@ -175,14 +200,14 @@
 }
 
 .infoTitle {
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
 }
 
 .infoText {
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: var(--text-secondary);
   line-height: 1.35;
   margin: 0;
@@ -191,7 +216,7 @@
 .sidebarFooter {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   padding: 0 4px;
 }
 
@@ -199,7 +224,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
+  font-size: 0.71rem;
   color: var(--text-secondary);
   font-weight: 600;
 }
@@ -220,7 +245,7 @@
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: var(--spacing-sm) 12px;
+  padding: 8px 11px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -241,7 +266,7 @@
   border-radius: var(--radius-full);
   background-color: var(--accent-primary);
   color: var(--bg-surface);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -256,7 +281,7 @@
 }
 
 .userName {
-  font-size: 0.8rem;
+  font-size: 0.79rem;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
@@ -278,7 +303,7 @@
   background-color: var(--bg-card-inner);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  font-size: 0.72rem;
+  font-size: 0.71rem;
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
@@ -299,7 +324,6 @@
   display: none;
 }
 
-/* Bug 1 Fix: Responsive Mobile Drawer */
 @media (max-width: 960px) {
   .sidebar {
     position: fixed;
@@ -319,7 +343,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background-color: rgba(36, 54, 45, 0.4);
+    background-color: rgba(31, 48, 39, 0.45);
     backdrop-filter: blur(2px);
     z-index: 199;
   }

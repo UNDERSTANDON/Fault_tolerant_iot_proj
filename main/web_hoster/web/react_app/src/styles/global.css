@@ -11,6 +11,7 @@ html, body {
   background-color: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-family);
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
@@ -28,6 +29,7 @@ body {
 
 button {
   font-family: inherit;
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
   border: none;
   background: none;
@@ -40,4 +42,3 @@ button:disabled {
 input, select, textarea {
   font-family: inherit;
 }
-

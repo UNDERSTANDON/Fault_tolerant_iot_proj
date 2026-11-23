@@ -22,7 +22,7 @@
 }
 
 .crumbRoot {
-  font-weight: 500;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -32,7 +32,7 @@
 
 .crumbActive {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 
 .topRightMeta {
@@ -66,17 +66,140 @@
   background-color: var(--state-local);
 }
 
-.avatarCircle {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #dce3db;
+.userMenuWrapper {
+  position: relative;
+}
+
+.userTriggerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 4px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
-  font-size: 0.72rem;
-  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.userTriggerBtn:hover {
+  border-color: var(--accent-primary);
+}
+
+.avatarCircle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.triggerName {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rolePill {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.roleAdmin {
+  background-color: var(--accent-primary-bg);
+  color: var(--accent-primary);
+  border: 1px solid var(--state-normal-border);
+}
+
+.roleVisitor {
+  background-color: var(--state-switching-bg);
+  color: var(--state-switching);
+  border: 1px solid var(--state-switching-border);
+}
+
+.chevron {
+  color: var(--text-secondary);
+}
+
+.userDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 230px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dropdownHeader {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdownUserRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+}
+
+.dropdownRole {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 2px 0;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  transition: background-color var(--transition-fast);
+}
+
+.dropdownItem:hover {
+  background-color: var(--bg-card-inner);
+}
+
+.dropdownSignOut {
+  color: var(--state-unavailable);
+  font-weight: 700;
+}
+
+.dropdownSignOut:hover {
+  background-color: var(--state-unavailable-bg);
 }
 
 .titleRow {
@@ -94,9 +217,9 @@
 
 .eyebrow {
   font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  color: var(--text-subhead);
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  color: var(--accent-primary);
   text-transform: uppercase;
 }
 
@@ -119,7 +242,6 @@
   align-items: center;
 }
 
-/* Badges Matching Reference Screenshot */
 .badgeNormal {
   display: inline-flex;
   align-items: center;
