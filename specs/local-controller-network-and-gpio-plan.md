@@ -2,7 +2,19 @@
 
 ## Status
 
-Planning document. No implementation changes are included in this stage entry.
+The fallback AP and station-reconnect implementation is complete. Build,
+automated transition/GPIO validation, and partial device-log evidence are
+recorded under `specs/log_evidence/controller_evidence/`. AP-client access to
+the embedded dashboard and sustained client behavior after station recovery
+remain unverified. GPIO assignments remain intentionally unconfigured.
+
+Human review: AP implemented, GPIO tests are reserved on Friday.
+
+**Priority update:** proceed with local-server-to-Cloud-Firestore event
+delivery before additional AP+STA behavior or physical GPIO mapping. The
+implemented AP+STA reconnect behavior remains in place; defer further changes
+or expanded AP+STA acceptance until the Firebase delivery stage has passed
+review and the user has committed that stage.
 
 ## Goal
 
@@ -17,26 +29,21 @@ a safe test method have been reviewed.
 
 ## Current implementation findings
 
-- `main/local_controller/local_controller.cpp` is a stub. Its header declares
-  status-task methods but there is no controller behavior yet.
+- `main/local_controller/local_controller.cpp` owns observed network state.
 - Wi-Fi setup, fallback AP startup, HTTP hosting, mDNS, and station reconnect
   currently live in `main/web_hoster/web_hoster.cpp`.
-- On startup, `start_local_network()` loads station Wi-Fi settings. If the SSID
-  is empty or invalid, `get_wifi_config()` fails and the function returns
-  before attempting the fallback AP.
+- On startup, missing or invalid station settings lead to a secured fallback
+  AP attempt.
 - If a configured station network fails initial connection attempts, startup
   attempts to start the fallback AP at `192.168.4.1`.
-- After a successful station connection later drops, the reconnect task
-  retries station Wi-Fi but does not create/start the fallback AP if it was
-  not already active. This matches the reported runtime hotspot-loss symptom.
+- Before this change, after an established station connection dropped, the
+  reconnect task did not start a fallback AP unless it was already active.
 - When a fallback AP already exists, station reconnection uses AP+STA mode.
-  The eventual behavior when station service returns, including whether the
-  AP remains active or is shut down, needs an explicit policy and testing.
-- The HTTP server serves embedded static assets. Do not assume that clients on
-  the ESP32 fallback AP can reach the laptop-hosted Docker broker, Node bridge,
-  or dashboard.
-- Current Wi-Fi and fallback AP settings are ESP-IDF Kconfig values in
-  `main/Kconfig.projbuild`; there is no GPIO mapping configuration yet.
+  The implemented policy keeps the AP active after station recovery.
+- The HTTP server serves embedded static assets. Do not assume fallback AP
+  clients can reach the laptop-hosted Docker broker, Node bridge, or dashboard.
+- Wi-Fi, fallback AP, and unassigned GPIO role settings are ESP-IDF Kconfig
+  values in `main/Kconfig.projbuild`.
 - The target board recorded in `ESP_specs.txt` is ESP32-S3-N16R8, but the
   complete board revision, wiring, and available GPIO layout are not
   established by that target name alone.
@@ -66,6 +73,8 @@ a safe test method have been reviewed.
   protection/alarm equipment.
 - Routing the ESP32 fallback AP to the laptop, Docker, the Internet, or cloud
   services.
+- Further AP+STA behavior changes, client-routing work, and expanded AP-client
+  verification until after the Firebase event-delivery stage.
 - Runtime editing of GPIO mappings through a web UI or JSON file.
 - Production provisioning, captive portal, or cloud-managed configuration.
 
@@ -73,19 +82,17 @@ a safe test method have been reviewed.
 
 - `web_hoster` remains the ESP-IDF Wi-Fi/HTTP/mDNS adapter: it performs
   ESP-IDF network operations and reports events/results.
-- `local_controller` owns application-level network policy and state
-  transitions: startup choice, fallback availability, retry/backoff policy,
-  and station recovery decisions. Avoid a second Wi-Fi event/state machine
-  that competes with `web_hoster`.
+- `local_controller` owns observed application-level network state;
+  `web_hoster` performs ESP-IDF operations and schedules reconnect retries.
+  Avoid a second Wi-Fi event/state machine that competes with `web_hoster`.
 - Define explicit states, at minimum: initializing, station connecting,
   station connected, fallback AP active, station+AP recovery, and unavailable.
   State must reflect observed ESP-IDF events, not merely requested operations.
 - On loss of station connectivity, activate or retain the secured fallback AP
   and continue bounded station retries. Ensure the fallback web interface is
   reachable without a laptop or broker.
-- When station connectivity returns, update status and apply the reviewed AP
-  recovery policy. Do not tear down the fallback path before the station path
-  is confirmed usable.
+- When station connectivity returns, report both paths as active and retain
+  the AP; do not tear down the fallback path.
 - The embedded UI and controller must report local, station, broker, and
   simulated states distinctly. AP operation alone must not be reported as
   Docker/broker connectivity.
@@ -192,19 +199,37 @@ a safe test method have been reviewed.
   independently verified.
 - The user reviews the test evidence and independently commits this stage.
 
-## Open decisions before implementation
+## Decisions and remaining verification
 
-- After station recovery, should the ESP32 keep the fallback AP active, or
-  stop it only after station connectivity has remained stable for a chosen
-  interval?
-- What should the local dashboard support in AP-only mode, given the laptop
-  bridge and Docker broker are not assumed reachable?
-- What are the acceptable measured fallback activation and station reconnect
-  thresholds?
-- Which logical GPIO roles should be declared now, before physical assignments
-  are known?
+- Current implementation keeps the fallback AP active after station recovery.
+  Confirm this policy during device testing before accepting the stage.
+- AP-only mode serves the embedded dashboard and firmware network-status
+  endpoint. Laptop bridge, Docker broker, Internet, cloud, and real device
+  controls are not assumed reachable or implemented here.
+- The base AP+STA reconnect implementation is present and reportedly retains
+  the AP after station recovery. Changes to that behavior and remaining
+  AP-client acceptance tests are deferred until after Firebase event delivery.
+- Fallback activation and station reconnect latency thresholds remain
+  unmeasured; no latency guarantee is claimed.
+- Initial GPIO roles are `SENSOR_INPUT_1` and `LIGHT_RELAY_1`, both unassigned.
 - What board-revision-specific GPIO set and conflict policy will be used once
   the physical layout is available?
-- Should invalid/unassigned GPIO configuration disable only the affected
-  feature or prevent firmware startup? Do not enable safety-relevant hardware
-  by default.
+- Invalid configured mappings prevent local network startup. Unassigned roles
+  do not initialize hardware.
+
+## Implementation and verification record
+
+- The secured AP starts for missing station settings, invalid settings, or
+  exhausted initial connection attempts. It is also started after station
+  loss, while reconnect retries continue at 5, 10, 20, then 30 seconds
+  (repeating at 30 seconds).
+- The fallback AP requires a 1-32 byte SSID and an 8-63 byte password.
+  `GET /api/network/status` reports observed station/AP state. The embedded
+  UI presents this firmware state separately from simulated dashboard data.
+- GPIO roles default to `-1`, with ESP32-S3 pin-range and duplicate-role
+  validation. Assigning a pin does not initialize hardware.
+- ESP-IDF build, CMake GPIO validation cases, native controller transition
+  tests, React build, and diff checks are documented in the evidence record.
+  React lint could not run because no ESLint 10 flat config exists. A
+  user-provided device log confirms AP startup, a DHCP lease, and eventual
+  station recovery; client dashboard and Internet routing still need testing.

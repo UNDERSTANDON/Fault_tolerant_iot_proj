@@ -50,10 +50,11 @@ control devices in the first release.
 
 | Component | Responsibility | Must not become |
 |---|---|---|
-| ESP32-S3 firmware | Wi-Fi lifecycle, sensor acquisition, LAN-facing device API, supported device commands, telemetry and event publishing | Dependent on Firebase, the local server, or MQTT for sampling and device control |
+| ESP32-S3 firmware | Wi-Fi lifecycle, sensor acquisition, LAN-facing device API, supported device commands, telemetry and event publishing; `EventNotifier` routes warning/critical notifications to local sinks | Dependent on Firebase, the local server, or MQTT for sampling and device control |
 | Local server | Host the dashboard and Docker services; provide a stable LAN endpoint and a path to deliver broker data to the dashboard | Required for the ESP32's sensor acquisition or device-control logic |
 | Browser dashboard | Served by the local server; display broker-delivered sensor readings, submit commands to the ESP32 API, show freshness and errors | A source of authoritative device state or sensor measurements |
 | Mosquitto in Docker | Local MQTT broker on the local server for telemetry and event distribution to the dashboard and cloud bridge | The only path for a user device command |
+| Firmware `EventNotifier` | Dispatch validated warning/critical notification data to an injected local sink; report whether that sink accepted it | A Firebase client, durable event queue, or claim that a notification reached the dashboard/cloud |
 | Proposed Docker cloud bridge | Consume MQTT messages, retry cloud delivery, forward acknowledged events | A prerequisite for local device control |
 | Firebase | Store received event/log data; later support analysis and remote notifications | A first-release actuator controller |
 | Physical device interface | Apply commands and provide whatever feedback its confirmed hardware supports | Assumed safe based only on software state |
@@ -142,6 +143,13 @@ Sensor sampling continues when the broker or local server is unavailable;
 the ESP32 retains its current local readings and retries publishing according
 to the approved policy.
 
+The firmware `EventNotifier` currently provides only an in-process dispatch
+interface for warning and critical notifications. A concrete MQTT/dashboard
+sink, event envelope, producer, and durable local retry queue are not yet
+implemented. Sink acceptance is not evidence that a broker or dashboard
+received the notification. Those details must follow the approved event and
+queue contracts.
+
 ### 5.4 Cloud synchronization
 
 1. The proposed Docker bridge consumes events from Mosquitto and forwards
@@ -189,8 +197,9 @@ review for electrical safety-dependent designs.
 
 ## 8. Implementation evidence
 
-At the time this architecture is written, the local and cloud controller
-sources are placeholders, and the HTTP server serves dashboard assets but
-does not expose the described control API. The dashboard contains simulated
-device and telemetry behavior. Treat this architecture as planned behavior
-until firmware, broker, cloud, and hardware tests demonstrate each flow.
+At the time this architecture is written, the firmware event notifier is an
+in-process interface without a concrete notification sink, and the HTTP
+server serves dashboard assets but does not expose the described control API.
+The dashboard contains simulated device and telemetry behavior. Treat this
+architecture as planned behavior until firmware, broker, cloud, and hardware
+tests demonstrate each flow.

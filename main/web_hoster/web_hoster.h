@@ -11,11 +11,12 @@ namespace web_hoster
           WebHoster();
           void start_local_network();
      private:
-          private:
-          void start_mDNS(const std::string &ssid, const std::string &password);
+          bool initialize_network_stack(bool create_station_netif);
+          bool start_fallback_ap();
+          bool start_mDNS();
           bool connect_to_house_network(const std::string &ssid,
                const std::string &password);
-          void start_web_server();
+          bool start_web_server();
           static void reconnect_to_house_network_task(void *parameter);
           bool get_wifi_config(std::string &ssid, std::string &password);
      };

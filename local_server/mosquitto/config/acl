@@ -1,5 +1,7 @@
 user esp32_test
 topic write demo/esp32-mqtt-connectivity/test
+topic write test/esp32/notifications/v1
 
 user dashboard_bridge
 topic read demo/esp32-mqtt-connectivity/test
+topic read test/esp32/notifications/v1

@@ -11,6 +11,16 @@ const BRIDGE_STATUS_LABELS = {
   unavailable: 'Offline'
 };
 
+const DEVICE_NETWORK_LABELS = {
+  initializing: 'Initializing',
+  station_connecting: 'Connecting to configured Wi-Fi',
+  station_connected: 'Station connected',
+  fallback_ap_active: 'Fallback AP active',
+  fallback_ap_reconnecting: 'Fallback AP active; station reconnecting',
+  station_ap_recovery: 'Station connected; fallback AP retained',
+  unavailable: 'Network unavailable'
+};
+
 function getStatusClass(status) {
   if (status === 'connected') {
     return styles.valSuccess;
@@ -21,7 +31,12 @@ function getStatusClass(status) {
   return styles.valWarn;
 }
 
-export default function ConnectionStatus({ networkState, bridgeState = { status: 'connected' }, onConnectBridge }) {
+export default function ConnectionStatus({
+  networkState,
+  deviceNetworkStatus,
+  bridgeState = { status: 'connected' },
+  onConnectBridge
+}) {
   const { internet, localLan, mqttBroker } = networkState;
   const hasBridgeObj = bridgeState && typeof bridgeState === 'object' && 'lastMessageAt' in bridgeState;
 
@@ -62,7 +77,7 @@ export default function ConnectionStatus({ networkState, bridgeState = { status:
           <Network size={18} className={localLan ? styles.iconGreen : styles.iconWarn} />
         </div>
         <div className={styles.meta}>
-          <span className={styles.label}>Local Network · LAN</span>
+          <span className={styles.label}>Local Network · LAN · Source: Simulator</span>
           <span className={`${styles.value} ${localLan ? styles.valSuccess : styles.valFailed}`}>
             {localLan ? 'Available' : 'Unavailable'}
           </span>
@@ -105,6 +120,14 @@ export default function ConnectionStatus({ networkState, bridgeState = { status:
       {hasBridgeObj && bridgeState.error && bridgeState.status !== 'not-configured' && (
         <p className={styles.bridgeNotice} role="status" aria-live="polite">
           {bridgeState.error}
+        </p>
+      )}
+
+      {deviceNetworkStatus && (
+        <p className={styles.deviceNetworkNotice} role="status" aria-live="polite">
+          {deviceNetworkStatus.available
+            ? `ESP32 network · Live: ${DEVICE_NETWORK_LABELS[deviceNetworkStatus.state] || 'Unknown'} · Station: ${deviceNetworkStatus.station_connected ? 'connected' : 'disconnected'} · Fallback AP: ${deviceNetworkStatus.fallback_ap_active ? 'active at 192.168.4.1' : 'inactive'}. AP access does not indicate MQTT broker or Internet access.`
+            : deviceNetworkStatus.error}
         </p>
       )}
 

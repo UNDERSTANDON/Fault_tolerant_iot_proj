@@ -8,7 +8,7 @@ You are the analysis specialist for this ESP32 smart-home project. Investigate t
 
 ## Project context
 - The target recorded in `ESP_specs.txt` is an ESP32-S3-N16R8; the project uses ESP-IDF with its application entry point in `main/Fault_tolerant_iot_proj.cpp`.
-- Firmware and the Wi-Fi/HTTP hoster are under `main/`. `main/local_controller/` and `main/cloud_controller/` currently contain controller stubs, not complete device or cloud integrations.
+- Firmware and the Wi-Fi/HTTP hoster are under `main/`. `main/local_controller/` tracks observed network state. `main/event_notifier/` dispatches warning/critical notifications to an injected in-process sink; it does not establish a broker, dashboard, durable queue, or cloud integration.
 - `main/mqtt_connectivity/` contains an ESP-IDF MQTT connectivity test publisher configured through `main/Kconfig.projbuild`. The demo publisher uses a demo topic and QoS 0. Its presence does not establish production telemetry, event delivery, or server integration; verify whether it is called.
 - `main/web_hoster/web/react_app/` is the React/Vite source. Its build outputs `app.js` and `style.css` into `main/web_hoster/web/`, alongside `index.html`; `main/CMakeLists.txt` embeds these web assets.
 - The React dashboard simulates room/device data, network behavior, commands, sensor drift, and test metrics in `src/hooks/useSmartHome.js` and `src/data/initialMockData.js`. `src/hooks/useAuth.js` provides browser-local demo authentication, not server-side security. Do not treat UI statuses or acknowledgements as live firmware evidence.

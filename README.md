@@ -91,6 +91,24 @@ If this prints no match, reopen `idf.py menuconfig`, enable the option, save,
 then build and flash again. Editing `sdkconfig` alone does not update firmware
 already flashed to the ESP32.
 
+### ESP32 fallback access point
+
+The ESP32 starts its own secured fallback access point when the station SSID is
+missing, station setup fails, or an established station connection is lost.
+Set **Fallback access point SSID** and a unique **Fallback access point
+password** (8-63 characters) in `idf.py menuconfig` before building. An empty
+or invalid password is rejected; the firmware will not create an open AP.
+
+Connect directly to that SSID and open `http://192.168.4.1/`. The fallback AP
+stays active after station Wi-Fi reconnects so local access is not dropped.
+Station retries use bounded delays of 5, 10, 20, then 30 seconds, repeating at
+30 seconds until a connection succeeds. `http://192.168.4.1/api/network/status`
+reports observed station/AP state. The embedded dashboard also labels that
+firmware network state separately from its simulated room readings and MQTT
+bridge status. The AP does not route clients to the laptop, Docker, the broker,
+the Internet, or cloud services; device control and GPIO hardware are not
+implemented by this fallback.
+
 Install the local service dependencies once, then verify certificate
 validation, authentication, ACLs, and delivery:
 
@@ -213,6 +231,110 @@ an access workaround.
 The hotspot-specific `.env` settings are for `npm run dev`; production
 `npm run build` intentionally omits the local bridge URL so the laptop's
 address is not embedded in the ESP32 web assets.
+
+### Isolated Firestore notification test
+
+The optional Firestore path is only for synthetic notification tests. It is
+disabled by default, uses the `test/esp32/notifications/v1` MQTT topic and the
+`testEventNotifications` collection, and does not forward these events to the
+dashboard or production Firebase. The ESP32 publisher is a separate build-time
+option; enabling it sends four test notifications (Warning, Critical, Warning,
+Critical) 60 seconds apart after MQTT connects.
+The local server requires Node.js 22 or newer for its Firebase Admin SDK.
+
+#### Recommended first run: local Firestore emulator
+
+The emulator was missing from the local setup: `firebase.json` only enabled
+single-project mode, without configuring a Firestore emulator or its port.
+The portable config is [firebase.emulator.json](firebase.emulator.json), which
+binds Firestore and the Emulator UI to loopback only. Install Firebase CLI and
+Java 21 or newer, then start the emulator from the repository root in its own
+terminal:
+
+```powershell
+npm install --global firebase-tools
+java -version
+firebase emulators:start --only firestore --project demo-fault-tolerant-iot --config firebase.emulator.json
+```
+
+Keep that terminal open. Firestore listens on `127.0.0.1:8080`; the Emulator
+UI is at `http://127.0.0.1:4000/`. The explicit `demo-` project ID prevents
+the CLI from selecting a real Firebase project. The rules file denies
+untrusted client access; the local Admin SDK connects directly to the emulator
+and needs no service-account JSON.
+
+Set these local-only values in `local_server/.env` (or the bridge process
+environment). The emulator path requires the test flag, loopback host, and
+`demo-` project ID; credentials and production project ID can be left blank:
+
+```text
+FIRESTORE_TEST_ENABLED=true
+FIRESTORE_TEST_EMULATOR=true
+FIREBASE_TEST_PROJECT_ID=demo-fault-tolerant-iot
+FIREBASE_PRODUCTION_PROJECT_ID=
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+GOOGLE_APPLICATION_CREDENTIALS=
+```
+
+The emulator host must be just `host:port` (no `http://`), and the bridge
+rejects non-loopback hosts in emulator mode. With the emulator running, run
+this smoke test from the repository root before starting the bridge or flashing
+the ESP32:
+
+```powershell
+npm --prefix local_server run test:firebase-emulator
+```
+
+It verifies a Firestore write, readback, and duplicate protection, then deletes
+its temporary document. Next, start the bridge with the existing `npm run dev`
+instructions. After running the ESP32 mock test, inspect the
+`testEventNotifications` collection in the Emulator UI and the local queue at
+`%LOCALAPPDATA%\FaultTolerantIoT\local-server\test-event-outbox`. Emulator data
+is local test data; it is not uploaded to Firebase. After changing broker
+ACLs, restart the local Mosquitto container so the new test-topic permissions
+take effect.
+
+#### Optional cloud test project
+
+For a real Firebase write test, create a dedicated test project, enable
+Firestore, and create a server-side service identity for that project. Keep
+its JSON credential outside the repository and Docker directories, restrict
+access to the local-server account, and never use a Firebase web-app config as
+a server credential. Set emulator mode off and configure:
+
+```text
+FIRESTORE_TEST_ENABLED=true
+FIRESTORE_TEST_EMULATOR=false
+FIREBASE_TEST_PROJECT_ID=<test-project-id>
+FIREBASE_PRODUCTION_PROJECT_ID=<different-production-project-id>
+FIRESTORE_EMULATOR_HOST=
+GOOGLE_APPLICATION_CREDENTIALS=C:/Users/<your-name>/AppData/Local/FaultTolerantIoT/firebase-test/service-account.json
+```
+
+The credential's `project_id` must match the test project. The bridge rejects
+credentials stored inside the repository and requires distinct test and
+production project IDs in cloud mode. `FIRESTORE_TEST_ENABLED=false` leaves
+both test destinations off.
+
+In `idf.py menuconfig`, enable **Publish synthetic warning/critical
+notifications for testing** under **ESP32 MQTT connectivity demo**, then build
+and flash. This defaults off; do not enable it in normal firmware. The mock
+events identify themselves as synthetic and use device uptime timestamps,
+not wall-clock times or sensor measurements. The bridge stores a test event
+under `%LOCALAPPDATA%\FaultTolerantIoT\local-server\test-event-outbox`
+before acknowledging its QoS-1 MQTT delivery. Firestore writes use the event
+ID as the document ID. Transient errors are retried with bounded backoff;
+permanent Firestore errors are quarantined. The outbox holds up to 500 pending
+events; a full or unavailable outbox is reported and the MQTT delivery is not
+acknowledged as accepted.
+
+Administrators can inspect the non-secret status at
+`GET /api/admin/test-events/status`. This reports whether test mode is enabled,
+whether the Firebase writer initialized, and pending/quarantined counts. It
+does not claim that a queued event has reached Firestore. Automated local
+checks run with `npm --prefix local_server test`. A live cloud write still
+requires the user-configured test project and service identity; no Firebase
+credentials are included in this repository.
 
 ### 30-minute LAN stability test
 

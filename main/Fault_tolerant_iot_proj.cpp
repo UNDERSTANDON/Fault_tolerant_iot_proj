@@ -4,9 +4,9 @@
 
 // This is an embedded project for ESP32-S3
 // The idea is to create a local-first fault-tolerant IoT system that
-// have the ability to store logs and AI analysis on cloud.
+// keep local event notification independent from optional cloud services.
 // To reduce the cost of development, we will use the website for the user to connect to the local controller and manage the IoT devices.
-// We can also implement a cloud controller to manage the local controllers and provide additional features such as AI analysis and data storage.
+// Cloud event storage and analysis belong in the local-server bridge.
 namespace main {
      // On init (which means when the ESP32-S3 is powered on), we will start the web server and the local network.
      // We will connect to the house network first as an access point, and then start the web server.

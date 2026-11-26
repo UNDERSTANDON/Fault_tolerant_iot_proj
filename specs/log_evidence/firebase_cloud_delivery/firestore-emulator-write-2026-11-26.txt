@@ -1,0 +1,33 @@
+Firestore emulator write-through-outbox smoke test
+Date: 2026-11-26
+Result: PASS
+
+Target:
+- Firebase Emulator Suite Firestore
+- Demo project ID: demo-fault-tolerant-iot
+- Emulator host: 127.0.0.1:8080
+- Collection: testEventNotifications
+- No live Firebase project or service-account credentials used
+
+Command:
+With `FIRESTORE_TEST_ENABLED=true`, `FIRESTORE_TEST_EMULATOR=true`,
+`FIREBASE_TEST_PROJECT_ID=demo-fault-tolerant-iot`,
+`FIREBASE_PRODUCTION_PROJECT_ID` empty,
+`FIRESTORE_EMULATOR_HOST=127.0.0.1:8080`, and
+`GOOGLE_APPLICATION_CREDENTIALS` empty:
+
+    npm --prefix local_server run test:firebase-emulator
+
+The emulator was already running, so the smoke test connected directly to its
+loopback Firestore endpoint. A second emulator could not bind to port 8080.
+
+Verified:
+- Synthetic test event was durably enqueued in the local test outbox.
+- Delivery worker created the event document and read it back from Firestore.
+- Replaying the same event ID was recognized as an exact duplicate.
+- The outbox was cleared only after writer confirmation.
+- Smoke-test Firestore document and temporary local outbox were removed.
+
+Limitations:
+- Does not verify MQTT broker ingestion or ESP32 publishing.
+- Does not verify live Firebase credentials, IAM permissions, or cloud delivery.
