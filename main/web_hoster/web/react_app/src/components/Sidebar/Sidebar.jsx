@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, ChevronDown, LayoutGrid, Compass, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, Activity, Cpu, Settings, X, LogOut } from 'lucide-react';
+import { MapPin, ChevronDown, LayoutGrid, Compass, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, Activity, Cpu, Settings, Bell, X, LogOut } from 'lucide-react';
 import Logo from '../Logo/Logo';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useLanguage } from '../../i18n/LanguageContext';
@@ -18,7 +18,8 @@ export default function Sidebar({
   isSigningOut = false,
   onManageUsers,
   hardwareStatus,
-  bridgeState
+  bridgeState,
+  notificationCount = 0
 }) {
   const { t, translateSource } = useLanguage();
   useScrollLock(Boolean(isMobileOpen));
@@ -27,6 +28,7 @@ export default function Sidebar({
   const isOverview = activeScreen === 'DASHBOARD' && !selectedRoomId;
   const isSensors = activeScreen === 'SENSORS' && !selectedRoomId;
   const isConnections = (activeScreen === 'DIAGNOSTICS' || activeScreen === 'LOCAL_FALLBACK' || activeScreen === 'RECOVERY') && !selectedRoomId;
+  const isHistory = activeScreen === 'NOTIFICATION_HISTORY' && !selectedRoomId;
   const isTesting = activeScreen === 'RESEARCH_TEST' && !selectedRoomId;
   const isUsers = activeScreen === 'USERS' && !selectedRoomId;
   const isSettings = activeScreen === 'SETTINGS' && !selectedRoomId;
@@ -190,6 +192,18 @@ export default function Sidebar({
               <Network size={17} />
               <span>{t('sidebar.connections')}</span>
               {currentMode === 'LOCAL' && <span className={styles.localBadge}>LOCAL</span>}
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.navItem} ${isHistory ? styles.navItemActive : ''}`}
+              onClick={() => handleNavClick('NOTIFICATION_HISTORY')}
+            >
+              <Bell size={17} />
+              <span>{t('sidebar.notificationHistory')}</span>
+              {notificationCount > 0 && (
+                <span className={styles.localBadge}>{notificationCount}</span>
+              )}
             </button>
 
             {!isVisitor && (

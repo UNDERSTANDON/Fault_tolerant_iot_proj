@@ -9,6 +9,68 @@ const HOME_CRITICAL_EVENT_TOPIC = 'home/events/critical';
 const HOME_TELEMETRY_TOPIC_REGEX = /^home\/[a-z0-9_-]+\/telemetry$/;
 const HOME_STATE_TOPIC_REGEX = /^home\/(living_room|bedroom|kitchen|hallway|gateway)\/(light|lock|fan|device)\/[a-z0-9_]+\/state$/;
 
+const NOTIFICATION_HISTORY_STORAGE_KEY = 'safehaven_notification_history_v1';
+const NOTIFICATION_RETENTION_DAYS = 30;
+const NOTIFICATION_RETENTION_MS = NOTIFICATION_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+const MAX_LOCAL_HISTORY_ITEMS = 500;
+const DEFAULT_FIREBASE_PROJECT_ID = 'testprojectesp32s3forfirebase';
+const DEFAULT_FIREBASE_KEY_PATH = 'C:/Users/BAO HAO/AppData/Local/FaultTolerantIoT/firebase-test/service-account.json';
+
+function inferNotificationCategory({ category, type, titleKey, messageKey }) {
+  if (['hazard', 'device', 'network', 'system'].includes(category)) {
+    return category;
+  }
+  const combined = `${titleKey || ''} ${messageKey || ''}`.toLowerCase();
+  if (combined.includes('smoke') || combined.includes('hazard')) return 'hazard';
+  if (combined.includes('cmd') || combined.includes('device') || combined.includes('action')) return 'device';
+  if (combined.includes('wan') || combined.includes('lan') || combined.includes('cloud') || combined.includes('baseline')) {
+    return 'network';
+  }
+  if (type === 'error') return 'hazard';
+  return 'system';
+}
+
+function pruneExpiredHistoryRecords(records, now = Date.now()) {
+  if (!Array.isArray(records)) return [];
+  return records
+    .filter((item) => {
+      if (!item || typeof item !== 'object' || typeof item.id !== 'string') return false;
+      const createdAtMs = Number.isFinite(item.createdAtMs) ? item.createdAtMs : now;
+      const expiresAtMs = Number.isFinite(item.expiresAtMs)
+        ? item.expiresAtMs
+        : createdAtMs + NOTIFICATION_RETENTION_MS;
+      return expiresAtMs > now && now - createdAtMs < NOTIFICATION_RETENTION_MS;
+    })
+    .sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0))
+    .slice(0, MAX_LOCAL_HISTORY_ITEMS);
+}
+
+function loadStoredNotificationHistory() {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(NOTIFICATION_HISTORY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    const pruned = pruneExpiredHistoryRecords(Array.isArray(parsed) ? parsed : []);
+    if (Array.isArray(parsed) && pruned.length !== parsed.length) {
+      window.localStorage.setItem(NOTIFICATION_HISTORY_STORAGE_KEY, JSON.stringify(pruned));
+    }
+    return pruned;
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredNotificationHistory(records) {
+  if (typeof window === 'undefined') return;
+  try {
+    const pruned = pruneExpiredHistoryRecords(records);
+    window.localStorage.setItem(NOTIFICATION_HISTORY_STORAGE_KEY, JSON.stringify(pruned));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 const INITIAL_ACTIVITY_LIST = [
   {
     id: 'act-1',
@@ -70,6 +132,14 @@ export function useSmartHome() {
   const [recentActivity, setRecentActivity] = useState(INITIAL_ACTIVITY_LIST);
   const [experimentLogs, setExperimentLogs] = useState(INITIAL_EXPERIMENT_LOGS);
   const [notifications, setNotifications] = useState([]);
+  const [notificationHistory, setNotificationHistory] = useState(() => loadStoredNotificationHistory());
+  const [historyMeta, setHistoryMeta] = useState({
+    projectId: DEFAULT_FIREBASE_PROJECT_ID,
+    collection: 'notificationHistory',
+    retentionDays: NOTIFICATION_RETENTION_DAYS,
+    firebaseConnected: false,
+    credentialsPath: DEFAULT_FIREBASE_KEY_PATH
+  });
   const [metrics, setMetrics] = useState({
     fallbackTimeMs: 0,
     avgResponseTimeMs: 0,
@@ -121,8 +191,77 @@ export function useSmartHome() {
     setNotifications((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
-  const addNotification = useCallback(({ type = 'info', title, message, titleKey, messageKey, params, appendLatencyMs }) => {
-    const newId = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+  const syncHistoryWithBridge = useCallback(async () => {
+    const now = Date.now();
+    setNotificationHistory((prev) => {
+      const pruned = pruneExpiredHistoryRecords(prev, now);
+      saveStoredNotificationHistory(pruned);
+      return pruned;
+    });
+
+    if (!bridgeHttpBase) return;
+    try {
+      const response = await fetch(`${bridgeHttpBase}/api/notifications/history`, {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data && typeof data === 'object') {
+        setHistoryMeta((prev) => ({
+          ...prev,
+          projectId: data.projectId || DEFAULT_FIREBASE_PROJECT_ID,
+          collection: data.collection || 'notificationHistory',
+          retentionDays: data.retentionDays || NOTIFICATION_RETENTION_DAYS,
+          firebaseConnected: Boolean(data.firebaseConnected),
+          credentialsPath: data.credentialsPath || DEFAULT_FIREBASE_KEY_PATH
+        }));
+      }
+      if (Array.isArray(data?.notifications)) {
+        setNotificationHistory((prevLocal) => {
+          const byId = new Map();
+          for (const item of pruneExpiredHistoryRecords(prevLocal, now)) {
+            byId.set(item.id, item);
+          }
+          for (const remoteItem of pruneExpiredHistoryRecords(data.notifications, now)) {
+            byId.set(remoteItem.id, remoteItem);
+          }
+          const merged = pruneExpiredHistoryRecords([...byId.values()], now);
+          saveStoredNotificationHistory(merged);
+          return merged;
+        });
+      }
+    } catch {
+      // Keep local 30-day cache when bridge is unreachable
+    }
+  }, [bridgeHttpBase]);
+
+  useEffect(() => {
+    const initialTimer = setTimeout(() => {
+      syncHistoryWithBridge();
+    }, 0);
+    const timer = setInterval(syncHistoryWithBridge, 30000);
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(timer);
+    };
+  }, [syncHistoryWithBridge]);
+
+  const addNotification = useCallback(({
+    id: customId,
+    type = 'info',
+    category,
+    title,
+    message,
+    titleKey,
+    messageKey,
+    params,
+    appendLatencyMs,
+    source = 'SafeHaven Local-First',
+    skipHistory = false
+  }) => {
+    const nowMs = Date.now();
+    const newId = customId || `toast-${nowMs}-${Math.random().toString(36).substring(2, 6)}`;
     const newToast = {
       id: newId,
       type,
@@ -132,7 +271,7 @@ export function useSmartHome() {
       messageKey,
       params,
       appendLatencyMs,
-      time: new Date().toLocaleTimeString('en-US')
+      time: new Date(nowMs).toLocaleTimeString('en-US')
     };
 
     setNotifications((prev) => [newToast, ...prev].slice(0, 4));
@@ -140,7 +279,163 @@ export function useSmartHome() {
     setTimeout(() => {
       setNotifications((prev) => prev.filter((item) => item.id !== newId));
     }, 4500);
-  }, []);
+
+    if (skipHistory) {
+      return;
+    }
+
+    const expiresAtMs = nowMs + NOTIFICATION_RETENTION_MS;
+    const historyRecord = {
+      id: newId,
+      projectId: DEFAULT_FIREBASE_PROJECT_ID,
+      type,
+      category: inferNotificationCategory({ category, type, titleKey, messageKey }),
+      title: title || titleKey || 'SafeHaven Notification',
+      message: message || messageKey || '',
+      ...(titleKey ? { titleKey } : {}),
+      ...(messageKey ? { messageKey } : {}),
+      ...(params ? { params } : {}),
+      ...(appendLatencyMs !== undefined ? { appendLatencyMs } : {}),
+      source,
+      createdAtMs: nowMs,
+      expiresAtMs,
+      createdAtIso: new Date(nowMs).toISOString(),
+      expiresAtIso: new Date(expiresAtMs).toISOString(),
+      syncedToFirebase: false
+    };
+
+    setNotificationHistory((prev) => {
+      const filtered = prev.filter((item) => item.id !== historyRecord.id);
+      const next = pruneExpiredHistoryRecords([historyRecord, ...filtered], nowMs);
+      saveStoredNotificationHistory(next);
+      return next;
+    });
+
+    if (bridgeHttpBase) {
+      fetch(`${bridgeHttpBase}/api/notifications/history`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(historyRecord)
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (!data) return;
+          if (data.status) {
+            setHistoryMeta((prev) => ({
+              ...prev,
+              projectId: data.status.projectId || DEFAULT_FIREBASE_PROJECT_ID,
+              firebaseConnected: Boolean(data.status.firebaseConnected),
+              credentialsPath: data.status.credentialsPath || prev.credentialsPath
+            }));
+          }
+          if (data.notification) {
+            setNotificationHistory((prev) => {
+              const updated = prev.map((item) =>
+                item.id === historyRecord.id ? { ...item, ...data.notification } : item
+              );
+              saveStoredNotificationHistory(updated);
+              return updated;
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [bridgeHttpBase]);
+
+  const deleteNotificationHistoryItem = useCallback(async (targetId) => {
+    if (!targetId) return;
+    setNotificationHistory((prev) => {
+      const next = prev.filter((item) => item.id !== targetId);
+      saveStoredNotificationHistory(next);
+      return next;
+    });
+    if (bridgeHttpBase) {
+      try {
+        await fetch(`${bridgeHttpBase}/api/notifications/delete`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: targetId })
+        });
+      } catch {
+        // Removed from local cache
+      }
+    }
+    addNotification({
+      type: 'info',
+      titleKey: 'notifications.historyDeletedTitle',
+      messageKey: 'notifications.historyDeletedMsg',
+      skipHistory: true
+    });
+  }, [bridgeHttpBase, addNotification]);
+
+  const clearAllNotificationHistory = useCallback(async () => {
+    setNotificationHistory([]);
+    saveStoredNotificationHistory([]);
+    if (bridgeHttpBase) {
+      try {
+        await fetch(`${bridgeHttpBase}/api/notifications/delete`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ all: true })
+        });
+      } catch {
+        // Cleared locally
+      }
+    }
+    addNotification({
+      type: 'info',
+      titleKey: 'notifications.historyClearedTitle',
+      messageKey: 'notifications.historyClearedMsg',
+      skipHistory: true
+    });
+  }, [bridgeHttpBase, addNotification]);
+
+  const cleanupExpiredNotifications = useCallback(async () => {
+    const now = Date.now();
+    setNotificationHistory((prev) => {
+      const pruned = pruneExpiredHistoryRecords(prev, now);
+      saveStoredNotificationHistory(pruned);
+      return pruned;
+    });
+    if (bridgeHttpBase) {
+      try {
+        const res = await fetch(`${bridgeHttpBase}/api/notifications/cleanup`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data?.notifications)) {
+            setNotificationHistory((prevLocal) => {
+              const byId = new Map();
+              for (const item of pruneExpiredHistoryRecords(prevLocal, now)) {
+                byId.set(item.id, item);
+              }
+              for (const remoteItem of pruneExpiredHistoryRecords(data.notifications, now)) {
+                byId.set(remoteItem.id, remoteItem);
+              }
+              const merged = pruneExpiredHistoryRecords([...byId.values()], now);
+              saveStoredNotificationHistory(merged);
+              return merged;
+            });
+          }
+        }
+      } catch {
+        // Local cleanup already applied
+      }
+    }
+    addNotification({
+      type: 'success',
+      titleKey: 'notifications.historyCleanedTitle',
+      messageKey: 'notifications.historyCleanedMsg',
+      skipHistory: true
+    });
+  }, [bridgeHttpBase, addNotification]);
 
   const applyHardwareSnapshot = useCallback((rawPayload, receivedAtIso) => {
     const snapshot = rawPayload?.snapshot || (rawPayload?.dht11 && rawPayload?.mq2 ? rawPayload : null);
@@ -1192,8 +1487,13 @@ export function useSmartHome() {
     recentActivity,
     experimentLogs,
     notifications,
+    notificationHistory,
+    historyMeta,
     addNotification,
     dismissNotification,
+    deleteNotificationHistoryItem,
+    clearAllNotificationHistory,
+    cleanupExpiredNotifications,
     toggleDevice,
     triggerFault,
     restoreNormal,
