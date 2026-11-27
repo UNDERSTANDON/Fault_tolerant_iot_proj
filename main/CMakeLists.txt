@@ -32,6 +32,8 @@ idf_component_register(
           "cjson"
           "mdns"
           "mqtt"
+          "esp_driver_gpio"
+          "esp_driver_ledc"
 
      EMBED_TXTFILES
           "web_hoster/web/index.html"

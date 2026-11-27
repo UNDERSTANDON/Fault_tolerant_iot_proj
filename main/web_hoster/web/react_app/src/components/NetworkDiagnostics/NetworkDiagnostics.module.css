@@ -61,7 +61,7 @@
 
 .topologyGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: var(--spacing-md);
 }
 
@@ -261,17 +261,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@media (max-width: 1024px) {
-  .topologyGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 640px) {
-  .topologyGrid {
-    grid-template-columns: 1fr;
-  }
-
   .toolHeader {
     flex-direction: column;
     align-items: flex-start;
