@@ -120,6 +120,13 @@ cd ..
 docker compose --env-file .\local_server\.env -f .\local_server\docker-compose.yml ps
 ```
 
+The verifier checks whether messages are actually delivered to identities
+that should have write-only access; a successful MQTT subscription
+acknowledgement alone does not establish read access. It does not reload or
+restart Mosquitto. After changing a bind-mounted broker configuration or ACL,
+verify the effective permissions after deliberately reloading or restarting
+the broker during planned maintenance.
+
 For phone/ESP32 hotspot testing, configure the Windows firewall from an
 elevated PowerShell session. First identify the active hotspot interface:
 

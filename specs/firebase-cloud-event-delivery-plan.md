@@ -3,17 +3,24 @@
 ## Status
 
 Implementation remains in progress, ahead of further AP+STA work and physical
-GPIO assignment. The local Firestore emulator write-through-outbox test passed
-on 2026-11-26. Live Firebase and ESP32-to-broker verification remain
-outstanding. Store evidence under
+GPIO assignment. The local emulator test passed on 2026-11-26, and the live
+test-project MQTT-to-Firestore integration passed on 2026-11-27, including
+readback, exact replay, and temporary-document cleanup. A fresh physical ESP32
+run on 2026-11-27 generated four synthetic events; the exact four event IDs
+were read back from the test Firestore project with matching device, run,
+sequence, and synthetic markers. Production event delivery remains
+unimplemented. Store evidence under
 `specs/log_evidence/firebase_cloud_delivery/`.
 
 ### Current implementation status
 
-The isolated synthetic-notification test path is implemented locally but is
-not yet verified against a live Firebase project or ESP32. It is separate
-from production event delivery, which remains unimplemented. Current test
-contract: `test/esp32/notifications/v1`, Firestore collection
+The isolated synthetic-notification test path has been verified against a
+live Firebase test project using both an authenticated MQTT test client and
+the opt-in physical ESP32 publisher. The latest hardware log records four
+bounded warning/critical publishes; all four corresponding Firestore
+documents were verified by read-only lookup. It is separate from production
+event delivery, which remains unimplemented. Current test contract:
+`test/esp32/notifications/v1`, Firestore collection
 `testEventNotifications`, synthetic source `esp32_mock`, event IDs
 `<12-hex-device-id>-<16-hex-run-id>-<sequence>`, and device-uptime
 timestamps. The opt-in firmware publisher is disabled by default and emits
@@ -30,8 +37,21 @@ confirmed the worker writes the event, reads back the Firestore document,
 recognizes an exact replay as a duplicate, and clears the local outbox only
 after confirmation. See
 `specs/log_evidence/firebase_cloud_delivery/firestore-emulator-write-2026-11-26.txt`.
-A dedicated Firebase test project and external service-account credential
-remain necessary for live cloud verification.
+The live test-project verification is recorded in
+`specs/log_evidence/firebase_cloud_delivery/live-cloud-mqtt-delivery-2026-11-27.txt`.
+The physical-device run and document readback are recorded in
+`specs/log_evidence/firebase_cloud_delivery/esp32-live-cloud-delivery-2026-11-27.txt`.
+
+An initial broker check incorrectly treated a successful QoS 1 SUBACK as
+proof that a write-only identity could read messages. The active broker may
+acknowledge a subscription while its ACL filters message delivery. The
+verifier now uses separate subscriber and publisher connections and checks
+actual delivery. After the user-authorized Mosquitto restart, all eight broker
+checks passed, including denial of message delivery to write-only identities
+and delivery between the authenticated MQTT/TLS publisher and WSS subscriber.
+Historical setup checks and the correction are documented in
+`specs/log_evidence/firebase_cloud_delivery/broker-acl-2026-11-26.txt` and
+`specs/log_evidence/firebase_cloud_delivery/cloud-test-readiness-2026-11-27.txt`.
 
 ## Goal
 

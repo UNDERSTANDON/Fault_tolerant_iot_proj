@@ -63,30 +63,30 @@ async function assertRejectedConnection(url) {
   }
 }
 
-async function assertWriteOnlyIdentityDoesNotReceive() {
-  const client = await connect(tlsUrl, {
+async function assertPublisherCannotReadTopic(topic) {
+  const credentials = {
     username: 'esp32_test',
     password: process.env.ESP32_MQTT_PASSWORD
-  });
+  };
+  const subscriber = await connect(tlsUrl, credentials);
+  let publisher;
   try {
-    const topic = 'demo/esp32-mqtt-connectivity/test';
-    await client.subscribeAsync(topic, { qos: 1 });
-    const messageResult = waitForMessage(client, 750)
+    await subscriber.subscribeAsync(topic, { qos: 1 });
+    const messageResult = waitForMessage(subscriber, 750)
       .then((message) => ({ received: true, message }))
       .catch(() => ({ received: false }));
-    await client.publishAsync(topic, JSON.stringify({
-      schema_version: 1,
-      kind: 'connectivity_test',
-      device_id: 'aabbccddeeff',
-      sequence: Date.now()
+    publisher = await connect(tlsUrl, credentials);
+    await publisher.publishAsync(topic, JSON.stringify({
+      kind: 'broker_acl_read_check',
+      nonce: Date.now()
     }), { qos: 1 });
 
-    const result = await messageResult;
-    if (result.received) {
-      throw new Error('The publisher identity received a message on a write-only topic');
+    if ((await messageResult).received) {
+      throw new Error(`The publisher identity received a message on write-only topic ${topic}`);
     }
   } finally {
-    await close(client);
+    await close(subscriber);
+    if (publisher) await close(publisher);
   }
 }
 
@@ -111,21 +111,6 @@ async function assertBridgeIdentityCannotPublish() {
     const result = await messageResult;
     if (result.received) {
       throw new Error('The bridge identity published to a read-only topic');
-    }
-  } finally {
-    await close(client);
-  }
-}
-
-async function assertPublisherCannotReadSyntheticTopic() {
-  const client = await connect(tlsUrl, {
-    username: 'esp32_test',
-    password: process.env.ESP32_MQTT_PASSWORD
-  });
-  try {
-    const grants = await client.subscribeAsync('test/esp32/notifications/v1', { qos: 1 });
-    if (grants.length !== 1 || grants[0].qos !== 128) {
-      throw new Error('The publisher identity received read access to the synthetic event topic');
     }
   } finally {
     await close(client);
@@ -243,11 +228,11 @@ async function main() {
   console.log('PASS invalid credentials rejected over MQTT/TLS');
   await assertRejectedConnection(wssUrl);
   console.log('PASS invalid credentials rejected over WSS');
-  await assertWriteOnlyIdentityDoesNotReceive();
-  console.log('PASS publisher identity cannot read its write-only topic');
+  await assertPublisherCannotReadTopic('demo/esp32-mqtt-connectivity/test');
+  console.log('PASS publisher identity cannot read the connectivity test topic');
   await assertBridgeIdentityCannotPublish();
   console.log('PASS bridge identity cannot publish to its read-only topic');
-  await assertPublisherCannotReadSyntheticTopic();
+  await assertPublisherCannotReadTopic('test/esp32/notifications/v1');
   console.log('PASS publisher identity cannot read the synthetic event topic');
   await assertBridgeIdentityCannotPublishSyntheticTopic();
   console.log('PASS bridge identity cannot publish to the synthetic event topic');
