@@ -8,13 +8,12 @@ export const INITIAL_ROOMS_DATA = [
     name: 'Hallway & Entrance',
     description: 'Apartment main entrance & foyer perimeter',
     devices: [
-      { id: 'hallway_light', name: 'Hallway Light', model: 'Relay CH1', type: 'light', state: true, available: true },
-      { id: 'door_nfc', name: 'NFC Door Lock', model: 'PN532 Latch', type: 'lock', state: 'LOCKED', available: true },
-      { id: 'ups_backup', name: 'UPS Backup Power', model: 'LiFePO4 24h', type: 'ups', value: '100%', unit: 'Battery', available: true }
+      { id: 'hallway_light', name: 'Hallway Light', model: 'LED · GPIO21', type: 'light', state: false, available: true },
+      { id: 'door_nfc', name: 'Smart Door Servo', model: 'Servo SG90 · GPIO8', type: 'lock', state: 'LOCKED', available: true }
     ],
     sensors: [
-      { id: 'hallway_nfc_sensor', name: 'Entrance NFC Reader', model: 'PN532', value: 'Armed', type: 'gateway', status: 'ONLINE', source: 'Simulator' },
-      { id: 'hallway_smoke', name: 'Foyer Smoke Detector', model: 'MQ-2', value: 'Clear', type: 'smoke', status: 'NORMAL', source: 'Simulator' }
+      { id: 'hallway_temp', name: 'Hallway Temperature', model: 'DHT11 · GPIO4', value: 'No Data', unit: '°C', type: 'temperature', status: 'NO DATA', source: 'No Data (ESP32-S3)' },
+      { id: 'hallway_smoke', name: 'Foyer Smoke Detector', model: 'MQ-2 · GPIO1', value: 'No Data', type: 'smoke', status: 'NO DATA', source: 'No Data (ESP32-S3)' }
     ]
   },
   {
@@ -22,13 +21,14 @@ export const INITIAL_ROOMS_DATA = [
     name: 'Living Room',
     description: 'Central domestic hub & ESP32-S3 Edge Gateway',
     devices: [
-      { id: 'living_light', name: 'Ceiling Light', model: 'Relay CH2', type: 'light', state: true, available: true },
-      { id: 'living_fan', name: 'Ventilation Fan', model: 'Relay CH3', type: 'fan', state: false, available: true }
+      { id: 'living_light', name: 'Ceiling Light', model: 'LED · GPIO5', type: 'light', state: false, available: true },
+      { id: 'living_fan', name: 'Ventilation Fan', model: 'Fan · GPIO9', type: 'fan', state: false, available: true }
     ],
     sensors: [
-      { id: 'living_temp', name: 'Ambient Temperature', model: 'DHT22', value: 28.4, unit: '°C', type: 'temperature', status: 'NORMAL', source: 'Simulator' },
-      { id: 'living_smoke', name: 'Smoke & Gas Detector', model: 'MQ-2', value: 'Clear', type: 'smoke', status: 'NORMAL', source: 'Simulator' },
-      { id: 'living_ap', name: 'ESP32 Edge Gateway', model: 'ESP32-S3', value: 'Active', type: 'gateway', status: 'ONLINE', source: 'Simulator' }
+      { id: 'living_temp', name: 'Ambient Temperature', model: 'DHT11 · GPIO4', value: 'No Data', unit: '°C', type: 'temperature', status: 'NO DATA', source: 'No Data (ESP32-S3)' },
+      { id: 'living_humidity', name: 'Relative Humidity', model: 'DHT11 · GPIO4', value: 'No Data', unit: '%', type: 'humidity', status: 'NO DATA', source: 'No Data (ESP32-S3)' },
+      { id: 'living_smoke', name: 'Smoke & Gas Detector', model: 'MQ-2 · GPIO1', value: 'No Data', type: 'smoke', status: 'NO DATA', source: 'No Data (ESP32-S3)' },
+      { id: 'living_ap', name: 'ESP32 Edge Gateway', model: 'ESP32-S3', value: 'No Data', type: 'gateway', status: 'NO DATA', source: 'No Data (ESP32-S3)' }
     ]
   },
   {
@@ -36,12 +36,12 @@ export const INITIAL_ROOMS_DATA = [
     name: 'Kitchen',
     description: 'Cooking, dining & high-priority fire monitoring zone',
     devices: [
-      { id: 'kitchen_light', name: 'Kitchen Light', model: 'Relay CH4', type: 'light', state: false, available: true }
+      { id: 'kitchen_light', name: 'Kitchen Light', model: 'LED · GPIO7', type: 'light', state: false, available: true }
     ],
     sensors: [
-      { id: 'kitchen_temp', name: 'Kitchen Temperature', model: 'DHT22', value: 29.8, unit: '°C', type: 'temperature', status: 'NORMAL', source: 'Simulator' },
-      { id: 'kitchen_humidity', name: 'Relative Humidity', model: 'DHT22', value: 65, unit: '%', type: 'humidity', status: 'NORMAL', source: 'Simulator' },
-      { id: 'kitchen_smoke', name: 'Smoke & Gas Detector', model: 'MQ-2', value: 'Clear', type: 'smoke', status: 'NORMAL', source: 'Simulator' }
+      { id: 'kitchen_temp', name: 'Kitchen Temperature', model: 'DHT11 · GPIO4', value: 'No Data', unit: '°C', type: 'temperature', status: 'NO DATA', source: 'No Data (ESP32-S3)' },
+      { id: 'kitchen_humidity', name: 'Relative Humidity', model: 'DHT11 · GPIO4', value: 'No Data', unit: '%', type: 'humidity', status: 'NO DATA', source: 'No Data (ESP32-S3)' },
+      { id: 'kitchen_smoke', name: 'Smoke & Gas Detector', model: 'MQ-2 · GPIO1', value: 'No Data', type: 'smoke', status: 'NO DATA', source: 'No Data (ESP32-S3)' }
     ]
   },
   {
@@ -49,11 +49,12 @@ export const INITIAL_ROOMS_DATA = [
     name: 'Bedroom',
     description: 'Sleeping quarters & nighttime environmental monitoring',
     devices: [
-      { id: 'bedroom_light', name: 'Bedroom Light', model: 'Relay CH5', type: 'light', state: false, available: true }
+      { id: 'bedroom_light', name: 'Bedroom Light', model: 'LED · GPIO6', type: 'light', state: false, available: true }
     ],
     sensors: [
-      { id: 'bedroom_temp', name: 'Bedroom Temperature', model: 'DHT22', value: 26.2, unit: '°C', type: 'temperature', status: 'NORMAL', source: 'Simulator' },
-      { id: 'bedroom_smoke', name: 'Smoke & Gas Detector', model: 'MQ-2', value: 'Clear', type: 'smoke', status: 'NORMAL', source: 'Simulator' }
+      { id: 'bedroom_temp', name: 'Bedroom Temperature', model: 'DHT11 · GPIO4', value: 'No Data', unit: '°C', type: 'temperature', status: 'NO DATA', source: 'No Data (ESP32-S3)' },
+      { id: 'bedroom_humidity', name: 'Relative Humidity', model: 'DHT11 · GPIO4', value: 'No Data', unit: '%', type: 'humidity', status: 'NO DATA', source: 'No Data (ESP32-S3)' },
+      { id: 'bedroom_smoke', name: 'Smoke & Gas Detector', model: 'MQ-2 · GPIO1', value: 'No Data', type: 'smoke', status: 'NO DATA', source: 'No Data (ESP32-S3)' }
     ]
   }
 ];

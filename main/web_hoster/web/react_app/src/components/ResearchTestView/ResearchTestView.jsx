@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { ArrowLeft, ShieldCheck, WifiOff, AlertTriangle, RotateCcw, Download, CheckCircle2, Play, Copy, Check, Flame } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './ResearchTestView.module.css';
 
 export default function ResearchTestView({
   networkState,
+  hardwareStatus,
   metrics,
   onTriggerFault,
   onRestore,
@@ -12,26 +14,45 @@ export default function ResearchTestView({
   onToggleSmokeAlarm,
   experimentLogs = []
 }) {
+  const { t, translateSource } = useLanguage();
   const [copied, setCopied] = useState(false);
+  const sourceLabel = translateSource(hardwareStatus?.dataSource);
+
+  const sanitizeCsvCell = (value) => {
+    const str = String(value ?? '');
+    const safeFormula = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+    return `"${safeFormula.replace(/"/g, '""')}"`;
+  };
 
   const handleExportCSV = () => {
-    const csvContent = "data:text/csv;charset=utf-8,"
-      + "Experiment ID,Timestamp,Test Scenario,Internet,Local LAN,Expected State,Measured Latency,Outcome\n"
-      + experimentLogs.map((e) => `${e.id},${e.time},${e.test},${e.internet},${e.lan},${e.expected},${e.measured},${e.result}`).join("\n");
+    const headers = ['Experiment ID', 'Timestamp', 'Test Scenario', 'Internet', 'Local LAN', 'Expected State', 'Measured Latency', 'Outcome'];
+    const rows = experimentLogs.map((e) => [
+      e.id,
+      e.time,
+      e.testKey ? t(e.testKey) : e.test,
+      e.internet,
+      e.lan,
+      e.expected,
+      e.measured,
+      sourceLabel
+    ].map(sanitizeCsvCell).join(','));
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "safehaven_resilience_test_data.csv");
+    const csvText = [headers.map(sanitizeCsvCell).join(','), ...rows].join('\n');
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'safehaven_resilience_test_data.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleCopyMarkdown = () => {
     const mdTable = `| Experiment ID | Test Scenario | Internet | Local LAN | Expected State | Latency / Transition | Result |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-` + experimentLogs.map((e) => `| ${e.id} | ${e.test} | ${e.internet} | ${e.lan} | ${e.expected} | ${e.measured} | **${e.result}** |`).join("\n");
+` + experimentLogs.map((e) => `| ${e.id} | ${e.test} | ${e.internet} | ${e.lan} | ${e.expected} | ${e.measured} | **${e.result}** |`).join('\n');
 
     navigator.clipboard.writeText(mdTable).then(() => {
       setCopied(true);
@@ -47,46 +68,43 @@ export default function ResearchTestView({
           type="button"
           className={styles.backButton}
           onClick={onBackToDashboard}
-          title="Return to Home Overview"
         >
           <ArrowLeft size={18} />
-          <span>Back to Overview</span>
+          <span>{t('common.backToOverview')}</span>
         </button>
-        <div className={styles.screenTag}>Screen S6: Resilience Test Lab (Admin) · Source: Simulator</div>
+        <div className={styles.screenTag}>{t('testLab.screenTag')} · {t('common.source')}: {sourceLabel}</div>
       </div>
 
       <div className={styles.titleSection}>
-        <h2 className={styles.title}>System Resilience &amp; Fault Injection Test Lab</h2>
-        <p className={styles.subtitle}>
-          Administrator verification suite: trigger controlled network partitioning and fire safety alerts to benchmark failover latency.
-        </p>
+        <h2 className={styles.title}>{t('testLab.title')}</h2>
+        <p className={styles.subtitle}>{t('testLab.subtitle')}</p>
       </div>
 
       {/* Metrics Banner */}
       <div className={styles.metricsGrid}>
         <div className={styles.metricCard}>
-          <span className={styles.metricLabel}>Fallback Transition Time (Δt_fallback)</span>
-          <span className={styles.metricBig}>{metrics.fallbackTimeMs || 320} ms</span>
-          <span className={styles.metricSub}>Target threshold: &lt; 500 ms · Source: Simulator</span>
+          <span className={styles.metricLabel}>{t('testLab.metricFallback')}</span>
+          <span className={styles.metricBig}>{metrics.fallbackTimeMs} ms</span>
+          <span className={styles.metricSub}>{t('testLab.metricFallbackSub')} · {t('common.source')}: {sourceLabel}</span>
         </div>
 
         <div className={styles.metricCard}>
-          <span className={styles.metricLabel}>Average Command Latency (Δt_cmd)</span>
+          <span className={styles.metricLabel}>{t('testLab.metricLatency')}</span>
           <span className={styles.metricBig}>{metrics.avgResponseTimeMs} ms</span>
-          <span className={styles.metricSub}>Local LAN round-trip · Source: Simulator</span>
+          <span className={styles.metricSub}>{t('testLab.metricLatencySub')} · {t('common.source')}: {sourceLabel}</span>
         </div>
 
         <div className={styles.metricCard}>
-          <span className={styles.metricLabel}>Command Execution Count</span>
+          <span className={styles.metricLabel}>{t('testLab.metricCount')}</span>
           <span className={styles.metricBig}>{metrics.commandsTotal}</span>
-          <span className={styles.metricSub}>Recorded in current session · Source: Simulator</span>
+          <span className={styles.metricSub}>{t('testLab.metricCountSub')} · {t('common.source')}: {sourceLabel}</span>
         </div>
       </div>
 
       {/* Interactive Scenario Injector Cards */}
       <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Interactive Fault Scenario Suite</h3>
-        <p className={styles.cardSubtitle}>Inject network and environmental hazard conditions to verify UI state isolation.</p>
+        <h3 className={styles.cardTitle}>{t('testLab.suiteTitle')}</h3>
+        <p className={styles.cardSubtitle}>{t('testLab.suiteSubtitle')}</p>
 
         <div className={styles.scenarioGrid}>
           {/* T1 */}
@@ -95,11 +113,11 @@ export default function ResearchTestView({
               <span className={styles.testBadge}>SCENARIO T1</span>
               <ShieldCheck size={18} color="#10b981" />
             </div>
-            <h4 className={styles.boxTitle}>Normal Baseline</h4>
-            <p className={styles.boxDesc}>Internet: ON | LAN: ON. Full dual-path telemetry baseline.</p>
+            <h4 className={styles.boxTitle}>{t('testLab.t1Title')}</h4>
+            <p className={styles.boxDesc}>{t('testLab.t1Desc')}</p>
             <button type="button" className={styles.injectBtn} onClick={onRestore}>
               <Play size={14} />
-              <span>Engage Baseline</span>
+              <span>{t('testLab.t1Btn')}</span>
             </button>
           </div>
 
@@ -109,15 +127,11 @@ export default function ResearchTestView({
               <span className={`${styles.testBadge} ${styles.badgeWarn}`}>SCENARIO T2</span>
               <WifiOff size={18} color="#f59e0b" />
             </div>
-            <h4 className={styles.boxTitle}>Internet Down (LAN Fallback)</h4>
-            <p className={styles.boxDesc}>Internet: OFF | LAN: ON. Verifies sub-500ms local failover.</p>
-            <button
-              type="button"
-              className={`${styles.injectBtn} ${styles.btnWarn}`}
-              onClick={() => onTriggerFault('INTERNET_DOWN')}
-            >
+            <h4 className={styles.boxTitle}>{t('testLab.t2Title')}</h4>
+            <p className={styles.boxDesc}>{t('testLab.t2Desc')}</p>
+            <button type="button" className={`${styles.injectBtn} ${styles.btnWarn}`} onClick={() => onTriggerFault('INTERNET_DOWN')}>
               <Play size={14} />
-              <span>Cut Internet</span>
+              <span>{t('testLab.t2Btn')}</span>
             </button>
           </div>
 
@@ -127,15 +141,11 @@ export default function ResearchTestView({
               <span className={`${styles.testBadge} ${styles.badgeDanger}`}>SCENARIO T3</span>
               <AlertTriangle size={18} color="#ef4444" />
             </div>
-            <h4 className={styles.boxTitle}>Total Network Outage</h4>
-            <p className={styles.boxDesc}>Internet: OFF | LAN: OFF. Verifies safe control locking &amp; stale-data freeze.</p>
-            <button
-              type="button"
-              className={`${styles.injectBtn} ${styles.btnDanger}`}
-              onClick={() => onTriggerFault('LAN_DOWN')}
-            >
+            <h4 className={styles.boxTitle}>{t('testLab.t3Title')}</h4>
+            <p className={styles.boxDesc}>{t('testLab.t3Desc')}</p>
+            <button type="button" className={`${styles.injectBtn} ${styles.btnDanger}`} onClick={() => onTriggerFault('LAN_DOWN')}>
               <Play size={14} />
-              <span>Cut Both Links</span>
+              <span>{t('testLab.t3Btn')}</span>
             </button>
           </div>
 
@@ -143,35 +153,31 @@ export default function ResearchTestView({
           <div className={styles.scenarioBox}>
             <div className={styles.boxHead}>
               <span className={`${styles.testBadge} ${styles.badgeInfo}`}>SCENARIO T4</span>
-              <RotateCcw size={18} color="#6366f1" />
+              <RotateCcw size={18} color="#3b82f6" />
             </div>
-            <h4 className={styles.boxTitle}>Recovery &amp; Cloud Sync</h4>
-            <p className={styles.boxDesc}>Internet: RESTORED | LAN: ON. Tests buffer replay transition.</p>
-            <button
-              type="button"
-              className={`${styles.injectBtn} ${styles.btnInfo}`}
-              onClick={() => onTriggerFault('SIMULATE_RECOVERY')}
-            >
+            <h4 className={styles.boxTitle}>{t('testLab.t4Title')}</h4>
+            <p className={styles.boxDesc}>{t('testLab.t4Desc')}</p>
+            <button type="button" className={`${styles.injectBtn} ${styles.btnInfo}`} onClick={() => onTriggerFault('SIMULATE_RECOVERY')}>
               <Play size={14} />
-              <span>Trigger Recovery</span>
+              <span>{t('testLab.t4Btn')}</span>
             </button>
           </div>
 
-          {/* T5: Hazard Alarm */}
+          {/* T5: Smoke Hazard */}
           <div className={`${styles.scenarioBox} ${isSmokeAlert ? styles.activeBoxDanger : ''}`}>
             <div className={styles.boxHead}>
-              <span className={`${styles.testBadge} ${styles.badgeDanger}`}>HAZARD T5</span>
+              <span className={`${styles.testBadge} ${styles.badgeDanger}`}>SCENARIO T5</span>
               <Flame size={18} color="#ef4444" />
             </div>
-            <h4 className={styles.boxTitle}>MQ-2 Smoke Alert</h4>
-            <p className={styles.boxDesc}>Triggers particulate hazard state to verify red vs. amber alert segregation.</p>
+            <h4 className={styles.boxTitle}>{t('testLab.t5Title')}</h4>
+            <p className={styles.boxDesc}>{t('testLab.t5Desc')}</p>
             <button
               type="button"
               className={`${styles.injectBtn} ${styles.btnDanger}`}
               onClick={() => onToggleSmokeAlarm && onToggleSmokeAlarm(!isSmokeAlert)}
             >
               <Play size={14} />
-              <span>{isSmokeAlert ? 'Clear Smoke Alert' : 'Trigger Smoke Alert'}</span>
+              <span>{isSmokeAlert ? t('testLab.t5BtnClear') : t('testLab.t5BtnTrigger')}</span>
             </button>
           </div>
         </div>
@@ -181,18 +187,18 @@ export default function ResearchTestView({
       <div className={styles.card}>
         <div className={styles.cardHeaderWithActions}>
           <div>
-            <h3 className={styles.cardTitle}>Test Lab Execution Log</h3>
-            <p className={styles.cardSubtitle}>Exportable scenario transitions · Source: Simulator</p>
+            <h3 className={styles.cardTitle}>{t('testLab.logTitle')}</h3>
+            <p className={styles.cardSubtitle}>{t('testLab.logSubtitle')} · {t('common.source')}: {sourceLabel}</p>
           </div>
 
           <div className={styles.actionButtonGroup}>
             <button type="button" className={styles.actionBtn} onClick={handleCopyMarkdown}>
               {copied ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
-              <span>{copied ? 'Copied Markdown!' : 'Copy Markdown Table'}</span>
+              <span>{copied ? t('testLab.copiedMdBtn') : t('testLab.copyMdBtn')}</span>
             </button>
             <button type="button" className={`${styles.actionBtn} ${styles.btnPrimary}`} onClick={handleExportCSV}>
               <Download size={14} />
-              <span>Export CSV</span>
+              <span>{t('testLab.exportCsvBtn')}</span>
             </button>
           </div>
         </div>
@@ -201,34 +207,40 @@ export default function ResearchTestView({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Test ID</th>
-                <th>Timestamp</th>
-                <th>Scenario Description</th>
-                <th>Internet</th>
-                <th>Local LAN</th>
-                <th>Expected UI State</th>
-                <th>Transition Time</th>
-                <th>Source / Status</th>
+                <th>{t('testLab.colTestId')}</th>
+                <th>{t('testLab.colTime')}</th>
+                <th>{t('testLab.colScenario')}</th>
+                <th>{t('testLab.colInternet')}</th>
+                <th>{t('testLab.colLan')}</th>
+                <th>{t('testLab.colExpected')}</th>
+                <th>{t('testLab.colTransition')}</th>
+                <th>{t('testLab.colResult')}</th>
               </tr>
             </thead>
             <tbody>
-              {experimentLogs.map((item) => (
-                <tr key={item.id}>
-                  <td><code>{item.id}</code></td>
-                  <td>{item.time}</td>
-                  <td><strong>{item.test}</strong></td>
-                  <td>{item.internet}</td>
-                  <td>{item.lan}</td>
-                  <td><span className={styles.expectedTag}>{item.expected}</span></td>
-                  <td><code>{item.measured}</code></td>
-                  <td>
-                    <span className={styles.verdictPass}>
-                      <CheckCircle2 size={12} color="#10b981" />
-                      <span>{item.result}</span>
-                    </span>
-                  </td>
+              {experimentLogs.length > 0 ? (
+                experimentLogs.map((item) => (
+                  <tr key={item.id}>
+                    <td><code>{item.id}</code></td>
+                    <td>{item.time}</td>
+                    <td><strong>{item.testKey ? t(item.testKey) : item.test}</strong></td>
+                    <td>{item.internet}</td>
+                    <td>{item.lan}</td>
+                    <td><span className={styles.expectedTag}>{item.expected}</span></td>
+                    <td><code>{item.measured}</code></td>
+                    <td>
+                      <span className={styles.verdictPass}>
+                        <CheckCircle2 size={12} color="#10b981" />
+                        <span>{sourceLabel}</span>
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8}>{t('common.noData')}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

@@ -88,7 +88,7 @@
 }
 
 .aptPopover {
-  background-color: #faf9f5;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
@@ -179,7 +179,7 @@
 
 .infoCard {
   margin-top: auto;
-  background-color: rgba(232, 239, 231, 0.65);
+  background-color: var(--accent-primary-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 13px;
@@ -192,7 +192,7 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -358,7 +358,7 @@
     width: 32px;
     height: 32px;
     border-radius: var(--radius-sm);
-    background-color: #ffffff;
+    background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
   }

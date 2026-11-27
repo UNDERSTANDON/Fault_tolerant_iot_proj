@@ -1,19 +1,20 @@
 import { ShieldCheck, WifiOff, RefreshCw, XOctagon, ArrowUpRight } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './ModeBanner.module.css';
 
-export default function ModeBanner({ networkState, onNavigateToConnections }) {
+export default function ModeBanner({ networkState, hardwareStatus, onNavigateToConnections }) {
+  const { t } = useLanguage();
   const { mode } = networkState;
+  const isEspLive = Boolean(hardwareStatus?.isLive);
 
-  if (mode === 'NORMAL') {
+  if (mode === 'NORMAL' && !isEspLive) {
     return (
-      <div className={`${styles.banner} ${styles.bannerNormal}`}>
+      <div className={`${styles.banner} ${styles.bannerLocal}`}>
         <div className={styles.leftGroup}>
-          <ShieldCheck size={20} className={styles.iconGreen} />
+          <WifiOff size={20} className={styles.iconAmber} />
           <div className={styles.textGroup}>
-            <span className={styles.headline}>Your home is securely connected</span>
-            <span className={styles.subtext}>
-              All 4 domestic zones are active. Local LAN and MQTT telemetry channels are online.
-            </span>
+            <span className={styles.headline}>{t('banners.waitingHeadline')}</span>
+            <span className={styles.subtext}>{t('banners.waitingSubtext')}</span>
           </div>
         </div>
 
@@ -23,7 +24,32 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
             className={styles.linkButton}
             onClick={onNavigateToConnections}
           >
-            <span>View connections</span>
+            <span>{t('common.viewConnections')}</span>
+            <ArrowUpRight size={14} />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (mode === 'NORMAL') {
+    return (
+      <div className={`${styles.banner} ${styles.bannerNormal}`}>
+        <div className={styles.leftGroup}>
+          <ShieldCheck size={20} className={styles.iconGreen} />
+          <div className={styles.textGroup}>
+            <span className={styles.headline}>{t('banners.normalHeadline')}</span>
+            <span className={styles.subtext}>{t('banners.normalSubtext')}</span>
+          </div>
+        </div>
+
+        {onNavigateToConnections && (
+          <button
+            type="button"
+            className={styles.linkButton}
+            onClick={onNavigateToConnections}
+          >
+            <span>{t('common.viewConnections')}</span>
             <ArrowUpRight size={14} />
           </button>
         )}
@@ -37,10 +63,8 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
         <div className={styles.leftGroup}>
           <WifiOff size={20} className={styles.iconAmber} />
           <div className={styles.textGroup}>
-            <span className={styles.headline}>LOCAL MODE · Autonomous LAN Control Active</span>
-            <span className={styles.subtext}>
-              External Internet is offline. Room switches and fire safety sensors remain operational over Local LAN.
-            </span>
+            <span className={styles.headline}>{t('banners.localHeadline')}</span>
+            <span className={styles.subtext}>{t('banners.localSubtext')}</span>
           </div>
         </div>
 
@@ -50,11 +74,11 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
             className={styles.linkButton}
             onClick={onNavigateToConnections}
           >
-            <span>View connections</span>
+            <span>{t('common.viewConnections')}</span>
             <ArrowUpRight size={14} />
           </button>
         ) : (
-          <span className={styles.sinceText}>LAN Fallback</span>
+          <span className={styles.sinceText}>{t('banners.lanFallbackTag')}</span>
         )}
       </div>
     );
@@ -66,13 +90,11 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
         <div className={styles.leftGroup}>
           <RefreshCw size={20} className={`${styles.iconBlue} ${styles.spin}`} />
           <div className={styles.textGroup}>
-            <span className={styles.headline}>SWITCHING · Establishing Local LAN Path</span>
-            <span className={styles.subtext}>
-              Verifying local gateway routing. Confirmed device states are preserved during handover.
-            </span>
+            <span className={styles.headline}>{t('banners.switchingHeadline')}</span>
+            <span className={styles.subtext}>{t('banners.switchingSubtext')}</span>
           </div>
         </div>
-        <span className={styles.statusWait}>Routing...</span>
+        <span className={styles.statusWait}>{t('banners.routingWait')}</span>
       </div>
     );
   }
@@ -83,13 +105,11 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
         <div className={styles.leftGroup}>
           <RefreshCw size={20} className={`${styles.iconIndigo} ${styles.spin}`} />
           <div className={styles.textGroup}>
-            <span className={styles.headline}>RECONNECTING · Synchronizing Cloud Telemetry</span>
-            <span className={styles.subtext}>
-              Carrier link restored. Replaying buffered local events to remote cloud storage.
-            </span>
+            <span className={styles.headline}>{t('banners.reconnectingHeadline')}</span>
+            <span className={styles.subtext}>{t('banners.reconnectingSubtext')}</span>
           </div>
         </div>
-        <span className={styles.statusWait}>Syncing...</span>
+        <span className={styles.statusWait}>{t('banners.syncingWait')}</span>
       </div>
     );
   }
@@ -99,10 +119,8 @@ export default function ModeBanner({ networkState, onNavigateToConnections }) {
       <div className={styles.leftGroup}>
         <XOctagon size={20} className={styles.iconRed} />
         <div className={styles.textGroup}>
-          <span className={styles.headline}>UNAVAILABLE · Local Gateway Unreachable</span>
-          <span className={styles.subtext}>
-            Unable to reach Local LAN or ESP32-S3 Gateway. Remote actuation is locked until link recovery.
-          </span>
+          <span className={styles.headline}>{t('banners.unavailableHeadline')}</span>
+          <span className={styles.subtext}>{t('banners.unavailableSubtext')}</span>
         </div>
       </div>
     </div>

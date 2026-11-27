@@ -11,6 +11,7 @@ import LocalFallbackView from './components/LocalFallbackView/LocalFallbackView'
 import RecoveryView from './components/RecoveryView/RecoveryView';
 import ResearchTestView from './components/ResearchTestView/ResearchTestView';
 import SensorsView from './components/SensorsView/SensorsView';
+import SettingsView from './components/SettingsView/SettingsView';
 import Notification from './components/Notification/Notification';
 import FaultSimulation from './components/FaultSimulation/FaultSimulation';
 import AuthModal from './components/AuthModal/AuthModal';
@@ -19,20 +20,16 @@ import SplashScreen from './components/SplashScreen/SplashScreen';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import { useSmartHome } from './hooks/useSmartHome';
 import { useAuth } from './hooks/useAuth';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { SUPPORTED_LANGUAGES } from './i18n/translations';
 import styles from './App.module.css';
 
 const SPLASH_SESSION_KEY = 'safehaven_splash_seen_v1';
 
-export default function App() {
+function AppShell({ auth, smartHome, showSplash }) {
+  const { t, translateSource } = useLanguage();
   const [activeScreen, setActiveScreen] = useState('DASHBOARD');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showSplash, setShowSplash] = useState(() => {
-    try {
-      return !sessionStorage.getItem(SPLASH_SESSION_KEY);
-    } catch {
-      return true;
-    }
-  });
 
   const {
     currentUser,
@@ -51,12 +48,13 @@ export default function App() {
     signIn,
     signOut,
     clearError
-  } = useAuth();
+  } = auth;
 
   const {
     rooms,
     networkState,
     deviceNetworkStatus,
+    hardwareStatus,
     bridgeState,
     connectBridge,
     metrics,
@@ -67,56 +65,23 @@ export default function App() {
     recentActivity,
     experimentLogs,
     notifications,
+    addNotification,
     dismissNotification,
     toggleDevice,
     triggerFault,
     restoreNormal,
     resetSystemState
-  } = useSmartHome();
+  } = smartHome;
 
   const isLocked = !isAuthenticated;
   const isVisitor = currentUser?.role === 'visitor';
   const effectiveScreen =
-    isVisitor && activeScreen !== 'SENSORS' && activeScreen !== 'DIAGNOSTICS'
+    isVisitor && activeScreen !== 'SENSORS' && activeScreen !== 'DIAGNOSTICS' && activeScreen !== 'SETTINGS'
       ? 'SENSORS'
       : activeScreen;
 
-  // Pre-login splash timer (~1.5s)
-  useEffect(() => {
-    if (!showSplash) return undefined;
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration = prefersReducedMotion ? 400 : 1500;
-
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-      try {
-        sessionStorage.setItem(SPLASH_SESSION_KEY, '1');
-      } catch {
-        // Ignore storage errors
-      }
-    }, duration);
-
-    return () => clearTimeout(timer);
-  }, [showSplash]);
-
-  // Listen for multi-tab sign-out events to reset local dashboard state
-  useEffect(() => {
-    const handleStorageReset = (event) => {
-      if (event.key === 'safehaven_logout_signal') {
-        resetSystemState();
-        setIsMobileMenuOpen(false);
-        setActiveScreen('DASHBOARD');
-      }
-    };
-    window.addEventListener('storage', handleStorageReset);
-    return () => window.removeEventListener('storage', handleStorageReset);
-  }, [resetSystemState]);
-
+  const selectedRoom = !isVisitor ? rooms.find((r) => r.id === selectedRoomId) || null : null;
   const isSystemUnavailable = networkState.mode === 'UNAVAILABLE';
-  const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
 
   const handleBackToDashboard = () => {
     setActiveScreen(isVisitor ? 'SENSORS' : 'DASHBOARD');
@@ -141,17 +106,39 @@ export default function App() {
     setActiveScreen('DASHBOARD');
   };
 
+  const handleNotifyPreferenceChange = (kind, nextValue) => {
+    if (kind === 'language') {
+      const langMeta = SUPPORTED_LANGUAGES.find((l) => l.code === nextValue);
+      addNotification({
+        type: 'success',
+        titleKey: 'notifications.langChangedTitle',
+        messageKey: 'notifications.langChangedMsg',
+        params: { lang: langMeta ? `${langMeta.nativeName} (${langMeta.name})` : nextValue }
+      });
+    } else if (kind === 'theme') {
+      addNotification({
+        type: 'info',
+        titleKey: 'notifications.themeChangedTitle',
+        messageKey: 'notifications.themeChangedMsg',
+        params: {
+          themeKey: nextValue === 'dark' ? 'settings.darkModeTitle' : 'settings.lightModeTitle'
+        }
+      });
+    }
+  };
+
   const getScreenTitle = () => {
     switch (effectiveScreen) {
-      case 'SENSORS': return 'Environmental Sensors';
-      case 'DIAGNOSTICS': return 'Connections';
-      case 'LOCAL_FALLBACK': return 'Local Fallback';
-      case 'RECOVERY': return 'Cloud Sync';
-      case 'RESEARCH_TEST': return 'Resilience Test Lab';
-      case 'USERS': return 'User Accounts';
+      case 'SENSORS': return t('header.envSensors');
+      case 'DIAGNOSTICS': return t('header.connections');
+      case 'LOCAL_FALLBACK': return t('header.localFallback');
+      case 'RECOVERY': return t('header.cloudSync');
+      case 'RESEARCH_TEST': return t('header.testLab');
+      case 'USERS': return t('header.userAccounts');
+      case 'SETTINGS': return t('header.settings');
       case 'DASHBOARD':
       default:
-        return 'Overview';
+        return t('header.homeOverview');
     }
   };
 
@@ -163,8 +150,8 @@ export default function App() {
         <SplashScreen
           statusText={
             isCheckingSession
-              ? 'Verifying local session & security credentials...'
-              : 'Initializing SafeHaven local-first gateway...'
+              ? t('splash.verifyingSession')
+              : t('splash.initializingGateway')
           }
         />
       )}
@@ -174,13 +161,11 @@ export default function App() {
         inert={isLocked || isSplashActive}
         aria-hidden={isLocked || isSplashActive}
       >
-        {/* Toast Notification System */}
         <Notification
           notifications={notifications}
           onDismiss={dismissNotification}
         />
 
-        {/* 1. Left Sidebar Navigation */}
         <Sidebar
           activeScreen={effectiveScreen}
           onSelectScreen={setActiveScreen}
@@ -193,9 +178,10 @@ export default function App() {
           onSignOut={handleSignOut}
           isSigningOut={isSigningOut}
           onManageUsers={() => setActiveScreen('USERS')}
+          hardwareStatus={hardwareStatus}
+          bridgeState={bridgeState}
         />
 
-        {/* 2. Main Content Canvas */}
         <div className={styles.mainWrapper}>
           <Header
             networkMode={networkState.mode}
@@ -208,30 +194,32 @@ export default function App() {
               setSelectedRoomId(null);
               setActiveScreen(screen);
             }}
+            onQuickThemeToggle={(nextTheme) => handleNotifyPreferenceChange('theme', nextTheme)}
           />
           {settingsError && <div className={styles.inlineError} role="alert">{settingsError}</div>}
 
           <ErrorBoundary onReset={handleBackToDashboard}>
-            {/* SCREEN S1: Home Overview (Administrator) */}
             {!isVisitor && effectiveScreen === 'DASHBOARD' && (
               <main>
                 <ConnectionStatus
                   networkState={networkState}
                   deviceNetworkStatus={deviceNetworkStatus}
+                  hardwareStatus={hardwareStatus}
                   bridgeState={bridgeState}
                   onConnectBridge={connectBridge}
                 />
 
                 <ModeBanner
                   networkState={networkState}
+                  hardwareStatus={hardwareStatus}
                   onNavigateToConnections={() => setActiveScreen('DIAGNOSTICS')}
                 />
 
                 <section>
                   <div className={styles.spacesHeader}>
-                    <h2 className={styles.spacesTitle}>Your spaces</h2>
+                    <h2 className={styles.spacesTitle}>{t('dashboard.yourSpaces')}</h2>
                     <span className={styles.spacesMeta}>
-                      Updated at {networkState.lastUpdated} · Source: Simulator
+                      {t('dashboard.updatedAt', { time: networkState.lastUpdated })} · {t('common.source')}: {translateSource(hardwareStatus?.dataSource)}
                     </span>
                   </div>
 
@@ -256,7 +244,6 @@ export default function App() {
               </main>
             )}
 
-            {/* Environmental Sensors View (Visitor Default & Admin View) */}
             {effectiveScreen === 'SENSORS' && (
               <SensorsView
                 rooms={rooms}
@@ -265,10 +252,10 @@ export default function App() {
               />
             )}
 
-            {/* SCREEN S3: Network & Channel Diagnostics */}
             {effectiveScreen === 'DIAGNOSTICS' && (
               <NetworkDiagnostics
                 networkState={networkState}
+                hardwareStatus={hardwareStatus}
                 bridgeState={bridgeState}
                 onBackToDashboard={handleBackToDashboard}
                 onSelectScreen={setActiveScreen}
@@ -276,30 +263,31 @@ export default function App() {
               />
             )}
 
-            {/* SCREEN S4: Local Fallback Architecture */}
             {!isVisitor && effectiveScreen === 'LOCAL_FALLBACK' && (
               <LocalFallbackView
                 networkState={networkState}
+                hardwareStatus={hardwareStatus}
                 rooms={rooms}
                 onToggleDevice={toggleDevice}
                 onBackToDashboard={handleBackToDashboard}
               />
             )}
 
-            {/* SCREEN S5: Cloud Reconnection & Sync */}
             {!isVisitor && effectiveScreen === 'RECOVERY' && (
               <RecoveryView
                 networkState={networkState}
+                hardwareStatus={hardwareStatus}
+                recentActivity={recentActivity}
                 onBackToDashboard={handleBackToDashboard}
                 onTriggerSync={restoreNormal}
                 onResetDemo={restoreNormal}
               />
             )}
 
-            {/* SCREEN S6: Resilience Test Lab */}
             {!isVisitor && effectiveScreen === 'RESEARCH_TEST' && (
               <ResearchTestView
                 networkState={networkState}
+                hardwareStatus={hardwareStatus}
                 metrics={metrics}
                 onTriggerFault={triggerFault}
                 onRestore={restoreNormal}
@@ -310,7 +298,6 @@ export default function App() {
               />
             )}
 
-            {/* User Account Management (Administrator Only) */}
             {effectiveScreen === 'USERS' && currentUser?.role === 'admin' && (
               <UserManagement
                 users={users}
@@ -321,10 +308,13 @@ export default function App() {
                 onSetVisitorEnabled={setVisitorEnabled}
               />
             )}
+
+            {effectiveScreen === 'SETTINGS' && (
+              <SettingsView onNotifyPreferenceChange={handleNotifyPreferenceChange} />
+            )}
           </ErrorBoundary>
         </div>
 
-        {/* SCREEN S2: Room Detail View Modal (Locks background scroll) */}
         {!isVisitor && selectedRoom && (
           <RoomDetail
             room={selectedRoom}
@@ -335,10 +325,10 @@ export default function App() {
           />
         )}
 
-        {/* Persistent Resilience Test Lab Drawer Bar (Administrator Only) */}
         {!isVisitor && (
           <FaultSimulation
             currentMode={networkState.mode}
+            hardwareStatus={hardwareStatus}
             onTriggerFault={triggerFault}
             onRestore={restoreNormal}
             metrics={metrics}
@@ -348,7 +338,6 @@ export default function App() {
         )}
       </div>
 
-      {/* Mandatory Non-Dismissible Auth Gate Modal (Shown after Splash completes) */}
       {!isSplashActive && isLocked && (
         <AuthModal
           authError={authError}
@@ -358,5 +347,37 @@ export default function App() {
         />
       )}
     </>
+  );
+}
+
+export default function App() {
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      return !sessionStorage.getItem(SPLASH_SESSION_KEY);
+    } catch {
+      return true;
+    }
+  });
+
+  const auth = useAuth();
+  const smartHome = useSmartHome();
+
+  useEffect(() => {
+    if (!showSplash) return undefined;
+    const timer = setTimeout(() => {
+      try {
+        sessionStorage.setItem(SPLASH_SESSION_KEY, '1');
+      } catch {
+        // Ignore storage errors
+      }
+      setShowSplash(false);
+    }, 1150);
+    return () => clearTimeout(timer);
+  }, [showSplash]);
+
+  return (
+    <LanguageProvider externalPreferences={auth.preferences} onSyncPreferences={auth.saveSettings}>
+      <AppShell auth={auth} smartHome={smartHome} showSplash={showSplash} />
+    </LanguageProvider>
   );
 }

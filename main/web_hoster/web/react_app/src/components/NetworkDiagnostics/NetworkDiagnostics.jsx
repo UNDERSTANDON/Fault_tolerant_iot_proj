@@ -1,51 +1,67 @@
 import { useState } from 'react';
 import { ArrowLeft, Cpu, Globe, Network, Radio, Server, RefreshCw, Wifi, ShieldCheck, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './NetworkDiagnostics.module.css';
-
-const BRIDGE_STATUS_LABELS = {
-  'not-configured': 'STANDBY (LOCAL)',
-  connecting: 'CONNECTING',
-  connected: 'CONNECTED',
-  reconnecting: 'RECONNECTING',
-  unavailable: 'OFFLINE',
-  unauthorized: 'AUTH REQUIRED'
-};
-
-function getLastMessageLabel(bridgeState) {
-  if (!bridgeState?.lastMessageAt) {
-    return 'Listening for ESP32 packets';
-  }
-  return bridgeState.messageStale ? 'Stale (>70s)' : 'Live packet verified';
-}
 
 export default function NetworkDiagnostics({
   networkState,
+  hardwareStatus,
   bridgeState = { status: 'not-configured', lastMessageAt: null, lastMessage: null, messageStale: false, error: null },
   onBackToDashboard,
   onSelectScreen,
   isVisitor = false
 }) {
-  const [pingStatus, setPingStatus] = useState(null);
+  const { t, locale, translateSource } = useLanguage();
+  const [pingKey, setPingKey] = useState(null);
   const [isPinging, setIsPinging] = useState(false);
 
   const isBridgeConnected = bridgeState?.status === 'connected';
-  const lastMessageTime = bridgeState?.lastMessageAt
-    ? new Date(bridgeState.lastMessageAt).toLocaleString()
-    : 'Awaiting packet';
+  const isEspLive = Boolean(hardwareStatus?.isLive);
+  const isLanActive = Boolean(isBridgeConnected || isEspLive);
+  const lastTelemetryTime = hardwareStatus?.lastTelemetryAt
+    ? new Date(hardwareStatus.lastTelemetryAt).toLocaleString(locale)
+    : (bridgeState?.lastMessageAt ? new Date(bridgeState.lastMessageAt).toLocaleString(locale) : t('diagnostics.noPacketReceived'));
+
+  const getBridgeBadge = (status) => {
+    switch (status) {
+      case 'not-configured': return t('connectionStatus.bridgeStandby');
+      case 'connecting': return t('connectionStatus.bridgeConnecting');
+      case 'connected': return t('connectionStatus.bridgeConnected');
+      case 'reconnecting': return t('connectionStatus.bridgeReconnecting');
+      case 'unavailable': return t('connectionStatus.bridgeUnavailable');
+      case 'unauthorized': return t('connectionStatus.bridgeAuthReq');
+      default: return t('common.standby');
+    }
+  };
+
+  const getLastMessageLabel = () => {
+    if (!bridgeState?.lastMessageAt) {
+      return t('diagnostics.listeningPackets');
+    }
+    return bridgeState.messageStale ? t('diagnostics.stalePackets') : t('diagnostics.livePacketVerified');
+  };
 
   const handleRunPing = () => {
     setIsPinging(true);
-    setPingStatus('Probing Local Gateway & MQTT Broker routes...');
+    setPingKey('start');
     setTimeout(() => {
       setIsPinging(false);
-      if (!networkState?.localLan) {
-        setPingStatus('PING FAILED: Local Gateway 192.168.1.1 Unreachable (LAN Offline)');
-      } else if (!networkState?.internet) {
-        setPingStatus('LAN HEALTHY: Gateway 192.168.1.1 (12ms) · External WAN unreachable (Local Fallback Active)');
+      if (isEspLive) {
+        setPingKey('live');
+      } else if (isBridgeConnected) {
+        setPingKey('bridgeOnly');
       } else {
-        setPingStatus('ALL CHANNELS HEALTHY: Local Gateway (11ms) · MQTT Broker (18ms) · 0% packet loss');
+        setPingKey('noData');
       }
-    }, 500);
+    }, 350);
+  };
+
+  const renderPingResult = () => {
+    if (pingKey === 'start') return t('diagnostics.probeStart');
+    if (pingKey === 'live') return t('diagnostics.probeLive', { source: translateSource(hardwareStatus?.dataSource) });
+    if (pingKey === 'bridgeOnly') return t('diagnostics.probeBridgeOnly');
+    if (pingKey === 'noData') return t('diagnostics.probeNoData');
+    return '';
   };
 
   return (
@@ -55,22 +71,19 @@ export default function NetworkDiagnostics({
           type="button"
           className={styles.backButton}
           onClick={onBackToDashboard}
-          title={isVisitor ? 'Return to Sensors View' : 'Return to Home Overview'}
         >
           <ArrowLeft size={18} />
-          <span>{isVisitor ? 'Back to Sensors' : 'Back to Overview'}</span>
+          <span>{isVisitor ? t('common.backToSensors') : t('common.backToOverview')}</span>
         </button>
 
         <div className={styles.screenTag}>
-          Screen S3: Network &amp; Channel Diagnostics
+          {t('diagnostics.screenTag')}
         </div>
       </div>
 
       <div className={styles.titleSection}>
-        <h2 className={styles.title}>Network Topology &amp; Channel Diagnostics</h2>
-        <p className={styles.subtitle}>
-          Real-time link telemetry across cloud routing, domestic LAN gateway, and the local MQTT broker bridge.
-        </p>
+        <h2 className={styles.title}>{t('diagnostics.title')}</h2>
+        <p className={styles.subtitle}>{t('diagnostics.subtitle')}</p>
       </div>
 
       {/* Topology Nodes Grid */}
@@ -80,46 +93,46 @@ export default function NetworkDiagnostics({
           <div className={styles.nodeHeader}>
             <Globe size={22} className={styles.nodeIcon} />
             <span className={styles.nodeBadge}>
-              {networkState?.internet ? 'CONNECTED' : 'OFFLINE'}
+              {networkState?.internet ? t('common.online') : t('common.offline')}
             </span>
           </div>
-          <h3 className={styles.nodeName}>External Cloud Uplink</h3>
-          <p className={styles.nodeDesc}>Remote telemetry synchronization &amp; WAN route</p>
+          <h3 className={styles.nodeName}>{t('diagnostics.node1Title')}</h3>
+          <p className={styles.nodeDesc}>{t('diagnostics.node1Desc')}</p>
           <div className={styles.nodeMeta}>
-            <span>State: <strong>{networkState?.internet ? 'Online (Reachable)' : 'Disconnected (Failover)'}</strong></span>
-            <span>Source: <code>Simulator</code></span>
+            <span>{t('diagnostics.stateLabel')}: <strong>{networkState?.internet ? t('diagnostics.browserOnline') : t('common.offline')}</strong></span>
+            <span>{t('common.source')}: <code>{t('diagnostics.browserStatus')}</code></span>
           </div>
         </div>
 
         {/* Node 2: Domestic Router / LAN */}
-        <div className={`${styles.nodeCard} ${networkState?.localLan ? styles.nodeHealthy : styles.nodeDown}`}>
+        <div className={`${styles.nodeCard} ${isLanActive ? styles.nodeHealthy : styles.nodeDown}`}>
           <div className={styles.nodeHeader}>
             <Network size={22} className={styles.nodeIcon} />
             <span className={styles.nodeBadge}>
-              {networkState?.localLan ? 'ACTIVE' : 'OFFLINE'}
+              {isLanActive ? t('common.connected') : t('diagnostics.noLink')}
             </span>
           </div>
-          <h3 className={styles.nodeName}>Domestic Router / LAN</h3>
-          <p className={styles.nodeDesc}>Local IP Gateway &amp; Hotspot Subnet</p>
+          <h3 className={styles.nodeName}>{t('diagnostics.node2Title')}</h3>
+          <p className={styles.nodeDesc}>{t('diagnostics.node2Desc')}</p>
           <div className={styles.nodeMeta}>
-            <span>Gateway IP: <code>192.168.137.1</code></span>
-            <span>Source: <code>Simulator</code></span>
+            <span>{t('diagnostics.stateLabel')}: <strong>{isLanActive ? t('diagnostics.bridgeReachable') : t('connectionStatus.noGatewayLink')}</strong></span>
+            <span>{t('common.source')}: <code>{t('diagnostics.lanProbe')}</code></span>
           </div>
         </div>
 
         {/* Node 3: ESP32-S3 Edge Gateway */}
-        <div className={`${styles.nodeCard} ${networkState?.localLan ? styles.nodeHealthy : styles.nodeDown}`}>
+        <div className={`${styles.nodeCard} ${isEspLive ? styles.nodeHealthy : styles.nodeDown}`}>
           <div className={styles.nodeHeader}>
             <Cpu size={22} className={styles.nodeIcon} />
             <span className={styles.nodeBadge}>
-              {networkState?.localLan ? 'ONLINE' : 'UNREACHABLE'}
+              {isEspLive ? t('common.online') : t('common.noDataStatus')}
             </span>
           </div>
-          <h3 className={styles.nodeName}>ESP32-S3 Edge Gateway</h3>
-          <p className={styles.nodeDesc}>Embedded WebHoster &amp; Local Zone Controller</p>
+          <h3 className={styles.nodeName}>{t('diagnostics.node3Title')}</h3>
+          <p className={styles.nodeDesc}>{t('diagnostics.node3Desc')}</p>
           <div className={styles.nodeMeta}>
-            <span>Host: <code>http://esp32-lan.local</code></span>
-            <span>Source: <code>Simulator</code></span>
+            <span>{t('diagnostics.telemetryLabel')}: <strong>{isEspLive ? t('diagnostics.streamingLive') : t('diagnostics.noDataReceived')}</strong></span>
+            <span>{t('common.source')}: <code>{translateSource(hardwareStatus?.dataSource)}</code></span>
           </div>
         </div>
 
@@ -128,18 +141,18 @@ export default function NetworkDiagnostics({
           <div className={styles.nodeHeader}>
             <Radio size={22} className={styles.nodeIcon} />
             <span className={styles.nodeBadge}>
-              {BRIDGE_STATUS_LABELS[bridgeState?.status] || 'STANDBY'}
+              {getBridgeBadge(bridgeState?.status)}
             </span>
           </div>
-          <h3 className={styles.nodeName}>Docker Mosquitto &amp; LAN Bridge</h3>
-          <p className={styles.nodeDesc}>TLS :8883 / WSS :8084 &amp; Node.js Auth Bridge (:8081)</p>
+          <h3 className={styles.nodeName}>{t('diagnostics.node4Title')}</h3>
+          <p className={styles.nodeDesc}>{t('diagnostics.node4Desc')}</p>
           <div className={styles.nodeMeta}>
-            <span>Packet status: <strong>{getLastMessageLabel(bridgeState)}</strong></span>
-            <span>Last packet: <code>{lastMessageTime}</code></span>
+            <span>{t('diagnostics.packetStatus')}: <strong>{isEspLive ? t('diagnostics.liveTelemetryActive') : getLastMessageLabel()}</strong></span>
+            <span>{t('diagnostics.lastPacket')}: <code>{lastTelemetryTime}</code></span>
             {bridgeState?.lastMessage && (
-              <span>Sequence: <code>#{bridgeState.lastMessage.sequence}</code></span>
+              <span>{t('diagnostics.sequence')}: <code>#{bridgeState.lastMessage.sequence}</code></span>
             )}
-            <span>Source: <code>Live MQTT</code></span>
+            <span>{t('common.source')}: <code>{t('common.liveMqtt')}</code></span>
           </div>
         </div>
       </div>
@@ -150,10 +163,8 @@ export default function NetworkDiagnostics({
           <div className={styles.toolTitleGroup}>
             <Server size={20} className={styles.toolIcon} />
             <div>
-              <h3 className={styles.toolTitle}>Link Benchmark &amp; MQTT Telemetry Channel</h3>
-              <p className={styles.toolSubtitle}>
-                Verify local gateway reachability and inspect live MQTT connectivity frames from the ESP32-S3 node.
-              </p>
+              <h3 className={styles.toolTitle}>{t('diagnostics.toolTitle')}</h3>
+              <p className={styles.toolSubtitle}>{t('diagnostics.toolSubtitle')}</p>
             </div>
           </div>
 
@@ -164,29 +175,29 @@ export default function NetworkDiagnostics({
             disabled={isPinging}
           >
             <RefreshCw size={16} className={isPinging ? styles.spin : ''} />
-            <span>{isPinging ? 'Probing Links...' : 'Run Link Probe'}</span>
+            <span>{isPinging ? t('diagnostics.probingLinks') : t('diagnostics.runLinkProbe')}</span>
           </button>
         </div>
 
-        {pingStatus && (
+        {pingKey && (
           <div className={styles.pingConsole} role="status" aria-live="polite">
             <span className={styles.consolePrompt}>$ safehaven-probe --gateway</span>
-            <span className={styles.consoleResult}>{pingStatus}</span>
+            <span className={styles.consoleResult}>{renderPingResult()}</span>
           </div>
         )}
 
         <div className={styles.specsRow}>
           <div className={styles.specItem}>
             <Radio size={16} />
-            <span>Bridge Status: <strong>{BRIDGE_STATUS_LABELS[bridgeState?.status] || 'STANDBY'}</strong></span>
+            <span>{t('diagnostics.bridgeStatusLabel')}: <strong>{getBridgeBadge(bridgeState?.status)}</strong></span>
           </div>
           <div className={styles.specItem}>
             <Wifi size={16} />
-            <span>Wi-Fi Signal (RSSI): <strong>-42 dBm (Excellent)</strong></span>
+            <span>{t('diagnostics.espStreamLabel')}: <strong>{isEspLive ? t('diagnostics.live2500ms') : t('diagnostics.noDataReceived')}</strong></span>
           </div>
           <div className={styles.specItem}>
             <ShieldCheck size={16} />
-            <span>Failover Target: <strong>&lt; 500ms Local Switching</strong></span>
+            <span>{t('diagnostics.failoverTargetLabel')}: <strong>{t('diagnostics.failoverTargetVal')}</strong></span>
           </div>
         </div>
 
@@ -198,7 +209,7 @@ export default function NetworkDiagnostics({
               onClick={() => onSelectScreen('LOCAL_FALLBACK')}
             >
               <AlertCircle size={15} />
-              <span>Open Local Fallback Matrix (Screen S4)</span>
+              <span>{t('diagnostics.openS4Btn')}</span>
             </button>
             <button
               type="button"
@@ -206,7 +217,7 @@ export default function NetworkDiagnostics({
               onClick={() => onSelectScreen('RECOVERY')}
             >
               <RefreshCw size={15} />
-              <span>Open Cloud Sync Pipeline (Screen S5)</span>
+              <span>{t('diagnostics.openS5Btn')}</span>
             </button>
           </div>
         )}

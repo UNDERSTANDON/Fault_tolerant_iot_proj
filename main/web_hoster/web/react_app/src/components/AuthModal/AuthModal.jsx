@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, Sun, Moon, Globe } from 'lucide-react';
 import Logo from '../Logo/Logo';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './AuthModal.module.css';
 
 export default function AuthModal({ authError, needsBootstrap, onSignIn, onClearError }) {
+  const { language, setLanguage, supportedLanguages, theme, toggleTheme, t } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -12,7 +14,6 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
   const dialogRef = useRef(null);
   const usernameInputRef = useRef(null);
 
-  // Reference-counted scroll lock
   useScrollLock(true);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
 
       if (e.key === 'Tab' && dialogRef.current) {
         const focusableSelectors =
-          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
         const focusable = Array.from(dialogRef.current.querySelectorAll(focusableSelectors));
         if (focusable.length === 0) return;
 
@@ -69,6 +70,14 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
     if (onClearError) onClearError();
   };
 
+  const translateAuthError = (err) => {
+    if (!err) return '';
+    if (err.includes('enter both username and password')) return t('auth.errMissingBoth');
+    if (err.includes('Invalid username or password')) return t('auth.errInvalidCredentials');
+    if (err.includes('disabled by the administrator')) return t('auth.errVisitorDisabled');
+    return err;
+  };
+
   return (
     <div
       className={styles.overlay}
@@ -77,15 +86,42 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
       aria-labelledby="auth-modal-title"
     >
       <div className={styles.dialog} ref={dialogRef}>
+        {/* Quick Theme & Language Toolbar on Login Modal */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card-inner)', fontSize: '0.72rem' }}>
+            <Globe size={13} color="var(--accent-primary)" />
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              aria-label={t('settings.langSectionTitle')}
+              style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.72rem', cursor: 'pointer', outline: 'none' }}
+            >
+              {supportedLanguages.map((l) => (
+                <option key={l.code} value={l.code} style={{ background: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
+                  {l.nativeName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? t('settings.lightModeTitle') : t('settings.darkModeTitle')}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-card-inner)', color: 'var(--text-primary)' }}
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+        </div>
+
         {/* Brand Header */}
         <div className={styles.header}>
           <Logo size="md" />
           <div className={styles.headerText}>
             <h2 id="auth-modal-title" className={styles.title}>
-              SafeHaven Access
+              {t('auth.title')}
             </h2>
             <p className={styles.subtitle}>
-              Local-First Smart Home · Authentication Required
+              {t('auth.subtitle')}
             </p>
           </div>
         </div>
@@ -94,14 +130,14 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.field}>
             <label htmlFor="auth-username" className={styles.label}>
-              Username
+              {t('auth.username')}
             </label>
             <input
               ref={usernameInputRef}
               id="auth-username"
               type="text"
               className={styles.input}
-              placeholder="e.g. admin or visitor"
+              placeholder={t('auth.usernamePlaceholder')}
               autoComplete="username"
               value={username}
               onChange={(e) => {
@@ -114,14 +150,14 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
 
           <div className={styles.field}>
             <label htmlFor="auth-password" className={styles.label}>
-              Password
+              {t('auth.password')}
             </label>
             <div className={styles.inputWrapper}>
               <input
                 id="auth-password"
                 type={showPassword ? 'text' : 'password'}
                 className={`${styles.input} ${styles.inputWithIcon}`}
-                placeholder="Enter your password"
+                placeholder={t('auth.passwordPlaceholder')}
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => {
@@ -134,8 +170,8 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
                 type="button"
                 className={styles.eyeBtn}
                 onClick={() => setShowPassword((prev) => !prev)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                title={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -145,35 +181,33 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
           {authError && (
             <div className={styles.errorBox} role="alert">
               <AlertCircle size={16} />
-              <span>{authError}</span>
+              <span>{translateAuthError(authError)}</span>
             </div>
           )}
 
           <button type="submit" className={styles.submitBtn}>
-            <span>Sign In to SafeHaven</span>
+            <span>{t('auth.signInBtn')}</span>
             <ArrowRight size={16} />
           </button>
         </form>
 
         <div className={styles.footerBox}>
           <div className={styles.quickAccountsRow}>
-            <span className={styles.quickLabel}>Quick access profiles:</span>
+            <span className={styles.quickLabel}>{t('auth.quickProfiles')}</span>
             <div className={styles.quickBtnGroup}>
               <button
                 type="button"
                 className={styles.quickRoleBtn}
                 onClick={() => handleFillAccount('admin', 'admin1234')}
-                title="Fill Administrator credentials"
               >
-                Admin
+                {t('common.adminShort')}
               </button>
               <button
                 type="button"
                 className={styles.quickRoleBtn}
                 onClick={() => handleFillAccount('visitor', 'visitor1234')}
-                title="Fill Visitor read-only credentials"
               >
-                Visitor (Read-Only)
+                {t('auth.visitorReadOnlyBtn')}
               </button>
             </div>
           </div>
@@ -182,8 +216,8 @@ export default function AuthModal({ authError, needsBootstrap, onSignIn, onClear
             <ShieldCheck size={14} />
             <span>
               {needsBootstrap
-                ? 'Run npm run setup:admin from local_server to provision host credentials.'
-                : 'Sign in with your Administrator or Visitor account to access SafeHaven.'}
+                ? t('auth.bootstrapNotice')
+                : t('auth.signInNotice')}
             </span>
           </div>
         </div>

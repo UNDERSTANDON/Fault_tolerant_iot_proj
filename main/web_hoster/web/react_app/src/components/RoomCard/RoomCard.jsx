@@ -1,9 +1,13 @@
 import { Sofa, Utensils, Bed, Compass, ArrowUpRight, ShieldCheck, Flame, Droplets, Wifi } from 'lucide-react';
 import DeviceControl from '../DeviceControl/DeviceControl';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './RoomCard.module.css';
 
 export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, onSelectRoom }) {
+  const { t, translateSensorValue } = useLanguage();
   const { id, name, devices = [], sensors = [] } = room;
+
+  const displayRoomName = t(`rooms.${id}.name`) !== `rooms.${id}.name` ? t(`rooms.${id}.name`) : name;
 
   const getRoomIcon = () => {
     switch (id) {
@@ -34,9 +38,10 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
   const tempSensor = sensors.find((s) => s.type === 'temperature');
   const smokeSensor = sensors.find((s) => s.type === 'smoke');
   const isSmokeAlert = smokeSensor?.status === 'ALERT';
-  const upsDevice = devices.find((d) => d.type === 'ups');
+  const hasTempNumber = typeof tempSensor?.value === 'number';
+  const isHardwareLive = Boolean(hasTempNumber || (smokeSensor?.status && smokeSensor.status !== 'NO DATA'));
+  const shortSourceLabel = isHardwareLive ? t('common.espLive') : t('common.noData');
 
-  // Filter out temperature sensor from secondary list so it isn't duplicated right below the Hero readout
   const secondarySensors = tempSensor
     ? sensors.filter((s) => s.id !== tempSensor.id)
     : sensors;
@@ -50,9 +55,9 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
             {getRoomIcon()}
           </div>
           <div className={styles.headerText}>
-            <h3 className={styles.roomName}>{name}</h3>
+            <h3 className={styles.roomName}>{displayRoomName}</h3>
             <span className={styles.roomSub}>
-              {sensors.length} {sensors.length === 1 ? 'sensor' : 'sensors'} · {devices.length} {devices.length === 1 ? 'device' : 'devices'}
+              {sensors.length} {sensors.length === 1 ? t('common.sensor') : t('common.sensors')} · {devices.length} {devices.length === 1 ? t('common.device') : t('common.devices')}
             </span>
           </div>
         </div>
@@ -62,49 +67,56 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
             type="button"
             className={styles.openDetailBtn}
             onClick={() => onSelectRoom(id)}
-            title={`Open ${name} controls & sensors`}
+            title={displayRoomName}
           >
             <ArrowUpRight size={17} />
           </button>
         )}
       </div>
 
-      {/* 2. Primary Hero Metric (Temperature + Model OR UPS Battery Reserve for Hallway) */}
+      {/* 2. Primary Hero Metric (Temperature + Model) */}
       {tempSensor ? (
         <div className={styles.heroMetricBox}>
           <div className={styles.tempLeft}>
-            <span className={styles.tempNum}>{tempSensor.value}</span>
-            <span className={styles.tempUnit}>{tempSensor.unit}</span>
+            <span className={hasTempNumber ? styles.tempNum : styles.tempNumText}>
+              {translateSensorValue(tempSensor.value)}
+            </span>
+            {hasTempNumber && <span className={styles.tempUnit}>{tempSensor.unit}</span>}
           </div>
           <div className={styles.tempRight}>
-            <span className={styles.tempLabel}>Room Temp</span>
-            <span className={styles.heroModelBadge}>{tempSensor.model || 'DHT22'} · Comfort</span>
+            <span className={styles.tempLabel}>{t('dashboard.roomTemp')}</span>
+            <span className={styles.heroModelBadge}>
+              {tempSensor.model || 'DHT11 · GPIO4'}
+            </span>
           </div>
         </div>
       ) : (
         <div className={styles.heroMetricBox}>
           <div className={styles.tempLeft}>
-            <span className={styles.tempNum}>{upsDevice ? '100' : 'Armed'}</span>
-            {upsDevice && <span className={styles.tempUnit}>%</span>}
+            <span className={styles.tempNumText}>{t('common.noData')}</span>
           </div>
           <div className={styles.tempRight}>
-            <span className={styles.tempLabel}>UPS Reserve</span>
-            <span className={styles.heroModelBadge}>LiFePO4 · 24h</span>
+            <span className={styles.tempLabel}>{t('dashboard.zoneStatus')}</span>
+            <span className={styles.heroModelBadge}>ESP32-S3</span>
           </div>
         </div>
       )}
 
-      {/* 3. Secondary Sensors List (Aligned height across all 4 cards, zero duplication) */}
+      {/* 3. Secondary Sensors List */}
       <div className={styles.sectionBlock}>
         <div className={styles.sectionTitleRow}>
           <span className={styles.sectionHeading}>
-            {tempSensor ? `SAFETY & EDGE SENSORS (${secondarySensors.length})` : `PERIMETER SENSORS (${secondarySensors.length})`}
+            {tempSensor
+              ? t('dashboard.safetyEdgeSensors', { count: secondarySensors.length })
+              : t('dashboard.perimeterSensors', { count: secondarySensors.length })}
           </span>
         </div>
 
         <div className={styles.sensorRows}>
           {secondarySensors.map((sensor) => {
             const sensorAlert = sensor.status === 'ALERT';
+            const displaySensorName = t(`sensors.${sensor.id}`) !== `sensors.${sensor.id}` ? t(`sensors.${sensor.id}`) : sensor.name;
+            const displaySensorVal = translateSensorValue(sensor.value);
             return (
               <div
                 key={sensor.id}
@@ -112,16 +124,18 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
               >
                 <div className={styles.sensorItemLeft}>
                   {getSmallSensorIcon(sensor)}
-                  <span className={styles.sensorItemName} title={sensor.name}>
-                    {sensor.name}
+                  <span className={styles.sensorItemName} title={displaySensorName}>
+                    {displaySensorName}
                   </span>
                 </div>
                 <div className={styles.sensorItemRight}>
                   {sensor.model && (
-                    <span className={styles.sensorModelPill}>{sensor.model}</span>
+                    <span className={styles.sensorModelPill} title={sensor.model}>
+                      {sensor.model.split('·')[0].trim()}
+                    </span>
                   )}
-                  <span className={styles.sensorItemVal}>
-                    {sensor.value}{sensor.unit ? ` ${sensor.unit}` : ''}
+                  <span className={sensor.value === 'No Data' ? styles.sensorItemValMuted : styles.sensorItemVal}>
+                    {displaySensorVal}{sensor.unit && typeof sensor.value === 'number' ? ` ${sensor.unit}` : ''}
                   </span>
                 </div>
               </div>
@@ -134,7 +148,7 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
       {isSmokeAlert && (
         <div className={`${styles.smokeRow} ${styles.smokeAlert}`}>
           <Flame size={15} className={styles.iconAlert} />
-          <span>Smoke hazard alert ({smokeSensor?.model || 'MQ-2'}) · Evacuate!</span>
+          <span>{t('dashboard.smokeAlertBanner', { model: smokeSensor?.model || 'MQ-2' })}</span>
         </div>
       )}
 
@@ -142,7 +156,7 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
 
       {/* 4. Explicit Devices in Use List */}
       <div className={styles.devicesSection}>
-        <span className={styles.sectionHeading}>DEVICES IN USE ({devices.length})</span>
+        <span className={styles.sectionHeading}>{t('dashboard.devicesInUse', { count: devices.length })}</span>
         <div className={styles.deviceList}>
           {devices.map((device) => (
             <DeviceControl
@@ -158,10 +172,16 @@ export default function RoomCard({ room, onToggleDevice, isSystemUnavailable, on
       {/* 5. Smart Telemetry Footer */}
       <div className={styles.cardFooter}>
         <span className={styles.footerStatus}>
-          <span className={isSystemUnavailable ? styles.dotOffline : styles.dotOnline} />
-          <span>{isSystemUnavailable ? 'Link Offline' : 'LAN Route · ACK ~12ms'}</span>
+          <span className={isSystemUnavailable || !isHardwareLive ? styles.dotOffline : styles.dotOnline} />
+          <span>
+            {isSystemUnavailable
+              ? t('dashboard.linkOffline')
+              : isHardwareLive
+                ? t('dashboard.espOnline')
+                : t('dashboard.espOffline')}
+          </span>
         </span>
-        <span className={styles.sourceMiniChip}>Source: Simulator</span>
+        <span className={styles.sourceMiniChip}>{t('common.source')}: {shortSourceLabel}</span>
       </div>
     </div>
   );

@@ -23,7 +23,7 @@
   left: 278px;
   max-width: 1120px;
   margin-left: auto;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -50,7 +50,7 @@
 
 .open .toggleBar {
   padding: 12px 20px;
-  background-color: #f7f6f2;
+  background-color: var(--bg-card-inner);
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-color);
 }
@@ -125,7 +125,7 @@
   gap: var(--spacing-md);
   max-height: 380px;
   overflow-y: auto;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
 }
 
 .testActions {

@@ -1,25 +1,6 @@
 import { Globe, Network, Radio, Wifi } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './ConnectionStatus.module.css';
-
-const BRIDGE_STATUS_LABELS = {
-  'not-configured': 'Standby (Local Mode)',
-  'authentication-required': 'Auth Required',
-  unauthorized: 'Access Denied',
-  connecting: 'Connecting',
-  connected: 'Connected',
-  reconnecting: 'Reconnecting',
-  unavailable: 'Offline'
-};
-
-const DEVICE_NETWORK_LABELS = {
-  initializing: 'Initializing',
-  station_connecting: 'Connecting to configured Wi-Fi',
-  station_connected: 'Station connected',
-  fallback_ap_active: 'Fallback AP active',
-  fallback_ap_reconnecting: 'Fallback AP active; station reconnecting',
-  station_ap_recovery: 'Station connected; fallback AP retained',
-  unavailable: 'Network unavailable'
-};
 
 function getStatusClass(status) {
   if (status === 'connected') {
@@ -34,25 +15,45 @@ function getStatusClass(status) {
 export default function ConnectionStatus({
   networkState,
   deviceNetworkStatus,
-  bridgeState = { status: 'connected' },
+  hardwareStatus,
+  bridgeState = { status: 'not-configured' },
   onConnectBridge
 }) {
-  const { internet, localLan, mqttBroker } = networkState;
+  const { t, locale } = useLanguage();
+  const { internet, mqttBroker } = networkState;
   const hasBridgeObj = bridgeState && typeof bridgeState === 'object' && 'lastMessageAt' in bridgeState;
+  const isBridgeConnected = bridgeState?.status === 'connected';
+  const isEspLive = Boolean(hardwareStatus?.isLive);
+  const isLanConnected = Boolean(isBridgeConnected || isEspLive || deviceNetworkStatus?.available);
+
+  const getBridgeLabel = (status) => {
+    switch (status) {
+      case 'not-configured': return t('connectionStatus.bridgeStandby');
+      case 'authentication-required': return t('connectionStatus.bridgeAuthReq');
+      case 'unauthorized': return t('connectionStatus.bridgeDenied');
+      case 'connecting': return t('connectionStatus.bridgeConnecting');
+      case 'connected': return t('connectionStatus.bridgeConnected');
+      case 'reconnecting': return t('connectionStatus.bridgeReconnecting');
+      case 'unavailable': return t('connectionStatus.bridgeUnavailable');
+      default: return t('common.standby');
+    }
+  };
 
   const bridgeLabel = hasBridgeObj
-    ? (BRIDGE_STATUS_LABELS[bridgeState.status] || 'Active')
-    : (mqttBroker ? 'Active' : 'Standby');
+    ? getBridgeLabel(bridgeState.status)
+    : (mqttBroker && isEspLive ? t('common.connected') : t('common.standby'));
 
-  const messageLabel = hasBridgeObj
-    ? (!bridgeState.lastMessageAt
-      ? (bridgeState.status === 'connected' ? 'Listening on Topic' : 'Ready (LAN HTTP)')
-      : (bridgeState.messageStale ? 'Stale (>70s)' : 'Heartbeat Active'))
-    : 'Ready';
+  const espGatewayLabel = isEspLive
+    ? t('connectionStatus.onlineSending')
+    : deviceNetworkStatus?.available
+      ? t('connectionStatus.apActiveNoSensor')
+      : t('connectionStatus.noDataDisconnected');
 
-  const lastMessageTime = hasBridgeObj && bridgeState.lastMessageAt
-    ? new Date(bridgeState.lastMessageAt).toLocaleTimeString()
-    : null;
+  const lastMessageTime = hardwareStatus?.lastTelemetryAt
+    ? new Date(hardwareStatus.lastTelemetryAt).toLocaleTimeString(locale)
+    : (hasBridgeObj && bridgeState.lastMessageAt
+      ? new Date(bridgeState.lastMessageAt).toLocaleTimeString(locale)
+      : null);
 
   return (
     <div className={styles.channelsCard}>
@@ -62,9 +63,9 @@ export default function ConnectionStatus({
           <Globe size={18} className={internet ? styles.iconGreen : styles.iconWarn} />
         </div>
         <div className={styles.meta}>
-          <span className={styles.label}>Internet · Source: Simulator</span>
+          <span className={styles.label}>{t('connectionStatus.browserNetwork')}</span>
           <span className={`${styles.value} ${internet ? styles.valSuccess : styles.valFailed}`}>
-            {internet ? 'Connected' : 'Disconnected'}
+            {internet ? t('common.online') : t('common.offline')}
           </span>
         </div>
       </div>
@@ -74,12 +75,12 @@ export default function ConnectionStatus({
       {/* 2. Local Network LAN */}
       <div className={styles.channelCol}>
         <div className={styles.iconBox}>
-          <Network size={18} className={localLan ? styles.iconGreen : styles.iconWarn} />
+          <Network size={18} className={isLanConnected ? styles.iconGreen : styles.iconWarn} />
         </div>
         <div className={styles.meta}>
-          <span className={styles.label}>Local Network · LAN · Source: Simulator</span>
-          <span className={`${styles.value} ${localLan ? styles.valSuccess : styles.valFailed}`}>
-            {localLan ? 'Available' : 'Unavailable'}
+          <span className={styles.label}>{t('connectionStatus.localLan')}</span>
+          <span className={`${styles.value} ${isLanConnected ? styles.valSuccess : styles.valFailed}`}>
+            {isLanConnected ? t('common.connected') : t('connectionStatus.noGatewayLink')}
           </span>
         </div>
       </div>
@@ -89,11 +90,11 @@ export default function ConnectionStatus({
       {/* 3. MQTT Broker / Local Bridge */}
       <div className={styles.channelCol}>
         <div className={styles.iconBox}>
-          <Radio size={18} className={bridgeState?.status === 'connected' || mqttBroker ? styles.iconGreen : styles.iconWarn} />
+          <Radio size={18} className={isBridgeConnected ? styles.iconGreen : styles.iconWarn} />
         </div>
         <div className={styles.meta}>
-          <span className={styles.label}>MQTT Broker · Source: Live</span>
-          <span className={`${styles.value} ${hasBridgeObj ? getStatusClass(bridgeState.status) : styles.valSuccess}`}>
+          <span className={styles.label}>{t('connectionStatus.mqttBroker')}</span>
+          <span className={`${styles.value} ${hasBridgeObj ? getStatusClass(bridgeState.status) : styles.valWarn}`}>
             {bridgeLabel}
           </span>
         </div>
@@ -104,15 +105,15 @@ export default function ConnectionStatus({
       {/* 4. ESP32-S3 Gateway */}
       <div className={styles.channelCol}>
         <div className={styles.iconBox}>
-          <Wifi size={18} className={styles.iconGreen} />
+          <Wifi size={18} className={isEspLive ? styles.iconGreen : styles.iconWarn} />
         </div>
         <div className={styles.meta}>
-          <span className={styles.label}>ESP32-S3 · Edge Gateway</span>
-          <span className={styles.value}>
-            {messageLabel}
+          <span className={styles.label}>{t('connectionStatus.espGateway')}</span>
+          <span className={`${styles.value} ${isEspLive ? styles.valSuccess : styles.valFailed}`}>
+            {espGatewayLabel}
           </span>
           {lastMessageTime && (
-            <span className={styles.detail}>Last packet · {lastMessageTime}</span>
+            <span className={styles.detail}>{t('connectionStatus.lastTelemetry')} · {lastMessageTime}</span>
           )}
         </div>
       </div>
@@ -126,7 +127,7 @@ export default function ConnectionStatus({
       {deviceNetworkStatus && (
         <p className={styles.deviceNetworkNotice} role="status" aria-live="polite">
           {deviceNetworkStatus.available
-            ? `ESP32 network · Live: ${DEVICE_NETWORK_LABELS[deviceNetworkStatus.state] || 'Unknown'} · Station: ${deviceNetworkStatus.station_connected ? 'connected' : 'disconnected'} · Fallback AP: ${deviceNetworkStatus.fallback_ap_active ? 'active at 192.168.4.1' : 'inactive'}. AP access does not indicate MQTT broker or Internet access.`
+            ? `ESP32-S3 Network · State: ${deviceNetworkStatus.state || 'Unknown'} · Station: ${deviceNetworkStatus.station_connected ? t('common.connected') : t('common.disconnected')} · Fallback AP: ${deviceNetworkStatus.fallback_ap_active ? '192.168.4.1' : t('common.offline')}`
             : deviceNetworkStatus.error}
         </p>
       )}
@@ -134,7 +135,7 @@ export default function ConnectionStatus({
       {onConnectBridge && hasBridgeObj && ['unauthorized', 'unavailable'].includes(bridgeState.status) && (
         <div className={styles.bridgeAuth}>
           <button type="button" onClick={onConnectBridge}>
-            Reconnect MQTT Bridge
+            {t('connectionStatus.reconnectBtn')}
           </button>
         </div>
       )}
