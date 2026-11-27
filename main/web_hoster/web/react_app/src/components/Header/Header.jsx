@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, Menu, LogOut, User, Users, Activity, ChevronDown, Settings, Sun, Moon, Globe } from 'lucide-react';
+import { Home, Menu, LogOut, User, Users, Activity, ChevronDown, Settings, Sun, Moon, Globe, Bell } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './Header.module.css';
 
@@ -11,7 +11,8 @@ export default function Header({
   onSignOut,
   isSigningOut = false,
   onSelectScreen,
-  onQuickThemeToggle
+  onQuickThemeToggle,
+  notificationCount = 0
 }) {
   const { locale, currentLangMeta, theme, toggleTheme, t } = useLanguage();
   const isLocal = networkMode === 'LOCAL';
@@ -116,6 +117,30 @@ export default function Header({
           {onSelectScreen && (
             <button
               type="button"
+              onClick={() => onSelectScreen('NOTIFICATION_HISTORY')}
+              title={t('header.notificationHistory')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                height: '32px',
+                padding: '0 10px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+                fontSize: '0.73rem',
+                fontWeight: 700
+              }}
+            >
+              <Bell size={14} color="var(--accent-primary)" />
+              <span>{notificationCount}</span>
+            </button>
+          )}
+
+          {onSelectScreen && (
+            <button
+              type="button"
               onClick={() => onSelectScreen('SETTINGS')}
               title={t('header.settings')}
               style={{
@@ -194,6 +219,21 @@ export default function Header({
                     >
                       <Users size={15} />
                       <span>{t('header.manageUsers')}</span>
+                    </button>
+                  )}
+
+                  {onSelectScreen && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.dropdownItem}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onSelectScreen('NOTIFICATION_HISTORY');
+                      }}
+                    >
+                      <Bell size={15} />
+                      <span>{t('header.notificationHistory')}</span>
                     </button>
                   )}
 

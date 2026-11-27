@@ -14,6 +14,10 @@ import {
   TestEventOutbox,
   validateTestNotification
 } from './test_event_delivery.mjs';
+import {
+  DEFAULT_NOTIFICATION_FIREBASE_PROJECT_ID,
+  NotificationHistoryStore
+} from './notification_history_store.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +56,7 @@ const config = {
   firestoreTestEmulator: firestoreTestEmulatorValue === 'true',
   firebaseTestProjectId: process.env.FIREBASE_TEST_PROJECT_ID || '',
   firebaseProductionProjectId: process.env.FIREBASE_PRODUCTION_PROJECT_ID || '',
+  firebaseNotificationProjectId: process.env.FIREBASE_NOTIFICATION_PROJECT_ID || DEFAULT_NOTIFICATION_FIREBASE_PROJECT_ID,
   firestoreEmulatorHost: process.env.FIRESTORE_EMULATOR_HOST || '',
   firebaseCredentialsPath: process.env.GOOGLE_APPLICATION_CREDENTIALS || '',
   allowedOrigins: new Set(
@@ -81,6 +86,13 @@ const isLoopbackBridge = ['localhost', '127.0.0.1', '::1'].includes(config.bridg
 const useHttpsBridge = !isLoopbackBridge || Boolean(config.tlsCertPath || config.tlsKeyPath);
 const serverDataDir = path.join(config.appDataDir, 'local-server');
 const usersFile = path.join(serverDataDir, 'users.json');
+const defaultFirebaseKeyFile = path.join(config.appDataDir, 'firebase-test', 'service-account.json');
+const notificationHistoryStore = new NotificationHistoryStore({
+  storageFilePath: path.join(serverDataDir, 'notification-history.json'),
+  projectId: config.firebaseNotificationProjectId,
+  credentialsPath: config.firebaseCredentialsPath || defaultFirebaseKeyFile,
+  repositoryRoot: path.resolve(__dirname, '..')
+});
 const testEventOutbox = config.firestoreTestEnabled
   ? new TestEventOutbox(path.join(serverDataDir, 'test-event-outbox'))
   : null;
@@ -914,8 +926,188 @@ bridgeServer.on('request', (request, res) => {
     return;
   }
 
+  if (url.pathname === '/api/notifications/history') {
+    handleNotificationHistoryRequest(request, res);
+    return;
+  }
+
+  if (url.pathname === '/api/notifications/cleanup') {
+    handleNotificationCleanupRequest(request, res);
+    return;
+  }
+
+  if (url.pathname === '/api/notifications/delete') {
+    handleNotificationDeleteRequest(request, res);
+    return;
+  }
+
   sendJson(res, 404, { error: 'Not found.' });
 });
+
+function handleNotificationHistoryRequest(request, res) {
+  const user = requireAuth(request);
+  if (!user) {
+    sendJson(res, 401, { error: 'Authentication required.' });
+    return;
+  }
+
+  if (request.method === 'GET') {
+    notificationHistoryStore
+      .listNotifications()
+      .then((payload) => sendJson(res, 200, payload))
+      .catch(() => sendJson(res, 500, { error: 'Unable to load notification history.' }));
+    return;
+  }
+
+  if (request.method === 'POST') {
+    let body = '';
+    let bodyTooLarge = false;
+    request.on('data', (chunk) => {
+      if (bodyTooLarge || body.length + chunk.length > 4096) {
+        bodyTooLarge = true;
+        return;
+      }
+      body += chunk;
+    });
+    request.on('end', () => {
+      if (bodyTooLarge) {
+        sendJson(res, 413, { error: 'Notification payload is too large.' });
+        return;
+      }
+      let parsed;
+      try {
+        parsed = body ? JSON.parse(body) : {};
+      } catch {
+        sendJson(res, 400, { error: 'Malformed notification payload.' });
+        return;
+      }
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        sendJson(res, 400, { error: 'Malformed notification payload.' });
+        return;
+      }
+      if (!parsed.title && !parsed.titleKey) {
+        sendJson(res, 400, { error: 'Notification requires title or titleKey.' });
+        return;
+      }
+
+      notificationHistoryStore
+        .addNotification(parsed)
+        .then((record) =>
+          sendJson(res, 201, {
+            notification: record,
+            status: notificationHistoryStore.getStatus()
+          })
+        )
+        .catch(() => sendJson(res, 500, { error: 'Unable to persist notification.' }));
+    });
+    return;
+  }
+
+  sendJson(res, 405, { error: 'Unsupported method.' });
+}
+
+function handleNotificationCleanupRequest(request, res) {
+  const user = requireAuth(request);
+  if (!user) {
+    sendJson(res, 401, { error: 'Authentication required.' });
+    return;
+  }
+  if (user.role !== 'admin') {
+    sendJson(res, 403, { error: 'Administrator access required.' });
+    return;
+  }
+  if (request.method !== 'POST') {
+    sendJson(res, 405, { error: 'Unsupported method.' });
+    return;
+  }
+
+  notificationHistoryStore
+    .purgeExpired()
+    .then(async (purgeResult) => {
+      const syncResult = await notificationHistoryStore.syncPendingToFirebase();
+      const listed = await notificationHistoryStore.listNotifications();
+      sendJson(res, 200, {
+        ...purgeResult,
+        ...syncResult,
+        ...listed
+      });
+    })
+    .catch(() => sendJson(res, 500, { error: 'Unable to execute 30-day notification cleanup.' }));
+}
+
+function handleNotificationDeleteRequest(request, res) {
+  const user = requireAuth(request);
+  if (!user) {
+    sendJson(res, 401, { error: 'Authentication required.' });
+    return;
+  }
+  if (user.role !== 'admin') {
+    sendJson(res, 403, { error: 'Administrator access required.' });
+    return;
+  }
+  if (request.method !== 'POST') {
+    sendJson(res, 405, { error: 'Unsupported method.' });
+    return;
+  }
+
+  let body = '';
+  let bodyTooLarge = false;
+  request.on('data', (chunk) => {
+    if (bodyTooLarge || body.length + chunk.length > 1024) {
+      bodyTooLarge = true;
+      return;
+    }
+    body += chunk;
+  });
+  request.on('end', () => {
+    if (bodyTooLarge) {
+      sendJson(res, 413, { error: 'Delete payload is too large.' });
+      return;
+    }
+    let parsed;
+    try {
+      parsed = body ? JSON.parse(body) : {};
+    } catch {
+      sendJson(res, 400, { error: 'Malformed delete payload.' });
+      return;
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      sendJson(res, 400, { error: 'Malformed delete payload.' });
+      return;
+    }
+
+    if (parsed.all === true) {
+      notificationHistoryStore
+        .clearAll()
+        .then((result) =>
+          sendJson(res, 200, {
+            ...result,
+            ...notificationHistoryStore.getStatus(),
+            notifications: []
+          })
+        )
+        .catch(() => sendJson(res, 500, { error: 'Unable to clear notification history.' }));
+      return;
+    }
+
+    const targetId = typeof parsed.id === 'string' ? parsed.id.trim() : '';
+    if (!targetId) {
+      sendJson(res, 400, { error: 'Specify notification id or all: true.' });
+      return;
+    }
+
+    notificationHistoryStore
+      .deleteNotification(targetId)
+      .then(async (result) => {
+        const listed = await notificationHistoryStore.listNotifications();
+        sendJson(res, 200, {
+          ...result,
+          ...listed
+        });
+      })
+      .catch(() => sendJson(res, 500, { error: 'Unable to delete notification.' }));
+  });
+}
 
 const isAllowedTopic = (topic) => config.allowedTopics.includes(topic);
 
@@ -955,8 +1147,21 @@ function isValidHardwarePayload(topic, payload) {
 function recordHardwarePayload(topic, payload) {
   const receivedAt = new Date().toISOString();
   if (HOME_TELEMETRY_TOPIC_REGEX.test(topic)) {
+    const previousSmoke = hardwareStateCache.snapshot?.mq2?.smoke;
     hardwareStateCache.snapshot = payload;
     hardwareStateCache.snapshotReceivedAt = receivedAt;
+    if (payload?.mq2?.smoke === 'ALERT' && previousSmoke !== 'ALERT') {
+      notificationHistoryStore.addNotification({
+        id: `hw-mq2-alert-${Date.now()}`,
+        type: 'error',
+        category: 'hazard',
+        titleKey: 'notifications.smokeCriticalTitle',
+        messageKey: 'notifications.smokeCriticalMsg',
+        title: 'CRITICAL HAZARD: Smoke Detected (MQ-2)',
+        message: 'Live MQ-2 ADC reading on GPIO1 exceeded configured safety threshold.',
+        source: 'ESP32-S3 Live (MQ-2)'
+      }).catch(() => {});
+    }
     return;
   }
   if (HOME_STATE_TOPIC_REGEX.test(topic)) {
@@ -966,6 +1171,29 @@ function recordHardwarePayload(topic, payload) {
       hardwareStateCache.snapshot.devices[payload.deviceId] = payload.deviceId === 'door_nfc'
         ? payload.state
         : payload.state === 'ON';
+    }
+    if (payload.status === 'SUCCESS') {
+      const isLock = payload.deviceId === 'door_nfc';
+      const isActive = isLock ? payload.state === 'UNLOCKED' : payload.state === 'ON';
+      const actionKey = isLock
+        ? (isActive ? 'notifications.actionUnlocked' : 'notifications.actionLocked')
+        : (isActive ? 'notifications.actionTurnedOn' : 'notifications.actionTurnedOff');
+      notificationHistoryStore.addNotification({
+        id: payload.commandId ? `ack-${payload.commandId}` : `ack-${payload.deviceId}-${Date.now()}`,
+        type: 'success',
+        category: 'device',
+        titleKey: 'notifications.cmdSuccessTitle',
+        params: {
+          deviceId: payload.deviceId,
+          device: payload.deviceId,
+          actionKey,
+          ackKey: 'notifications.ackMqttBridge',
+          pin: payload.hardwarePin ?? '?'
+        },
+        title: `${payload.deviceId} ${payload.state}`,
+        message: `MQTT Bridge -> ESP32-S3 GPIO${payload.hardwarePin ?? '?'} · Source: ESP32-S3 Live`,
+        source: 'ESP32-S3 Live'
+      }).catch(() => {});
     }
     return;
   }
@@ -977,8 +1205,25 @@ function recordHardwarePayload(topic, payload) {
   if (topic === HOME_CRITICAL_EVENT_TOPIC) {
     hardwareStateCache.lastCriticalEvent = payload;
     hardwareStateCache.criticalEventReceivedAt = receivedAt;
+    notificationHistoryStore.addNotification({
+      id: payload.event_id ? `crit-${payload.event_id}` : `crit-${Date.now()}`,
+      type: 'error',
+      category: 'hazard',
+      titleKey: 'notifications.smokeCriticalTitle',
+      messageKey: 'notifications.smokeCriticalMsg',
+      title: payload.title || 'CRITICAL HAZARD: Smoke Detected (MQ-2)',
+      message: payload.message || 'Live MQ-2 reading exceeded configured safety threshold.',
+      source: 'ESP32-S3 Live (MQ-2)'
+    }).catch(() => {});
   }
 }
+
+// Run 30-day notification history purge and Firestore outbox sync on startup and periodically
+notificationHistoryStore.listNotifications().catch(() => {});
+const notificationMaintenanceTimer = setInterval(() => {
+  notificationHistoryStore.listNotifications().catch(() => {});
+}, 30 * 1000);
+notificationMaintenanceTimer.unref();
 
 const buildConnectionOptions = () => {
   const options = {

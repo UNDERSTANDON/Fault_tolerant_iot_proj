@@ -12,6 +12,7 @@ import RecoveryView from './components/RecoveryView/RecoveryView';
 import ResearchTestView from './components/ResearchTestView/ResearchTestView';
 import SensorsView from './components/SensorsView/SensorsView';
 import SettingsView from './components/SettingsView/SettingsView';
+import NotificationHistoryView from './components/NotificationHistoryView/NotificationHistoryView';
 import Notification from './components/Notification/Notification';
 import FaultSimulation from './components/FaultSimulation/FaultSimulation';
 import AuthModal from './components/AuthModal/AuthModal';
@@ -65,8 +66,13 @@ function AppShell({ auth, smartHome, showSplash }) {
     recentActivity,
     experimentLogs,
     notifications,
+    notificationHistory,
+    historyMeta,
     addNotification,
     dismissNotification,
+    deleteNotificationHistoryItem,
+    clearAllNotificationHistory,
+    cleanupExpiredNotifications,
     toggleDevice,
     triggerFault,
     restoreNormal,
@@ -76,7 +82,11 @@ function AppShell({ auth, smartHome, showSplash }) {
   const isLocked = !isAuthenticated;
   const isVisitor = currentUser?.role === 'visitor';
   const effectiveScreen =
-    isVisitor && activeScreen !== 'SENSORS' && activeScreen !== 'DIAGNOSTICS' && activeScreen !== 'SETTINGS'
+    isVisitor
+      && activeScreen !== 'SENSORS'
+      && activeScreen !== 'DIAGNOSTICS'
+      && activeScreen !== 'SETTINGS'
+      && activeScreen !== 'NOTIFICATION_HISTORY'
       ? 'SENSORS'
       : activeScreen;
 
@@ -135,6 +145,7 @@ function AppShell({ auth, smartHome, showSplash }) {
       case 'RECOVERY': return t('header.cloudSync');
       case 'RESEARCH_TEST': return t('header.testLab');
       case 'USERS': return t('header.userAccounts');
+      case 'NOTIFICATION_HISTORY': return t('header.notificationHistory');
       case 'SETTINGS': return t('header.settings');
       case 'DASHBOARD':
       default:
@@ -180,6 +191,7 @@ function AppShell({ auth, smartHome, showSplash }) {
           onManageUsers={() => setActiveScreen('USERS')}
           hardwareStatus={hardwareStatus}
           bridgeState={bridgeState}
+          notificationCount={notificationHistory.length}
         />
 
         <div className={styles.mainWrapper}>
@@ -195,6 +207,7 @@ function AppShell({ auth, smartHome, showSplash }) {
               setActiveScreen(screen);
             }}
             onQuickThemeToggle={(nextTheme) => handleNotifyPreferenceChange('theme', nextTheme)}
+            notificationCount={notificationHistory.length}
           />
           {settingsError && <div className={styles.inlineError} role="alert">{settingsError}</div>}
 
@@ -306,6 +319,17 @@ function AppShell({ auth, smartHome, showSplash }) {
                 onLoadUsers={loadUsers}
                 onCreateVisitor={createVisitor}
                 onSetVisitorEnabled={setVisitorEnabled}
+              />
+            )}
+
+            {effectiveScreen === 'NOTIFICATION_HISTORY' && (
+              <NotificationHistoryView
+                notificationHistory={notificationHistory}
+                historyMeta={historyMeta}
+                isVisitor={isVisitor}
+                onDeleteItem={deleteNotificationHistoryItem}
+                onClearAll={clearAllNotificationHistory}
+                onRunCleanup={cleanupExpiredNotifications}
               />
             )}
 
