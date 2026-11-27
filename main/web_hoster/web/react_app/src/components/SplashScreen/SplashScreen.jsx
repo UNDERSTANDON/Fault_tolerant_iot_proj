@@ -1,9 +1,11 @@
 import { ShieldCheck, Wifi } from 'lucide-react';
 import Logo from '../Logo/Logo';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './SplashScreen.module.css';
 
-export default function SplashScreen({ statusText = 'Initializing local gateway & security session...' }) {
+export default function SplashScreen({ statusText }) {
+  const { t } = useLanguage();
   useScrollLock(true);
 
   return (
@@ -14,27 +16,25 @@ export default function SplashScreen({ statusText = 'Initializing local gateway 
         </div>
 
         <div className={styles.titleBlock}>
-          <span className={styles.eyebrow}>LOCAL-FIRST RESILIENT IOT</span>
+          <span className={styles.eyebrow}>{t('splash.eyebrow')}</span>
           <h1 className={styles.brandHeading}>SafeHaven</h1>
-          <p className={styles.tagline}>
-            Autonomous Home Control &amp; Environmental Safety System
-          </p>
+          <p className={styles.tagline}>{t('splash.tagline')}</p>
         </div>
 
         <div className={styles.progressTrack} aria-hidden="true">
           <div className={styles.progressFill} />
         </div>
 
-        <p className={styles.statusLine}>{statusText}</p>
+        <p className={styles.statusLine}>{statusText || t('splash.initializingGateway')}</p>
 
         <div className={styles.pillsRow}>
           <span className={styles.pill}>
             <ShieldCheck size={13} />
-            <span>Edge-Autonomous Safety</span>
+            <span>{t('splash.pillSafety')}</span>
           </span>
           <span className={styles.pill}>
             <Wifi size={13} />
-            <span>ESP32-S3 &amp; LAN Ready</span>
+            <span>{t('splash.pillEsp')}</span>
           </span>
         </div>
       </div>

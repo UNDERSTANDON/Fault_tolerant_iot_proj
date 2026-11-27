@@ -5,11 +5,15 @@
 #include "gpio_mapping.h"
 #include <cstddef>
 #include <algorithm>
+#include "cJSON.h"
+#include "hardware_controller.h"
 #include "mqtt_connectivity.h"
 #include "esp_event.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "esp_netif.h"
+#include "esp_timer.h"
 #include "esp_wifi.h"
 #include "mdns.h"
 #include "nvs_flash.h"
@@ -141,6 +145,112 @@ namespace
           httpd_resp_set_hdr(request, "Cache-Control", "no-store");
           return httpd_resp_send(request, response, length);
      }
+
+     esp_err_t hardware_state_handler(httpd_req_t *request)
+     {
+          hardware_controller::HardwareSnapshot snap = {};
+          if (!hardware_controller::get_snapshot(snap))
+          {
+               return httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR,
+                                         "Hardware state unavailable");
+          }
+          uint8_t mac[6] = {};
+          char dev_id[16] = "esp32-s3";
+          if (esp_read_mac(mac, ESP_MAC_WIFI_STA) == ESP_OK)
+          {
+               std::snprintf(dev_id, sizeof(dev_id), "%02x%02x%02x%02x%02x%02x",
+                             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+          }
+          char json_buf[768] = {};
+          if (!hardware_controller::format_snapshot_json(snap, dev_id, json_buf, sizeof(json_buf)))
+          {
+               return httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR,
+                                         "Failed to serialize hardware snapshot");
+          }
+          httpd_resp_set_type(request, "application/json");
+          httpd_resp_set_hdr(request, "Cache-Control", "no-store");
+          return httpd_resp_send(request, json_buf, HTTPD_RESP_USE_STRLEN);
+     }
+
+     esp_err_t hardware_command_handler(httpd_req_t *request)
+     {
+          if (request->content_len <= 0 || request->content_len > 512)
+          {
+               return httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST,
+                                         "Invalid command body size");
+          }
+
+          char content_type[64] = {};
+          if (httpd_req_get_hdr_value_str(request, "Content-Type", content_type, sizeof(content_type)) != ESP_OK ||
+              std::strncmp(content_type, "application/json", 16) != 0)
+          {
+               return httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST,
+                                         "Content-Type must be application/json");
+          }
+
+          char origin_hdr[128] = {};
+          char host_hdr[64] = {};
+          if (httpd_req_get_hdr_value_str(request, "Origin", origin_hdr, sizeof(origin_hdr)) == ESP_OK &&
+              httpd_req_get_hdr_value_str(request, "Host", host_hdr, sizeof(host_hdr)) == ESP_OK)
+          {
+               char expected_origin[96] = {};
+               std::snprintf(expected_origin, sizeof(expected_origin), "http://%s", host_hdr);
+               if (std::strcmp(origin_hdr, expected_origin) != 0)
+               {
+                    return httpd_resp_send_err(request, HTTPD_403_FORBIDDEN,
+                                              "Cross-origin hardware command rejected");
+               }
+          }
+          char body[513] = {};
+          int total_read = 0;
+          while (total_read < request->content_len)
+          {
+               const int chunk = httpd_req_recv(
+                   request, body + total_read,
+                   static_cast<std::size_t>(request->content_len - total_read));
+               if (chunk <= 0)
+               {
+                    return httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST,
+                                              "Incomplete command body");
+               }
+               total_read += chunk;
+          }
+          body[total_read] = '\0';
+
+          cJSON *root = cJSON_Parse(body);
+          if (root == nullptr || !cJSON_IsObject(root))
+          {
+               cJSON_Delete(root);
+               return httpd_resp_send_err(request, HTTPD_400_BAD_REQUEST, "Malformed JSON");
+          }
+
+          const cJSON *dev_item = cJSON_GetObjectItemCaseSensitive(root, "deviceId");
+          const cJSON *state_item = cJSON_GetObjectItemCaseSensitive(root, "targetState");
+          const cJSON *cmd_item = cJSON_GetObjectItemCaseSensitive(root, "commandId");
+
+          const char *device_id = cJSON_IsString(dev_item) ? dev_item->valuestring : nullptr;
+          const char *target_state = cJSON_IsString(state_item) ? state_item->valuestring : nullptr;
+          const char *command_id = cJSON_IsString(cmd_item) ? cmd_item->valuestring : "cmd-ap";
+
+          hardware_controller::CommandResult cmd_res = {};
+          const bool ok = hardware_controller::execute_device_command(device_id, target_state, cmd_res);
+          cJSON_Delete(root);
+
+          char ack_buf[384] = {};
+          const uint64_t ts_ms = static_cast<uint64_t>(esp_timer_get_time() / 1000ULL);
+          if (!hardware_controller::format_command_ack_json(command_id, cmd_res, ts_ms, ack_buf, sizeof(ack_buf)))
+          {
+               return httpd_resp_send_err(request, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to serialize ACK");
+          }
+
+          httpd_resp_set_type(request, "application/json");
+          httpd_resp_set_hdr(request, "Cache-Control", "no-store");
+          if (!ok)
+          {
+               httpd_resp_set_status(request, "400 Bad Request");
+          }
+          return httpd_resp_send(request, ack_buf, HTTPD_RESP_USE_STRLEN);
+     }
 }
 
 // This is the web hoster module for the ESP32-S3
@@ -171,6 +281,11 @@ namespace web_hoster
           {
                ESP_LOGE(TAG, "Configured GPIO role mapping is invalid");
                return;
+          }
+
+          if (!hardware_controller::init() || !hardware_controller::start_polling_task())
+          {
+               ESP_LOGW(TAG, "Hardware polling initialization failed; network host remains active");
           }
 
           std::string ssid;
@@ -501,6 +616,7 @@ namespace web_hoster
 
           httpd_config_t config = HTTPD_DEFAULT_CONFIG();
           config.server_port = WEB_SERVER_PORT;
+          config.max_uri_handlers = 10;
           esp_err_t result = httpd_start(&web_server, &config);
           if (result != ESP_OK)
           {
@@ -509,7 +625,7 @@ namespace web_hoster
                return false;
           }
 
-          httpd_uri_t asset_uris[4] = {};
+          httpd_uri_t asset_uris[6] = {};
           asset_uris[0].uri = "/";
           asset_uris[0].method = HTTP_GET;
           asset_uris[0].handler = index_handler;
@@ -525,6 +641,12 @@ namespace web_hoster
           asset_uris[3].uri = "/api/network/status";
           asset_uris[3].method = HTTP_GET;
           asset_uris[3].handler = network_status_handler;
+          asset_uris[4].uri = "/api/hardware/state";
+          asset_uris[4].method = HTTP_GET;
+          asset_uris[4].handler = hardware_state_handler;
+          asset_uris[5].uri = "/api/hardware/command";
+          asset_uris[5].method = HTTP_POST;
+          asset_uris[5].handler = hardware_command_handler;
           for (const httpd_uri_t &uri : asset_uris)
           {
                result = httpd_register_uri_handler(web_server, &uri);

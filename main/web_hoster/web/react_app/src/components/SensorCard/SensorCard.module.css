@@ -104,10 +104,17 @@
 }
 
 .sensorValue {
-  font-size: 0.98rem;
+  font-size: 0.94rem;
   font-weight: 800;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sensorValueText {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -133,6 +140,11 @@
 .pillNormal {
   background-color: var(--state-normal-bg);
   color: var(--state-normal);
+}
+
+.pillWarn {
+  background-color: #fef3c7;
+  color: #b45309;
 }
 
 .pillAlert {

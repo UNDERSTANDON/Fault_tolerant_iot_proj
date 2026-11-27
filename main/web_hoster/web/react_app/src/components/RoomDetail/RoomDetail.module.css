@@ -12,7 +12,7 @@
 }
 
 .modalContent {
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   max-width: 900px;
@@ -31,7 +31,7 @@
   justify-content: space-between;
   padding: 20px 28px;
   border-bottom: 1px solid var(--border-color);
-  background-color: #f7f6f2;
+  background-color: var(--bg-card-inner);
 }
 
 .headerLeft {
@@ -93,7 +93,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
   transition: all var(--transition-fast);
@@ -101,7 +101,7 @@
 
 .closeBtn:hover {
   color: var(--text-primary);
-  background-color: #f3f2ec;
+  background-color: var(--bg-card-hover);
 }
 
 .statusStrip {
@@ -110,7 +110,7 @@
   flex-wrap: wrap;
   gap: var(--spacing-lg);
   padding: 10px 28px;
-  background-color: #fbfaf6;
+  background-color: var(--bg-card-inner);
   border-bottom: 1px solid var(--border-color);
   font-size: 0.8rem;
   color: var(--text-secondary);
@@ -136,7 +136,7 @@
   display: grid;
   grid-template-columns: 0.92fr 1.08fr;
   gap: 24px;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
 }
 
 .block {
@@ -202,7 +202,7 @@
 .gaugeBar {
   height: 8px;
   width: 100%;
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   border-radius: var(--radius-full);
   overflow: hidden;
   border: 1px solid var(--border-color);
@@ -230,7 +230,7 @@
   justify-content: space-between;
   padding: 14px 28px;
   border-top: 1px solid var(--border-color);
-  background-color: #f7f6f2;
+  background-color: var(--bg-card-inner);
 }
 
 .footerNote {

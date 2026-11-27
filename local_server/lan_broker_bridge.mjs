@@ -2,7 +2,7 @@ import { createServer as createHttpsServer } from 'node:https';
 import { createServer as createHttpServer } from 'node:http';
 import { WebSocketServer } from 'ws';
 import mqtt from 'mqtt';
-import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync } from 'node:fs';
 import { randomBytes, pbkdf2Sync, timingSafeEqual, createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
@@ -92,6 +92,38 @@ let testEventWorker = null;
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 
+const HOME_TELEMETRY_TOPIC = 'home/esp32/telemetry';
+const HOME_HEARTBEAT_TOPIC = 'home/gateway/heartbeat';
+const HOME_CRITICAL_EVENT_TOPIC = 'home/events/critical';
+const HOME_HARDWARE_TOPICS = [
+  HOME_TELEMETRY_TOPIC,
+  'home/+/telemetry',
+  'home/+/+/+/state',
+  HOME_HEARTBEAT_TOPIC,
+  HOME_CRITICAL_EVENT_TOPIC
+];
+const HOME_TELEMETRY_TOPIC_REGEX = /^home\/[a-z0-9_-]+\/telemetry$/;
+const HOME_STATE_TOPIC_REGEX = /^home\/(living_room|bedroom|kitchen|hallway|gateway)\/(light|lock|fan|device)\/[a-z0-9_]+\/state$/;
+
+const DEVICE_COMMAND_ROUTES = {
+  hallway_light: { zone: 'hallway', type: 'light', topic: 'home/hallway/light/hallway_light/set', isLock: false },
+  door_nfc: { zone: 'hallway', type: 'lock', topic: 'home/hallway/lock/door_nfc/set', isLock: true },
+  living_light: { zone: 'living_room', type: 'light', topic: 'home/living_room/light/living_light/set', isLock: false },
+  living_fan: { zone: 'living_room', type: 'fan', topic: 'home/living_room/fan/living_fan/set', isLock: false },
+  kitchen_light: { zone: 'kitchen', type: 'light', topic: 'home/kitchen/light/kitchen_light/set', isLock: false },
+  bedroom_light: { zone: 'bedroom', type: 'light', topic: 'home/bedroom/light/bedroom_light/set', isLock: false }
+};
+
+const hardwareStateCache = {
+  snapshot: null,
+  snapshotReceivedAt: null,
+  deviceStates: {},
+  lastHeartbeat: null,
+  heartbeatReceivedAt: null,
+  lastCriticalEvent: null,
+  criticalEventReceivedAt: null
+};
+
 if (!Number.isInteger(config.bridgePort) || config.bridgePort < 1 || config.bridgePort > 65535) {
   throw new Error('BRIDGE_PORT must be a valid TCP port.');
 }
@@ -115,7 +147,9 @@ function readJson(filePath, fallback) {
 
 function writeJson(filePath, value) {
   mkdirSync(path.dirname(filePath), { recursive: true });
-  writeFileSync(filePath, JSON.stringify(value, null, 2), 'utf8');
+  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  writeFileSync(tempPath, JSON.stringify(value, null, 2), 'utf8');
+  renameSync(tempPath, filePath);
 }
 
 function usernameIsValid(username) {
@@ -162,7 +196,12 @@ function normalizeUserRecord(user) {
     createdAt: Number(user.createdAt || Date.now()),
     passwordHash: user.passwordHash,
     salt: user.salt,
-    preferences: { theme: preferences.theme === 'dark' ? 'dark' : 'light' }
+    preferences: {
+      theme: preferences.theme === 'dark' ? 'dark' : 'light',
+      ...(typeof preferences.language === 'string' && ['en', 'vi', 'zh', 'ko', 'ja', 'fr', 'de'].includes(preferences.language)
+        ? { language: preferences.language }
+        : {})
+    }
   };
 }
 
@@ -265,10 +304,16 @@ function getSessionUserFromRequest(request) {
 }
 
 function createSession(user) {
+  const now = Date.now();
+  for (const [id, entry] of sessionStore) {
+    if (now > entry.expiresAt) {
+      sessionStore.delete(id);
+    }
+  }
   const sessionId = randomBytes(32).toString('hex');
   sessionStore.set(sessionId, {
     userId: user.id,
-    expiresAt: Date.now() + config.sessionTtlMs
+    expiresAt: now + config.sessionTtlMs
   });
   return sessionId;
 }
@@ -304,6 +349,11 @@ function revokeSessionsForUser(userId) {
 function getLoginAttemptState(request) {
   const address = request.socket.remoteAddress || 'unknown';
   const now = Date.now();
+  for (const [key, entry] of loginAttempts) {
+    if (now >= entry.resetAt) {
+      loginAttempts.delete(key);
+    }
+  }
   const existing = loginAttempts.get(address);
   if (!existing || now >= existing.resetAt) {
     const state = { failures: 0, resetAt: now + LOGIN_ATTEMPT_WINDOW_MS };
@@ -517,12 +567,15 @@ function handleSettingsRequest(request, res) {
         sendJson(res, 400, { error: 'Malformed settings payload.' });
         return;
       }
+      const allowedLanguages = ['en', 'vi', 'zh', 'ko', 'ja', 'fr', 'de'];
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)
         || Object.keys(parsed).some((key) => key !== 'preferences')
         || !parsed.preferences || typeof parsed.preferences !== 'object' || Array.isArray(parsed.preferences)
-        || Object.keys(parsed.preferences).some((key) => key !== 'theme')
-        || !['light', 'dark'].includes(parsed.preferences.theme)) {
-        sendJson(res, 400, { error: 'Only the light or dark theme preference can be updated.' });
+        || Object.keys(parsed.preferences).length === 0
+        || Object.keys(parsed.preferences).some((key) => key !== 'theme' && key !== 'language')
+        || (parsed.preferences.theme !== undefined && !['light', 'dark'].includes(parsed.preferences.theme))
+        || (parsed.preferences.language !== undefined && !allowedLanguages.includes(parsed.preferences.language))) {
+        sendJson(res, 400, { error: 'Only valid theme or language preferences can be updated.' });
         return;
       }
 
@@ -532,7 +585,12 @@ function handleSettingsRequest(request, res) {
         sendJson(res, 404, { error: 'User not found.' });
         return;
       }
-      currentUser.preferences = { theme: parsed.preferences.theme };
+      const nextTheme = parsed.preferences.theme || currentUser.preferences?.theme || 'light';
+      const nextLang = parsed.preferences.language || currentUser.preferences?.language;
+      currentUser.preferences = {
+        theme: nextTheme,
+        ...(nextLang ? { language: nextLang } : {})
+      };
       try {
         persistUsers(users);
       } catch {
@@ -549,6 +607,138 @@ function handleSettingsRequest(request, res) {
   }
 
   sendJson(res, 405, { error: 'Unsupported method.' });
+}
+
+function normalizeTargetState(route, rawTarget) {
+  if (!route) return null;
+  if (typeof rawTarget === 'boolean') {
+    if (route.isLock) return rawTarget ? 'UNLOCKED' : 'LOCKED';
+    return rawTarget ? 'ON' : 'OFF';
+  }
+  if (typeof rawTarget !== 'string') return null;
+  const upper = rawTarget.trim().toUpperCase();
+  if (route.isLock) {
+    if (upper === 'LOCKED' || upper === 'OFF') return 'LOCKED';
+    if (upper === 'UNLOCKED' || upper === 'ON') return 'UNLOCKED';
+    return null;
+  }
+  if (upper === 'ON' || upper === 'OFF') return upper;
+  return null;
+}
+
+function handleHardwareStateRequest(request, res) {
+  const user = requireAuth(request);
+  if (!user) {
+    sendJson(res, 401, { error: 'Authentication required.' });
+    return;
+  }
+  if (request.method !== 'GET') {
+    sendJson(res, 405, { error: 'Unsupported method.' });
+    return;
+  }
+  sendJson(res, 200, {
+    brokerConnected: brokerClient.connected,
+    snapshot: hardwareStateCache.snapshot,
+    snapshotReceivedAt: hardwareStateCache.snapshotReceivedAt,
+    deviceStates: hardwareStateCache.deviceStates,
+    lastHeartbeat: hardwareStateCache.lastHeartbeat,
+    heartbeatReceivedAt: hardwareStateCache.heartbeatReceivedAt,
+    lastCriticalEvent: hardwareStateCache.lastCriticalEvent,
+    criticalEventReceivedAt: hardwareStateCache.criticalEventReceivedAt
+  });
+}
+
+function handleDeviceCommandRequest(request, res) {
+  const user = requireAuth(request);
+  if (!user) {
+    sendJson(res, 401, { error: 'Authentication required.' });
+    return;
+  }
+  if (user.role !== 'admin') {
+    sendJson(res, 403, { error: 'Administrator access required.' });
+    return;
+  }
+  if (request.method !== 'POST') {
+    sendJson(res, 405, { error: 'Unsupported method.' });
+    return;
+  }
+
+  let body = '';
+  let bodyTooLarge = false;
+  request.on('data', (chunk) => {
+    if (bodyTooLarge || body.length + chunk.length > 1024) {
+      bodyTooLarge = true;
+      return;
+    }
+    body += chunk;
+  });
+  request.on('end', () => {
+    if (bodyTooLarge) {
+      sendJson(res, 413, { error: 'Command payload is too large.' });
+      return;
+    }
+    let parsed;
+    try {
+      parsed = body ? JSON.parse(body) : {};
+    } catch {
+      sendJson(res, 400, { error: 'Malformed command payload.' });
+      return;
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      sendJson(res, 400, { error: 'Malformed command payload.' });
+      return;
+    }
+
+    const deviceId = typeof parsed.deviceId === 'string' ? parsed.deviceId.trim() : '';
+    const route = Object.prototype.hasOwnProperty.call(DEVICE_COMMAND_ROUTES, deviceId)
+      ? DEVICE_COMMAND_ROUTES[deviceId]
+      : null;
+    if (!route) {
+      sendJson(res, 400, { error: 'Unknown target deviceId.' });
+      return;
+    }
+
+    const normalizedState = normalizeTargetState(route, parsed.targetState);
+    if (!normalizedState) {
+      sendJson(res, 400, { error: 'Invalid targetState for device.' });
+      return;
+    }
+
+    if (!brokerClient.connected) {
+      sendJson(res, 503, { error: 'MQTT broker is unavailable.' });
+      return;
+    }
+
+    const commandId = `cmd-${Date.now()}-${randomBytes(4).toString('hex')}`;
+    const timestampMs = Date.now();
+    const commandPayload = {
+      commandId,
+      deviceId,
+      zoneId: route.zone,
+      deviceType: route.type,
+      targetState: normalizedState,
+      source: 'web_bridge',
+      requestedBy: user.username,
+      timestampMs
+    };
+
+    brokerClient.publish(route.topic, JSON.stringify(commandPayload), { qos: 1, retain: false }, (error) => {
+      if (error) {
+        sendJson(res, 503, { error: 'Failed to publish MQTT command to broker.' });
+        return;
+      }
+      sendJson(res, 200, {
+        status: 'ACCEPTED',
+        mqttPublished: true,
+        commandId,
+        deviceId,
+        zoneId: route.zone,
+        topic: route.topic,
+        targetState: normalizedState,
+        timestampMs
+      });
+    });
+  });
 }
 
 function responseToJson(response) {
@@ -714,10 +904,81 @@ bridgeServer.on('request', (request, res) => {
     return;
   }
 
+  if (url.pathname === '/api/hardware/state') {
+    handleHardwareStateRequest(request, res);
+    return;
+  }
+
+  if (url.pathname === '/api/devices/command') {
+    handleDeviceCommandRequest(request, res);
+    return;
+  }
+
   sendJson(res, 404, { error: 'Not found.' });
 });
 
 const isAllowedTopic = (topic) => config.allowedTopics.includes(topic);
+
+const isAllowedHardwareTopic = (topic) => (
+  HOME_TELEMETRY_TOPIC_REGEX.test(topic)
+  || HOME_STATE_TOPIC_REGEX.test(topic)
+  || topic === HOME_HEARTBEAT_TOPIC
+  || topic === HOME_CRITICAL_EVENT_TOPIC
+);
+
+function isValidHardwarePayload(topic, payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return false;
+  }
+  if (HOME_TELEMETRY_TOPIC_REGEX.test(topic)) {
+    return payload.schema_version === 1
+      && payload.dht11 && typeof payload.dht11 === 'object' && !Array.isArray(payload.dht11)
+      && payload.mq2 && typeof payload.mq2 === 'object' && !Array.isArray(payload.mq2)
+      && payload.devices && typeof payload.devices === 'object' && !Array.isArray(payload.devices);
+  }
+  if (HOME_STATE_TOPIC_REGEX.test(topic)) {
+    return typeof payload.deviceId === 'string'
+      && typeof payload.state === 'string'
+      && ['SUCCESS', 'FAILED'].includes(payload.status);
+  }
+  if (topic === HOME_HEARTBEAT_TOPIC) {
+    return typeof payload.gatewayId === 'string';
+  }
+  if (topic === HOME_CRITICAL_EVENT_TOPIC) {
+    return payload.schema_version === 1
+      && payload.kind === 'hardware_hazard_event'
+      && typeof payload.event_id === 'string';
+  }
+  return false;
+}
+
+function recordHardwarePayload(topic, payload) {
+  const receivedAt = new Date().toISOString();
+  if (HOME_TELEMETRY_TOPIC_REGEX.test(topic)) {
+    hardwareStateCache.snapshot = payload;
+    hardwareStateCache.snapshotReceivedAt = receivedAt;
+    return;
+  }
+  if (HOME_STATE_TOPIC_REGEX.test(topic)) {
+    hardwareStateCache.deviceStates[payload.deviceId] = { ...payload, receivedAt };
+    if (payload.status === 'SUCCESS' && hardwareStateCache.snapshot?.devices
+      && Object.prototype.hasOwnProperty.call(hardwareStateCache.snapshot.devices, payload.deviceId)) {
+      hardwareStateCache.snapshot.devices[payload.deviceId] = payload.deviceId === 'door_nfc'
+        ? payload.state
+        : payload.state === 'ON';
+    }
+    return;
+  }
+  if (topic === HOME_HEARTBEAT_TOPIC) {
+    hardwareStateCache.lastHeartbeat = payload;
+    hardwareStateCache.heartbeatReceivedAt = receivedAt;
+    return;
+  }
+  if (topic === HOME_CRITICAL_EVENT_TOPIC) {
+    hardwareStateCache.lastCriticalEvent = payload;
+    hardwareStateCache.criticalEventReceivedAt = receivedAt;
+  }
+}
 
 const buildConnectionOptions = () => {
   const options = {
@@ -793,9 +1054,16 @@ const sendStatus = (status, detail) => {
 
 const sendPayload = (topic, payload) => {
   if (topic === TEST_NOTIFICATION_TOPIC) return;
-  if (!isAllowedTopic(topic) || !isValidTestPayload(payload)) {
+  const testTopicAllowed = isAllowedTopic(topic);
+  const hardwareTopicAllowed = isAllowedHardwareTopic(topic);
+  if ((!testTopicAllowed && !hardwareTopicAllowed)
+    || (testTopicAllowed && !isValidTestPayload(payload))
+    || (hardwareTopicAllowed && !isValidHardwarePayload(topic, payload))) {
     console.warn(`Rejected invalid or unexpected broker payload on ${topic}`);
     return;
+  }
+  if (hardwareTopicAllowed) {
+    recordHardwarePayload(topic, payload);
   }
   const envelope = { type: 'mqtt-message', topic, payload, receivedAt: new Date().toISOString() };
   for (const client of messageClients) {
@@ -870,8 +1138,7 @@ brokerClient.handleMessage = (packet, callback) => {
 brokerClient.on('connect', () => {
   console.log('MQTT broker connected.');
   sendStatus('connected', 'MQTT broker reachable');
-  for (const topic of config.allowedTopics) {
-    const qos = topic === TEST_NOTIFICATION_TOPIC ? 1 : 0;
+  const subscribeTopic = (topic, qos) => {
     brokerClient.subscribe(topic, { qos }, (error) => {
       if (error) {
         console.error(`Failed to subscribe to ${topic} (${error.code || error.name || 'unknown error'}).`);
@@ -879,6 +1146,13 @@ brokerClient.on('connect', () => {
       }
       console.log(`Subscribed to ${topic}`);
     });
+  };
+  for (const topic of config.allowedTopics) {
+    subscribeTopic(topic, topic === TEST_NOTIFICATION_TOPIC ? 1 : 0);
+  }
+  for (const topic of HOME_HARDWARE_TOPICS) {
+    const qos = topic.endsWith('/state') || topic === HOME_CRITICAL_EVENT_TOPIC ? 1 : 0;
+    subscribeTopic(topic, qos);
   }
 });
 

@@ -13,11 +13,15 @@ idf_component_register(
      SRCS
           "Fault_tolerant_iot_proj.cpp"
           "event_notifier/event_notifier.cpp"
+          "hardware_controller/hardware_controller.cpp"
           "local_controller/local_controller.cpp"
           "mqtt_connectivity/mqtt_connectivity.cpp"
           "web_hoster/web_hoster.cpp"
 
      PRIV_REQUIRES 
+          "driver"
+          "esp_adc"
+          "esp_timer"
           "esp_wifi"
           "esp_netif"
           "esp_event"
@@ -38,6 +42,7 @@ idf_component_register(
      INCLUDE_DIRS
           "."
           "event_notifier"
+          "hardware_controller"
           "local_controller"
           "mqtt_connectivity"
           "web_hoster"

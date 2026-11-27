@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { MapPin, ChevronDown, LayoutGrid, Compass, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, Activity, Cpu, BatteryCharging, X, LogOut } from 'lucide-react';
+import { MapPin, ChevronDown, LayoutGrid, Compass, Sofa, Utensils, Bed, Network, FlaskConical, ShieldCheck, Users, Activity, Cpu, Settings, X, LogOut } from 'lucide-react';
 import Logo from '../Logo/Logo';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({
@@ -15,8 +16,11 @@ export default function Sidebar({
   currentUser,
   onSignOut,
   isSigningOut = false,
-  onManageUsers
+  onManageUsers,
+  hardwareStatus,
+  bridgeState
 }) {
+  const { t, translateSource } = useLanguage();
   useScrollLock(Boolean(isMobileOpen));
   const [isAptOpen, setIsAptOpen] = useState(false);
 
@@ -25,6 +29,7 @@ export default function Sidebar({
   const isConnections = (activeScreen === 'DIAGNOSTICS' || activeScreen === 'LOCAL_FALLBACK' || activeScreen === 'RECOVERY') && !selectedRoomId;
   const isTesting = activeScreen === 'RESEARCH_TEST' && !selectedRoomId;
   const isUsers = activeScreen === 'USERS' && !selectedRoomId;
+  const isSettings = activeScreen === 'SETTINGS' && !selectedRoomId;
   const isVisitor = currentUser?.role === 'visitor';
 
   const handleNavClick = (screenId) => {
@@ -39,23 +44,21 @@ export default function Sidebar({
     if (onCloseMobile) onCloseMobile();
   };
 
-  const roleLabel = isVisitor ? 'Visitor · Read-only' : 'Administrator';
+  const roleLabel = isVisitor ? t('common.visitorReadOnly') : t('common.administrator');
 
   return (
     <>
-      {/* Mobile Backdrop */}
       {isMobileOpen && (
         <div className={styles.mobileBackdrop} onClick={onCloseMobile} aria-hidden="true" />
       )}
 
       <aside className={`${styles.sidebar} ${isMobileOpen ? styles.sidebarMobileOpen : ''}`}>
-        {/* Mobile Close Button */}
         {isMobileOpen && (
           <button
             type="button"
             className={styles.mobileCloseBtn}
             onClick={onCloseMobile}
-            title="Close menu"
+            title={t('common.close')}
           >
             <X size={18} />
           </button>
@@ -63,7 +66,7 @@ export default function Sidebar({
 
         {/* 1. SafeHaven Branding */}
         <div className={styles.brand}>
-          <Logo size="sm" showText subtitle="RESILIENT SMART HOME" />
+          <Logo size="sm" showText subtitle={t('sidebar.subtitle')} />
         </div>
 
         {/* 2. Interactive Apartment & Gateway Popover Card */}
@@ -73,20 +76,19 @@ export default function Sidebar({
             className={`${styles.apartmentCard} ${isAptOpen ? styles.apartmentCardActive : ''}`}
             onClick={() => setIsAptOpen((prev) => !prev)}
             aria-expanded={isAptOpen}
-            title="View apartment gateway & zone summary"
           >
             <div className={styles.apartmentLeft}>
               <div className={styles.pinCircle}>
-                <MapPin size={15} color="#285640" />
+                <MapPin size={15} color="var(--accent-primary)" />
               </div>
               <div className={styles.apartmentMeta}>
-                <span className={styles.apartmentTitle}>My apartment</span>
-                <span className={styles.apartmentSub}>4 zones · 10 sensors</span>
+                <span className={styles.apartmentTitle}>{t('sidebar.myApartment')}</span>
+                <span className={styles.apartmentSub}>{t('sidebar.zonesSensors')}</span>
               </div>
             </div>
             <ChevronDown
               size={14}
-              color="#5c665e"
+              color="var(--text-secondary)"
               className={isAptOpen ? styles.chevronRotated : styles.chevronNormal}
             />
           </button>
@@ -95,24 +97,24 @@ export default function Sidebar({
             <div className={styles.aptPopover}>
               <div className={styles.aptRow}>
                 <Cpu size={13} className={styles.aptIcon} />
-                <span>Edge MCU: <strong>ESP32-S3 (v6.1)</strong></span>
+                <span>{t('sidebar.edgeMcu')}: <strong>ESP32-S3 (v6.1)</strong></span>
               </div>
               <div className={styles.aptRow}>
                 <Network size={13} className={styles.aptIcon} />
-                <span>LAN Subnet: <code>192.168.137.1</code></span>
+                <span>{t('sidebar.lanSubnet')}: <code>192.168.4.1 / LAN</code></span>
               </div>
               <div className={styles.aptRow}>
-                <BatteryCharging size={13} className={styles.aptIcon} />
-                <span>Backup UPS: <strong>100% LiFePO4 (24h)</strong></span>
+                <Activity size={13} className={styles.aptIcon} />
+                <span>{t('sidebar.sensorBus')}: <strong>DHT11 · MQ-2 · 4 LED</strong></span>
               </div>
             </div>
           )}
         </div>
 
-        {/* 3. Navigation Links (All 4 Spaces Included) */}
+        {/* 3. Navigation Links */}
         <div className={styles.navSection}>
           <span className={styles.sectionHeader}>
-            {isVisitor ? 'TELEMETRY & DIAGNOSTICS' : 'SPACES & CONTROLS'}
+            {isVisitor ? t('sidebar.telemetryDiag') : t('sidebar.spacesControls')}
           </span>
 
           <nav className={styles.navList}>
@@ -123,7 +125,7 @@ export default function Sidebar({
                 onClick={() => handleNavClick('DASHBOARD')}
               >
                 <LayoutGrid size={17} />
-                <span>Overview</span>
+                <span>{t('sidebar.overview')}</span>
               </button>
             )}
 
@@ -134,7 +136,7 @@ export default function Sidebar({
                 onClick={() => handleRoomClick('hallway')}
               >
                 <Compass size={17} />
-                <span>Hallway &amp; entrance</span>
+                <span>{t('rooms.hallway.name')}</span>
               </button>
             )}
 
@@ -145,7 +147,7 @@ export default function Sidebar({
                 onClick={() => handleRoomClick('living_room')}
               >
                 <Sofa size={17} />
-                <span>Living room</span>
+                <span>{t('rooms.living_room.name')}</span>
               </button>
             )}
 
@@ -156,7 +158,7 @@ export default function Sidebar({
                 onClick={() => handleRoomClick('kitchen')}
               >
                 <Utensils size={17} />
-                <span>Kitchen</span>
+                <span>{t('rooms.kitchen.name')}</span>
               </button>
             )}
 
@@ -167,28 +169,26 @@ export default function Sidebar({
                 onClick={() => handleRoomClick('bedroom')}
               >
                 <Bed size={17} />
-                <span>Bedroom</span>
+                <span>{t('rooms.bedroom.name')}</span>
               </button>
             )}
 
-            {/* Sensors (Available to Visitor & Admin) */}
             <button
               type="button"
               className={`${styles.navItem} ${isSensors ? styles.navItemActive : ''}`}
               onClick={() => handleNavClick('SENSORS')}
             >
               <Activity size={17} />
-              <span>Sensors</span>
+              <span>{t('sidebar.sensors')}</span>
             </button>
 
-            {/* Connections */}
             <button
               type="button"
               className={`${styles.navItem} ${isConnections ? styles.navItemActive : ''}`}
               onClick={() => handleNavClick('DIAGNOSTICS')}
             >
               <Network size={17} />
-              <span>Connections</span>
+              <span>{t('sidebar.connections')}</span>
               {currentMode === 'LOCAL' && <span className={styles.localBadge}>LOCAL</span>}
             </button>
 
@@ -199,7 +199,7 @@ export default function Sidebar({
                 onClick={() => handleNavClick('RESEARCH_TEST')}
               >
                 <FlaskConical size={17} />
-                <span>Test Lab</span>
+                <span>{t('sidebar.testLab')}</span>
               </button>
             )}
 
@@ -214,21 +214,29 @@ export default function Sidebar({
                 }}
               >
                 <Users size={17} />
-                <span>User accounts</span>
+                <span>{t('sidebar.userAccounts')}</span>
               </button>
             )}
+
+            {/* Settings (Available to both Admin & Visitor) */}
+            <button
+              type="button"
+              className={`${styles.navItem} ${isSettings ? styles.navItemActive : ''}`}
+              onClick={() => handleNavClick('SETTINGS')}
+            >
+              <Settings size={17} />
+              <span>{t('sidebar.settings')}</span>
+            </button>
           </nav>
         </div>
 
         {/* 4. Always Close To Home Card */}
         <div className={styles.infoCard}>
           <div className={styles.infoIconCircle}>
-            <ShieldCheck size={18} color="#285640" />
+            <ShieldCheck size={18} color="var(--accent-primary)" />
           </div>
-          <h4 className={styles.infoTitle}>Always close to home.</h4>
-          <p className={styles.infoText}>
-            Local control and safety alerts stay active over LAN even when Internet drops.
-          </p>
+          <h4 className={styles.infoTitle}>{t('sidebar.alwaysCloseTitle')}</h4>
+          <p className={styles.infoText}>{t('sidebar.alwaysCloseText')}</p>
         </div>
 
         {/* 5. User Account & Synchronized Sign Out */}
@@ -248,10 +256,10 @@ export default function Sidebar({
               className={styles.signOutBtn}
               onClick={onSignOut}
               disabled={isSigningOut}
-              title="Sign out of SafeHaven"
+              title={t('sidebar.signOut')}
             >
               <LogOut size={15} />
-              <span>{isSigningOut ? 'Wait...' : 'Sign out'}</span>
+              <span>{isSigningOut ? t('sidebar.wait') : t('sidebar.signOut')}</span>
             </button>
           </div>
         )}
@@ -260,9 +268,11 @@ export default function Sidebar({
         <div className={styles.sidebarFooter}>
           <div className={styles.simulatedTag}>
             <span className={styles.greenDot}></span>
-            <span>SafeHaven Local-First Engine</span>
+            <span>{t('sidebar.engineTitle')}</span>
           </div>
-          <span className={styles.disclaimer}>Source: Simulator · Bridge: Live MQTT</span>
+          <span className={styles.disclaimer}>
+            {t('common.source')}: {translateSource(hardwareStatus?.dataSource)} · {t('common.bridge')}: {bridgeState?.status === 'connected' ? t('common.liveMqtt') : t('common.offline')}
+          </span>
         </div>
       </aside>
     </>

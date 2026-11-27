@@ -100,7 +100,7 @@
   height: 58px;
   padding: 8px 11px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, #faf9f5 0%, #f3f2ec 100%);
+  background: var(--bg-card-inner);
   border: 1px solid var(--border-light);
 }
 
@@ -118,6 +118,15 @@
   line-height: 1;
   letter-spacing: -0.8px;
   font-variant-numeric: tabular-nums;
+}
+
+.tempNumText {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  line-height: 1.1;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
 }
 
 .tempUnit {
@@ -144,9 +153,9 @@
 }
 
 .heroModelBadge {
-  font-size: 0.59rem;
+  font-size: 0.55rem;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 5px;
   background-color: var(--accent-primary-bg);
   color: var(--accent-primary);
@@ -188,7 +197,7 @@
   gap: 4px;
   padding: 6px 8px;
   border-radius: 7px;
-  background-color: #f8f7f3;
+  background-color: var(--bg-card-inner);
   border: 1px solid var(--border-light);
   font-size: 0.69rem;
 }
@@ -218,14 +227,14 @@
 .sensorItemRight {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
 .sensorModelPill {
-  font-size: 0.59rem;
+  font-size: 0.53rem;
   font-weight: 800;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: 4px;
   background-color: var(--bg-surface);
   color: var(--text-secondary);
@@ -234,9 +243,17 @@
 }
 
 .sensorItemVal {
-  font-weight: 800;
+  font-size: 0.62rem;
+  font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sensorItemValMuted {
+  font-size: 0.59rem;
+  font-weight: 600;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -327,13 +344,14 @@
 }
 
 .sourceMiniChip {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  padding: 1px 7px;
+  padding: 1px 6px;
   border-radius: var(--radius-full);
   background-color: var(--bg-card-inner);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 @keyframes pulse {

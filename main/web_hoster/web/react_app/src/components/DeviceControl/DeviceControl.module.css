@@ -12,12 +12,12 @@
 
 .innerCard:hover:not(.disabled) {
   border-color: var(--border-color);
-  background-color: #efeee8;
+  background-color: var(--bg-card-hover);
 }
 
 .cardActive {
-  background-color: #edf3ec;
-  border-color: rgba(40, 86, 64, 0.18);
+  background-color: var(--accent-primary-bg);
+  border-color: var(--state-normal-border);
 }
 
 .leftMeta {
@@ -32,7 +32,7 @@
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.75);
+  background-color: var(--bg-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,8 +42,8 @@
 }
 
 .iconWrapActive {
-  background-color: #ffffff;
-  box-shadow: 0 1px 3px rgba(31, 48, 39, 0.08);
+  background-color: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .iconOn {

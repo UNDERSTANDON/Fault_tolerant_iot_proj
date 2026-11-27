@@ -3,14 +3,14 @@
 #include <cstdio>
 #include <cstring>
 
-#if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
 #include "cJSON.h"
 #include "event_notifier.h"
-#endif
+#include "hardware_controller.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_random.h"
+#include "esp_system.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
@@ -34,7 +34,13 @@ namespace
     constexpr char TAG[] = "mqtt_connectivity";
     constexpr char TEST_TOPIC[] = "demo/esp32-mqtt-connectivity/test";
     constexpr char TEST_NOTIFICATION_TOPIC[] = "test/esp32/notifications/v1";
+    constexpr char HOME_TELEMETRY_TOPIC[] = "home/esp32/telemetry";
+    constexpr char HOME_HEARTBEAT_TOPIC[] = "home/gateway/heartbeat";
+    constexpr char HOME_COMMAND_SUB_TOPIC[] = "home/+/+/+/set";
+    constexpr char HOME_CRITICAL_EVENT_TOPIC[] = "home/events/critical";
     constexpr TickType_t PUBLISH_INTERVAL = pdMS_TO_TICKS(30000);
+    constexpr uint64_t HARDWARE_TELEMETRY_INTERVAL_MS = 2500;
+    constexpr uint64_t HEARTBEAT_INTERVAL_MS = 10000;
 #if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
     constexpr TickType_t MOCK_NOTIFICATION_INTERVAL = pdMS_TO_TICKS(60000);
     constexpr uint32_t MOCK_NOTIFICATION_LIMIT = 4;
@@ -46,12 +52,135 @@ namespace
     esp_mqtt_client_handle_t mqtt_client = nullptr;
     EventGroupHandle_t mqtt_event_group = nullptr;
     TaskHandle_t publish_task_handle = nullptr;
+    TaskHandle_t hardware_telemetry_task_handle = nullptr;
     char device_id[13] = {};
 #if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
     char test_run_id[17] = {};
 #endif
     uint32_t publish_sequence = 0;
     bool previously_connected = false;
+
+    void publish_hardware_telemetry_now()
+    {
+        if (mqtt_client == nullptr || mqtt_event_group == nullptr ||
+            (xEventGroupGetBits(mqtt_event_group) & MQTT_CONNECTED_BIT) == 0)
+        {
+            return;
+        }
+        hardware_controller::HardwareSnapshot snap = {};
+        if (!hardware_controller::get_snapshot(snap))
+        {
+            return;
+        }
+        char json_buf[768] = {};
+        if (hardware_controller::format_snapshot_json(snap, device_id, json_buf, sizeof(json_buf)))
+        {
+            esp_mqtt_client_publish(mqtt_client, HOME_TELEMETRY_TOPIC, json_buf, 0, 0, 0);
+        }
+    }
+
+    bool ends_with(const char *str, const char *suffix)
+    {
+        if (!str || !suffix)
+        {
+            return false;
+        }
+        const std::size_t len = std::strlen(str);
+        const std::size_t slen = std::strlen(suffix);
+        return len >= slen && std::strcmp(str + len - slen, suffix) == 0;
+    }
+
+    void handle_command_message(const esp_mqtt_event_t *event)
+    {
+        if (event == nullptr || event->topic == nullptr || event->data == nullptr ||
+            event->topic_len <= 0 || event->data_len <= 0 ||
+            event->current_data_offset != 0 || event->total_data_len != event->data_len)
+        {
+            return;
+        }
+        if (static_cast<std::size_t>(event->topic_len) >= 160 ||
+            static_cast<std::size_t>(event->data_len) >= 512)
+        {
+            ESP_LOGW(TAG, "Ignoring oversized MQTT command frame");
+            return;
+        }
+
+        char topic_buf[160] = {};
+        std::memcpy(topic_buf, event->topic, static_cast<std::size_t>(event->topic_len));
+        topic_buf[event->topic_len] = '\0';
+
+        if (std::strncmp(topic_buf, "home/", 5) != 0 || !ends_with(topic_buf, "/set"))
+        {
+            return;
+        }
+
+        char data_buf[512] = {};
+        std::memcpy(data_buf, event->data, static_cast<std::size_t>(event->data_len));
+        data_buf[event->data_len] = '\0';
+
+        cJSON *root = cJSON_Parse(data_buf);
+        if (root == nullptr || !cJSON_IsObject(root))
+        {
+            cJSON_Delete(root);
+            ESP_LOGW(TAG, "Rejected malformed JSON command on %s", topic_buf);
+            return;
+        }
+
+        const cJSON *dev_item = cJSON_GetObjectItemCaseSensitive(root, "deviceId");
+        const cJSON *state_item = cJSON_GetObjectItemCaseSensitive(root, "targetState");
+        const cJSON *cmd_item = cJSON_GetObjectItemCaseSensitive(root, "commandId");
+
+        const char *target_device = cJSON_IsString(dev_item) ? dev_item->valuestring : nullptr;
+        const char *target_state = cJSON_IsString(state_item) ? state_item->valuestring : nullptr;
+        const char *command_id = cJSON_IsString(cmd_item) ? cmd_item->valuestring : "cmd-mqtt";
+
+        hardware_controller::CommandResult meta_check = {};
+        if (hardware_controller::resolve_device_metadata(target_device, meta_check))
+        {
+            char expected_set_topic[160] = {};
+            std::snprintf(expected_set_topic, sizeof(expected_set_topic), "home/%s/%s/%s/set",
+                          meta_check.zone_id, meta_check.device_type, meta_check.device_id);
+            if (std::strcmp(topic_buf, expected_set_topic) != 0)
+            {
+                ESP_LOGW(TAG, "Rejected MQTT command with mismatched topic %s vs deviceId %s",
+                         topic_buf, target_device ? target_device : "?");
+                cJSON_Delete(root);
+                return;
+            }
+        }
+
+        hardware_controller::CommandResult cmd_res = {};
+        const bool ok = hardware_controller::execute_device_command(target_device, target_state, cmd_res);
+
+        char state_topic[160] = {};
+        if (cmd_res.zone_id && cmd_res.device_type && cmd_res.device_id)
+        {
+            std::snprintf(state_topic, sizeof(state_topic), "home/%s/%s/%s/state",
+                          cmd_res.zone_id, cmd_res.device_type, cmd_res.device_id);
+        }
+        else
+        {
+            std::snprintf(state_topic, sizeof(state_topic), "home/gateway/device/unknown/state");
+        }
+
+        char ack_buf[384] = {};
+        const uint64_t ts_ms = static_cast<uint64_t>(esp_timer_get_time() / 1000ULL);
+        if (hardware_controller::format_command_ack_json(command_id, cmd_res, ts_ms, ack_buf, sizeof(ack_buf)))
+        {
+            esp_mqtt_client_publish(mqtt_client, state_topic, ack_buf, 0, 1, 0);
+        }
+
+        ESP_LOGI(TAG, "MQTT command %s -> %s (%s)",
+                 target_device ? target_device : "?",
+                 cmd_res.state_label ? cmd_res.state_label : "ERR",
+                 ok ? "SUCCESS" : "FAILED");
+
+        cJSON_Delete(root);
+        if (ok)
+        {
+            publish_hardware_telemetry_now();
+        }
+    }
 
     void mqtt_event_handler(void *, esp_event_base_t, int32_t event_id,
                             void *event_data)
@@ -70,6 +199,14 @@ namespace
             }
             previously_connected = true;
             xEventGroupSetBits(mqtt_event_group, MQTT_CONNECTED_BIT);
+            if (mqtt_client != nullptr)
+            {
+                esp_mqtt_client_subscribe(mqtt_client, HOME_COMMAND_SUB_TOPIC, 1);
+                publish_hardware_telemetry_now();
+            }
+            break;
+        case MQTT_EVENT_DATA:
+            handle_command_message(event);
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGW(TAG, "MQTT disconnected; client retry is scheduled");
@@ -88,6 +225,115 @@ namespace
             break;
         default:
             break;
+        }
+    }
+
+    class SmokeHazardNotificationSink final : public event_notifier::NotificationSink
+    {
+    public:
+        bool notify_warning(const event_notifier::Notification &notification) override
+        {
+            return publish(notification, "warning");
+        }
+
+        bool notify_critical(const event_notifier::Notification &notification) override
+        {
+            return publish(notification, "critical");
+        }
+
+    private:
+        bool publish(const event_notifier::Notification &notification, const char *severity)
+        {
+            if (mqtt_client == nullptr || mqtt_event_group == nullptr ||
+                (xEventGroupGetBits(mqtt_event_group) & MQTT_CONNECTED_BIT) == 0)
+            {
+                return false;
+            }
+            ++sequence_;
+            char event_id[48] = {};
+            std::snprintf(event_id, sizeof(event_id), "%s-mq2-%lu",
+                          device_id, static_cast<unsigned long>(sequence_));
+
+            cJSON *event = cJSON_CreateObject();
+            if (event == nullptr)
+            {
+                return false;
+            }
+            cJSON_AddNumberToObject(event, "schema_version", 1);
+            cJSON_AddStringToObject(event, "kind", "hardware_hazard_event");
+            cJSON_AddBoolToObject(event, "is_test", false);
+            cJSON_AddStringToObject(event, "event_id", event_id);
+            cJSON_AddStringToObject(event, "source", "esp32_mq2");
+            cJSON_AddStringToObject(event, "device_id", device_id);
+            cJSON_AddStringToObject(event, "severity", severity);
+            cJSON_AddStringToObject(event, "title", notification.title);
+            cJSON_AddStringToObject(event, "message", notification.message);
+            cJSON_AddNumberToObject(event, "timestamp_ms", static_cast<double>(esp_timer_get_time() / 1000ULL));
+
+            char *payload = cJSON_PrintUnformatted(event);
+            cJSON_Delete(event);
+            if (payload == nullptr)
+            {
+                return false;
+            }
+            const int msg_id = esp_mqtt_client_publish(mqtt_client, HOME_CRITICAL_EVENT_TOPIC, payload, 0, 1, 0);
+            cJSON_free(payload);
+            return msg_id >= 0;
+        }
+
+        uint32_t sequence_ = 0;
+    };
+
+    void hardware_telemetry_task(void *)
+    {
+        SmokeHazardNotificationSink smoke_sink;
+        const event_notifier::EventNotifier notifier(smoke_sink);
+        bool prev_smoke_alert = false;
+        uint64_t last_telemetry_ms = 0;
+        uint64_t last_heartbeat_ms = 0;
+
+        for (;;)
+        {
+            xEventGroupWaitBits(mqtt_event_group, MQTT_CONNECTED_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+
+            hardware_controller::HardwareSnapshot snap = {};
+            if (hardware_controller::get_snapshot(snap))
+            {
+                const uint64_t now_ms = snap.uptime_ms;
+                const bool smoke_changed = (snap.smoke_alert != prev_smoke_alert);
+                if (smoke_changed || (now_ms - last_telemetry_ms) >= HARDWARE_TELEMETRY_INTERVAL_MS)
+                {
+                    publish_hardware_telemetry_now();
+                    last_telemetry_ms = now_ms;
+
+                    if (snap.smoke_alert && !prev_smoke_alert)
+                    {
+                        const event_notifier::Notification hazard = {
+                            event_notifier::Severity::critical,
+                            "MQ-2 Smoke Hazard Detected",
+                            "Live ADC reading on GPIO1 exceeded configured smoke threshold."};
+                        notifier.notify(hazard);
+                    }
+                    prev_smoke_alert = snap.smoke_alert;
+                }
+
+                if ((now_ms - last_heartbeat_ms) >= HEARTBEAT_INTERVAL_MS)
+                {
+                    char hb_buf[256] = {};
+                    std::snprintf(
+                        hb_buf, sizeof(hb_buf),
+                        "{\"gatewayId\":\"%s\",\"internetAvailable\":true,\"localLanAvailable\":true,"
+                        "\"freeHeapBytes\":%lu,\"hardwareEnabled\":%s,\"uptimeMs\":%llu}",
+                        device_id,
+                        static_cast<unsigned long>(esp_get_free_heap_size()),
+                        snap.hardware_enabled ? "true" : "false",
+                        static_cast<unsigned long long>(now_ms));
+                    esp_mqtt_client_publish(mqtt_client, HOME_HEARTBEAT_TOPIC, hb_buf, 0, 0, 0);
+                    last_heartbeat_ms = now_ms;
+                }
+            }
+
+            vTaskDelay(pdMS_TO_TICKS(500));
         }
     }
 
@@ -402,6 +648,12 @@ namespace mqtt_connectivity
             vEventGroupDelete(mqtt_event_group);
             mqtt_event_group = nullptr;
             return;
+        }
+
+        if (xTaskCreate(hardware_telemetry_task, "hw_telemetry", 4096, nullptr, 5,
+                        &hardware_telemetry_task_handle) != pdPASS)
+        {
+            ESP_LOGE(TAG, "Could not create hardware telemetry task");
         }
 
         ESP_LOGI(TAG, "MQTT client started after Wi-Fi obtained an IP address");

@@ -66,22 +66,104 @@ endmenu
 
 menu "Local controller GPIO mapping"
 
+config LOCAL_HARDWARE_ENABLE
+    bool "Enable real DHT11, MQ-2, 4 LEDs, Door Servo and Fan GPIO drivers"
+    default y
+    help
+        Enables real sensor polling and GPIO/LEDC actuator output on the
+        mapped ESP32-S3 pins. Disable only for dry-run firmware without IO.
+
 config LOCAL_GPIO_SENSOR_INPUT_1
-    int "Sensor input 1 GPIO"
+    int "Legacy sensor input 1 GPIO"
     range -1 48
     default -1
     help
-        Logical input role only. Keep at -1 until the board revision and
-        electrical interface are reviewed. Assigning a pin does not enable
-        hardware initialization.
+        Optional legacy role. Keep at -1 unless explicitly needed.
 
 config LOCAL_GPIO_LIGHT_RELAY_1
-    int "Light relay 1 GPIO"
+    int "Legacy light relay 1 GPIO"
     range -1 48
     default -1
     help
-        Logical output role only. Keep at -1 until the board revision, wiring,
-        and safe inactive level are reviewed. Assigning a pin does not enable
-        relay hardware.
+        Optional legacy role. Keep at -1 unless explicitly needed.
+
+config LOCAL_GPIO_MQ2_ADC
+    int "MQ-2 smoke analog AO GPIO (ADC1: 1..10)"
+    range -1 48
+    default 1
+    help
+        ESP32-S3 ADC1 channel pin connected to MQ-2 AO (use voltage divider
+        if powered from 5V). Default GPIO1.
+
+config LOCAL_GPIO_DHT11
+    int "DHT11 data GPIO"
+    range -1 48
+    default 4
+    help
+        ESP32-S3 1-Wire pin connected to DHT11 DATA (VCC 3V3). Default GPIO4.
+
+config LOCAL_GPIO_LED_LIVING
+    int "LED 1 (Living Room) GPIO"
+    range -1 48
+    default 5
+    help
+        GPIO -> 330 Ohm -> LED(+) -> GND. Default GPIO5.
+
+config LOCAL_GPIO_LED_BEDROOM
+    int "LED 2 (Bedroom) GPIO"
+    range -1 48
+    default 6
+    help
+        GPIO -> 330 Ohm -> LED(+) -> GND. Default GPIO6.
+
+config LOCAL_GPIO_LED_KITCHEN
+    int "LED 3 (Kitchen) GPIO"
+    range -1 48
+    default 7
+    help
+        GPIO -> 330 Ohm -> LED(+) -> GND. Default GPIO7.
+
+config LOCAL_GPIO_LED_HALLWAY
+    int "LED 4 (Hallway) GPIO"
+    range -1 48
+    default 21
+    help
+        GPIO -> 330 Ohm -> LED(+) -> GND. Default GPIO21.
+
+config LOCAL_GPIO_DOOR_SERVO
+    int "Door Servo (SG90/MG90S) PWM GPIO"
+    range -1 48
+    default 8
+    help
+        50Hz LEDC PWM signal pin for door lock/unlock servo. Default GPIO8.
+
+config LOCAL_GPIO_FAN_OUTPUT
+    int "Ventilation Fan actuator GPIO (standby/relay)"
+    range -1 48
+    default 9
+    help
+        Standby digital output pin for ventilation fan relay/MOSFET. Default GPIO9.
+
+config LOCAL_FAN_ACTIVE_LOW
+    bool "Fan output is active-low (optocoupler relay module)"
+    default n
+
+config LOCAL_MQ2_ALERT_MV
+    int "MQ-2 smoke alert threshold at GPIO pin (mV)"
+    range 100 3300
+    default 1600
+    help
+        ADC pin voltage threshold in millivolts above which MQ-2 triggers
+        CRITICAL smoke hazard alert (with 15% hysteresis).
+
+config LOCAL_MQ2_PREHEAT_SECONDS
+    int "MQ-2 warm-up guard duration after boot (seconds)"
+    range 0 180
+    default 30
+
+config LOCAL_MQ2_DIVIDER_X100
+    int "MQ-2 voltage divider scale x100 (100=direct, 150=10k+20k, 200=10k+10k)"
+    range 100 300
+    default 100
 
 endmenu

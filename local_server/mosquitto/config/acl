@@ -1,7 +1,19 @@
 user esp32_test
 topic write demo/esp32-mqtt-connectivity/test
 topic write test/esp32/notifications/v1
+topic read home/+/+/+/set
+topic write home/esp32/telemetry
+topic write home/+/telemetry
+topic write home/+/+/+/state
+topic write home/gateway/heartbeat
+topic write home/events/critical
 
 user dashboard_bridge
 topic read demo/esp32-mqtt-connectivity/test
 topic read test/esp32/notifications/v1
+topic write home/+/+/+/set
+topic read home/esp32/telemetry
+topic read home/+/telemetry
+topic read home/+/+/+/state
+topic read home/gateway/heartbeat
+topic read home/events/critical

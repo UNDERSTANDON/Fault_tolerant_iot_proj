@@ -3,37 +3,25 @@ import { INITIAL_ROOMS_DATA, INITIAL_NETWORK_STATE, NETWORK_MODES } from '../dat
 
 const TEST_TOPIC = 'demo/esp32-mqtt-connectivity/test';
 const TEST_MESSAGE_STALE_AFTER_MS = 70000;
+const HARDWARE_TELEMETRY_STALE_AFTER_MS = 15000;
+const HOME_HEARTBEAT_TOPIC = 'home/gateway/heartbeat';
+const HOME_CRITICAL_EVENT_TOPIC = 'home/events/critical';
+const HOME_TELEMETRY_TOPIC_REGEX = /^home\/[a-z0-9_-]+\/telemetry$/;
+const HOME_STATE_TOPIC_REGEX = /^home\/(living_room|bedroom|kitchen|hallway|gateway)\/(light|lock|fan|device)\/[a-z0-9_]+\/state$/;
 
 const INITIAL_ACTIVITY_LIST = [
   {
     id: 'act-1',
-    title: 'Living Room Ceiling Light turned ON',
-    sub: 'Local LAN ACK · Relay CH2 · Source: Simulator',
-    time: '10:23:42',
-    type: 'light'
-  },
-  {
-    id: 'act-2',
-    title: 'Living Room Ventilation Fan turned OFF',
-    sub: 'Local LAN ACK · Relay CH3 · Source: Simulator',
-    time: '10:23:10',
-    type: 'fan'
-  },
-  {
-    id: 'act-3',
-    title: 'Local gateway link verified',
-    sub: 'NORMAL · All 4 zones online · Source: Simulator',
-    time: '10:22:05',
+    titleKey: 'activity.awaitingTitle',
+    subKey: 'activity.awaitingSub',
+    title: 'Awaiting ESP32-S3 hardware telemetry',
+    sub: 'DHT11 (GPIO4) · MQ-2 (GPIO1) · 4 LEDs · Source: No Data',
+    time: '--:--:--',
     type: 'network'
   }
 ];
 
-const INITIAL_EXPERIMENT_LOGS = [
-  { id: 'EXP-101', time: '10:20:10', test: 'T1: Normal Baseline', internet: 'ON', lan: 'ON', expected: 'NORMAL', measured: '18 ms', result: 'PASS · Simulator' },
-  { id: 'EXP-102', time: '10:21:40', test: 'T2: Internet Partition', internet: 'OFF', lan: 'ON', expected: 'LOCAL', measured: '320 ms', result: 'PASS · Simulator' },
-  { id: 'EXP-103', time: '10:22:05', test: 'T3: LAN Router Failure', internet: 'OFF', lan: 'OFF', expected: 'UNAVAILABLE', measured: '12 ms', result: 'PASS · Simulator' },
-  { id: 'EXP-104', time: '10:23:15', test: 'T4: Carrier Recovery', internet: 'RESTORED', lan: 'ON', expected: 'NORMAL', measured: '780 ms', result: 'PASS · Simulator' }
-];
+const INITIAL_EXPERIMENT_LOGS = [];
 
 function getBridgeSecurityMode(url) {
   if (!url) {
@@ -67,6 +55,11 @@ function isConnectivityTestPayload(topic, payload) {
 
 export function useSmartHome() {
   const localBridgeUrl = import.meta.env.VITE_LAN_BRIDGE_URL || '';
+  const bridgeHttpBase = localBridgeUrl
+    ? (import.meta.env.VITE_LOCAL_SERVER_URL
+      || localBridgeUrl.replace(/^wss:/, 'https:').replace(/^ws:/, 'http:'))
+      .replace(/\/+$/, '')
+    : '';
   const isEmbeddedFirmwareHost = typeof window !== 'undefined'
     && window.location.protocol === 'http:'
     && window.location.port === '';
@@ -79,7 +72,7 @@ export function useSmartHome() {
   const [notifications, setNotifications] = useState([]);
   const [metrics, setMetrics] = useState({
     fallbackTimeMs: 0,
-    avgResponseTimeMs: 24,
+    avgResponseTimeMs: 0,
     commandsTotal: 0,
     commandsSuccess: 0
   });
@@ -93,12 +86,230 @@ export function useSmartHome() {
     requiresAuthentication: false,
     error: isInsecureRemoteBridge ? 'Remote dashboard connections require a WSS bridge URL.' : null
   }));
+  const [hardwareStatus, setHardwareStatus] = useState({
+    isLive: false,
+    lastTelemetryAt: null,
+    dataSource: 'No Data (ESP32-S3)',
+    dhtValid: false,
+    mq2Valid: false,
+    mq2Preheating: false,
+    mq2RawMv: null,
+    mq2Percent: null
+  });
   const [deviceNetworkStatus, setDeviceNetworkStatus] = useState(null);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [isSmokeAlert, setIsSmokeAlert] = useState(false);
 
   const activeSocketRef = useRef(null);
   const transitionTimerRef = useRef(null);
+  const roomsRef = useRef(rooms);
+  const bridgeStatusRef = useRef(bridgeState.status);
+  const lastHardwareTelemetryAtRef = useRef(0);
+  const pendingDeviceUntilRef = useRef({});
+  const pendingAckWaitersRef = useRef(new Map());
+  const seenCriticalEventsRef = useRef(new Set());
+
+  useEffect(() => {
+    roomsRef.current = rooms;
+  }, [rooms]);
+
+  useEffect(() => {
+    bridgeStatusRef.current = bridgeState.status;
+  }, [bridgeState.status]);
+
+  const dismissNotification = useCallback((id) => {
+    setNotifications((prev) => prev.filter((item) => item.id !== id));
+  }, []);
+
+  const addNotification = useCallback(({ type = 'info', title, message, titleKey, messageKey, params, appendLatencyMs }) => {
+    const newId = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newToast = {
+      id: newId,
+      type,
+      title,
+      message,
+      titleKey,
+      messageKey,
+      params,
+      appendLatencyMs,
+      time: new Date().toLocaleTimeString('en-US')
+    };
+
+    setNotifications((prev) => [newToast, ...prev].slice(0, 4));
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((item) => item.id !== newId));
+    }, 4500);
+  }, []);
+
+  const applyHardwareSnapshot = useCallback((rawPayload, receivedAtIso) => {
+    const snapshot = rawPayload?.snapshot || (rawPayload?.dht11 && rawPayload?.mq2 ? rawPayload : null);
+    if (!snapshot || !snapshot.dht11 || !snapshot.mq2 || !snapshot.devices) {
+      return;
+    }
+
+    const nowMs = Date.now();
+    lastHardwareTelemetryAtRef.current = nowMs;
+    const timestampIso = receivedAtIso || rawPayload?.snapshotReceivedAt || new Date(nowMs).toISOString();
+    const isHwEnabled = snapshot.source === 'Hardware';
+    const dataSourceLabel = isHwEnabled ? 'ESP32-S3 Live' : 'Hardware Standby';
+    const mq2Alert = snapshot.mq2.smoke === 'ALERT';
+    const mq2Preheating = Boolean(snapshot.mq2.preheating);
+
+    setIsSmokeAlert(mq2Alert);
+    setHardwareStatus({
+      isLive: true,
+      lastTelemetryAt: timestampIso,
+      dataSource: dataSourceLabel,
+      dhtValid: Boolean(snapshot.dht11.valid),
+      mq2Valid: Boolean(snapshot.mq2.valid),
+      mq2Preheating,
+      mq2RawMv: snapshot.mq2.rawMv ?? null,
+      mq2Percent: snapshot.mq2.smokePercent ?? null
+    });
+
+    setRooms((prevRooms) =>
+      prevRooms.map((room) => ({
+        ...room,
+        devices: room.devices.map((device) => {
+          const pendingUntil = pendingDeviceUntilRef.current[device.id] || 0;
+          if (nowMs < pendingUntil || !Object.prototype.hasOwnProperty.call(snapshot.devices, device.id)) {
+            return device;
+          }
+          if (device.type === 'lock') {
+            return {
+              ...device,
+              state: snapshot.devices[device.id] === 'UNLOCKED' ? 'UNLOCKED' : 'LOCKED'
+            };
+          }
+          return {
+            ...device,
+            state: Boolean(snapshot.devices[device.id])
+          };
+        }),
+        sensors: room.sensors.map((sensor) => {
+          if (sensor.type === 'temperature') {
+            return snapshot.dht11.valid
+              ? { ...sensor, value: Number(snapshot.dht11.temperature), status: 'NORMAL', source: 'ESP32-S3 Live (DHT11)' }
+              : { ...sensor, value: 'No Data', status: 'NO DATA', source: 'No Data (DHT11)' };
+          }
+          if (sensor.type === 'humidity') {
+            return snapshot.dht11.valid
+              ? { ...sensor, value: Number(snapshot.dht11.humidity), status: 'NORMAL', source: 'ESP32-S3 Live (DHT11)' }
+              : { ...sensor, value: 'No Data', status: 'NO DATA', source: 'No Data (DHT11)' };
+          }
+          if (sensor.type === 'smoke') {
+            if (!snapshot.mq2.valid) {
+              return { ...sensor, value: 'No Data', status: 'NO DATA', source: 'No Data (MQ-2)' };
+            }
+            if (mq2Preheating) {
+              return {
+                ...sensor,
+                value: `Preheating (${snapshot.mq2.smokePercent ?? 0}%)`,
+                status: 'PREHEATING',
+                source: 'ESP32-S3 Live (MQ-2)'
+              };
+            }
+            if (mq2Alert) {
+              return {
+                ...sensor,
+                value: `SMOKE (${snapshot.mq2.smokePercent ?? 100}%)`,
+                status: 'ALERT',
+                source: 'ESP32-S3 Live (MQ-2)'
+              };
+            }
+            return {
+              ...sensor,
+              value: `Clear (${snapshot.mq2.smokePercent ?? 0}%)`,
+              status: 'NORMAL',
+              source: 'ESP32-S3 Live (MQ-2)'
+            };
+          }
+          if (sensor.id === 'living_ap' || sensor.id === 'hallway_nfc_sensor') {
+            return { ...sensor, value: 'Connected', status: 'ONLINE', source: dataSourceLabel };
+          }
+          return sensor;
+        })
+      }))
+    );
+
+    setNetworkState((prev) => ({
+      ...prev,
+      mqttBroker: true,
+      lastUpdated: new Date(timestampIso).toLocaleTimeString('en-US')
+    }));
+  }, []);
+
+  const applyDeviceStateAck = useCallback((ackPayload, receivedAtIso) => {
+    if (!ackPayload || typeof ackPayload.deviceId !== 'string') {
+      return;
+    }
+
+    delete pendingDeviceUntilRef.current[ackPayload.deviceId];
+    const waiter = pendingAckWaitersRef.current.get(ackPayload.commandId);
+    if (waiter) {
+      pendingAckWaitersRef.current.delete(ackPayload.commandId);
+      waiter(ackPayload);
+    }
+
+    if (ackPayload.status !== 'SUCCESS') {
+      return;
+    }
+
+    setRooms((prevRooms) =>
+      prevRooms.map((room) => ({
+        ...room,
+        devices: room.devices.map((device) => {
+          if (device.id !== ackPayload.deviceId) return device;
+          if (device.type === 'lock') {
+            return { ...device, state: ackPayload.state === 'UNLOCKED' ? 'UNLOCKED' : 'LOCKED' };
+          }
+          return { ...device, state: ackPayload.state === 'ON' };
+        })
+      }))
+    );
+
+    if (receivedAtIso) {
+      setNetworkState((prev) => ({
+        ...prev,
+        lastUpdated: new Date(receivedAtIso).toLocaleTimeString('en-US')
+      }));
+    }
+  }, []);
+
+  const handleHardwareCriticalEvent = useCallback((payload, receivedAtIso) => {
+    if (!payload || typeof payload.event_id !== 'string') {
+      return;
+    }
+    if (seenCriticalEventsRef.current.has(payload.event_id)) {
+      return;
+    }
+    if (seenCriticalEventsRef.current.size >= 50) {
+      seenCriticalEventsRef.current.clear();
+    }
+    seenCriticalEventsRef.current.add(payload.event_id);
+
+    setIsSmokeAlert(true);
+    addNotification({
+      type: 'error',
+      titleKey: 'notifications.smokeCriticalTitle',
+      messageKey: 'notifications.smokeCriticalMsg',
+      title: payload.title || 'CRITICAL HAZARD: Smoke Detected (MQ-2)',
+      message: payload.message || 'Live MQ-2 reading exceeded configured safety threshold.'
+    });
+    setRecentActivity((prev) => [
+      {
+        id: `hw-crit-${Date.now()}`,
+        titleKey: 'activity.smokeTriggeredTitle',
+        subKey: 'activity.smokeTriggeredSub',
+        title: payload.title || 'MQ-2 Smoke Hazard Detected',
+        sub: 'ALERT · GPIO1 threshold exceeded · Source: Hardware Live',
+        time: new Date(receivedAtIso || Date.now()).toLocaleTimeString('en-US'),
+        type: 'network'
+      },
+      ...prev.slice(0, 5)
+    ]);
+  }, [addNotification]);
 
   const connectBridge = useCallback(() => {
     setBridgeEnabled(true);
@@ -151,6 +362,34 @@ export function useSmartHome() {
     };
   }, [isEmbeddedFirmwareHost]);
 
+  // Embedded ESP32 AP HTTP fallback polling (when hosted on http://192.168.4.1/ or esp32-lan.local)
+  useEffect(() => {
+    if (!isEmbeddedFirmwareHost) {
+      return undefined;
+    }
+
+    let active = true;
+    const pollEmbeddedHardwareState = async () => {
+      try {
+        const response = await fetch('/api/hardware/state', { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (active) {
+          applyHardwareSnapshot(data, new Date().toISOString());
+        }
+      } catch {
+        // Keep last state until next embedded poll
+      }
+    };
+
+    pollEmbeddedHardwareState();
+    const interval = setInterval(pollEmbeddedHardwareState, 2000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [isEmbeddedFirmwareHost, applyHardwareSnapshot]);
+
   useEffect(() => {
     if (!localBridgeUrl || !bridgeEnabled || isInsecureRemoteBridge) {
       return undefined;
@@ -161,6 +400,23 @@ export function useSmartHome() {
     let reconnectTimer;
     let reconnectAttempt = 0;
     let authenticationRejected = false;
+
+    const hydrateBridgeHardwareState = async () => {
+      if (!bridgeHttpBase) return;
+      try {
+        const response = await fetch(`${bridgeHttpBase}/api/hardware/state`, {
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        if (!response.ok || !isActive) return;
+        const data = await response.json();
+        if (data?.snapshot) {
+          applyHardwareSnapshot(data, data.snapshotReceivedAt);
+        }
+      } catch {
+        // Live telemetry continues arriving via WebSocket
+      }
+    };
 
     const scheduleReconnect = () => {
       if (!isActive || reconnectTimer) {
@@ -212,6 +468,7 @@ export function useSmartHome() {
 
           if (message.type === 'authenticated') {
             socket.send(JSON.stringify({ type: 'subscribe', topics: [TEST_TOPIC] }));
+            hydrateBridgeHardwareState();
             return;
           }
 
@@ -238,10 +495,38 @@ export function useSmartHome() {
                 ? 'Local bridge cannot reach the MQTT broker.'
                 : null
             }));
+            if (message.state === 'connected') {
+              hydrateBridgeHardwareState();
+            }
             return;
           }
 
           if (message.type === 'mqtt-message') {
+            if (HOME_TELEMETRY_TOPIC_REGEX.test(message.topic)) {
+              applyHardwareSnapshot(message.payload, message.receivedAt);
+              return;
+            }
+
+            if (HOME_STATE_TOPIC_REGEX.test(message.topic)) {
+              applyDeviceStateAck(message.payload, message.receivedAt);
+              return;
+            }
+
+            if (message.topic === HOME_CRITICAL_EVENT_TOPIC) {
+              handleHardwareCriticalEvent(message.payload, message.receivedAt);
+              return;
+            }
+
+            if (message.topic === HOME_HEARTBEAT_TOPIC) {
+              lastHardwareTelemetryAtRef.current = Date.now();
+              setNetworkState((prev) => ({
+                ...prev,
+                mqttBroker: true,
+                lastUpdated: new Date(message.receivedAt || Date.now()).toLocaleTimeString('en-US')
+              }));
+              return;
+            }
+
             if (!isConnectivityTestPayload(message.topic, message.payload)) {
               return;
             }
@@ -258,6 +543,9 @@ export function useSmartHome() {
             setRecentActivity((previous) => [
               {
                 id: `bridge-${Date.now()}`,
+                titleKey: 'activity.mqttPacketTitle',
+                subKey: 'activity.mqttPacketSub',
+                params: { seq: message.payload.sequence },
                 title: 'ESP32-S3 MQTT packet received',
                 sub: `Sequence #${message.payload.sequence} · Source: Live MQTT`,
                 time: new Date(receivedAt).toLocaleTimeString('en-US'),
@@ -305,7 +593,16 @@ export function useSmartHome() {
         activeSocketRef.current = null;
       }
     };
-  }, [bridgeConnectAttempt, bridgeEnabled, isInsecureRemoteBridge, localBridgeUrl]);
+  }, [
+    bridgeConnectAttempt,
+    bridgeEnabled,
+    bridgeHttpBase,
+    isInsecureRemoteBridge,
+    localBridgeUrl,
+    applyHardwareSnapshot,
+    applyDeviceStateAck,
+    handleHardwareCriticalEvent
+  ]);
 
   useEffect(() => {
     if (!bridgeState.lastMessageAt || bridgeState.messageStale) {
@@ -323,60 +620,43 @@ export function useSmartHome() {
     return () => clearTimeout(timer);
   }, [bridgeState.lastMessageAt, bridgeState.messageStale]);
 
-  // Live natural sensor drift when network is NOT UNAVAILABLE
+  // Watchdog: when ESP32-S3 telemetry has not arrived or goes stale (>15s), mark sensors as No Data (no random simulation)
   useEffect(() => {
     const interval = setInterval(() => {
-      setNetworkState((currentNet) => {
-        if (currentNet.mode === NETWORK_MODES.UNAVAILABLE) {
-          return currentNet;
-        }
+      const hwAgeMs = lastHardwareTelemetryAtRef.current
+        ? Date.now() - lastHardwareTelemetryAtRef.current
+        : Infinity;
 
+      if (hwAgeMs < HARDWARE_TELEMETRY_STALE_AFTER_MS) {
+        return;
+      }
+
+      if (lastHardwareTelemetryAtRef.current !== 0) {
+        lastHardwareTelemetryAtRef.current = 0;
+        setIsSmokeAlert(false);
+        setHardwareStatus((prev) => ({
+          ...prev,
+          isLive: false,
+          dataSource: 'No Data (ESP32-S3)',
+          dhtValid: false,
+          mq2Valid: false,
+          mq2Preheating: false
+        }));
         setRooms((prevRooms) =>
           prevRooms.map((room) => ({
             ...room,
-            sensors: room.sensors.map((sensor) => {
-              if (sensor.type === 'temperature') {
-                const delta = Math.random() * 0.4 - 0.2;
-                const newTemp = Math.round((sensor.value + delta) * 10) / 10;
-                const clamped = Math.min(31.0, Math.max(25.5, newTemp));
-                return { ...sensor, value: clamped };
-              }
-              if (sensor.type === 'humidity') {
-                const delta = Math.floor(Math.random() * 3) - 1;
-                const clamped = Math.min(72, Math.max(58, sensor.value + delta));
-                return { ...sensor, value: clamped };
-              }
-              return sensor;
-            })
+            sensors: room.sensors.map((sensor) => ({
+              ...sensor,
+              value: 'No Data',
+              status: 'NO DATA',
+              source: 'No Data (ESP32-S3)'
+            }))
           }))
         );
-
-        return currentNet;
-      });
-    }, 4500);
+      }
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
-
-  const dismissNotification = useCallback((id) => {
-    setNotifications((prev) => prev.filter((item) => item.id !== id));
-  }, []);
-
-  const addNotification = useCallback(({ type = 'info', title, message }) => {
-    const newId = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const newToast = {
-      id: newId,
-      type,
-      title,
-      message,
-      time: new Date().toLocaleTimeString('en-US')
-    };
-
-    setNotifications((prev) => [newToast, ...prev].slice(0, 4));
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((item) => item.id !== newId));
-    }, 4500);
   }, []);
 
   const toggleSmokeAlarm = useCallback((triggerAlert) => {
@@ -402,8 +682,10 @@ export function useSmartHome() {
     setRecentActivity((prev) => [
       {
         id: `act-${Date.now()}`,
+        titleKey: triggerAlert ? 'activity.smokeTriggeredTitle' : 'activity.smokeClearedTitle',
+        subKey: triggerAlert ? 'activity.smokeTriggeredSub' : 'activity.smokeClearedSub',
         title: triggerAlert ? 'MQ-2 Smoke Hazard Alert Triggered' : 'MQ-2 Smoke Alert Cleared',
-        sub: triggerAlert ? 'ALERT · Particulate threshold exceeded · Source: Simulator' : 'NORMAL · Air quality clear · Source: Simulator',
+        sub: triggerAlert ? 'ALERT · Particulate threshold exceeded' : 'NORMAL · Air quality clear',
         time: nowTime,
         type: 'network'
       },
@@ -413,19 +695,23 @@ export function useSmartHome() {
     if (triggerAlert) {
       addNotification({
         type: 'error',
+        titleKey: 'notifications.smokeCriticalTitle',
+        messageKey: 'notifications.smokeCriticalMsg',
         title: 'CRITICAL HAZARD: Smoke Detected (MQ-2)',
-        message: 'Particulate threshold exceeded in monitored zones. Local safety alert engaged (Source: Simulator).'
+        message: 'Live MQ-2 ADC reading on GPIO1 exceeded configured safety threshold.'
       });
     } else {
       addNotification({
         type: 'success',
+        titleKey: 'notifications.smokeClearedTitle',
+        messageKey: 'notifications.smokeClearedMsg',
         title: 'Hazard Cleared: Normal Air Quality',
         message: 'MQ-2 smoke sensors returned to normal baseline.'
       });
     }
   }, [addNotification]);
 
-  const toggleDevice = useCallback((deviceId, targetState) => {
+  const toggleDevice = useCallback(async (deviceId, targetState) => {
     const startTime = performance.now();
     const nowTime = new Date().toLocaleTimeString('en-US');
 
@@ -436,77 +722,173 @@ export function useSmartHome() {
       }));
       addNotification({
         type: 'error',
+        titleKey: 'notifications.cmdRejectedOfflineTitle',
+        messageKey: 'notifications.cmdRejectedOfflineMsg',
         title: 'Command Rejected · Link Offline',
         message: 'Local LAN and ESP32-S3 Gateway are currently unreachable.'
       });
-      return false;
+      return { ok: false };
     }
 
-    let changedDeviceName = '';
-    let isLockType = false;
-    let deviceType = 'light';
+    let existingDevice = null;
+    for (const room of roomsRef.current) {
+      const match = room.devices.find((d) => d.id === deviceId);
+      if (match) {
+        existingDevice = match;
+        break;
+      }
+    }
 
-    setRooms((prevRooms) =>
-      prevRooms.map((room) => ({
-        ...room,
-        devices: room.devices.map((device) => {
-          if (device.id === deviceId) {
-            changedDeviceName = device.name;
-            isLockType = device.type === 'lock';
-            deviceType = device.type;
-            return {
-              ...device,
-              state: isLockType ? (targetState ? 'UNLOCKED' : 'LOCKED') : targetState
-            };
-          }
-          return device;
-        })
-      }))
-    );
+    const changedDeviceName = existingDevice?.name || deviceId;
+    const isLockType = existingDevice?.type === 'lock';
+    const deviceType = existingDevice?.type || 'light';
+    const previousState = existingDevice?.state;
+    const nextStateValue = isLockType ? (targetState ? 'UNLOCKED' : 'LOCKED') : Boolean(targetState);
+    const targetStateStr = isLockType ? (targetState ? 'UNLOCKED' : 'LOCKED') : (targetState ? 'ON' : 'OFF');
 
-    const elapsed = Math.round(performance.now() - startTime + (networkState.mode === 'LOCAL' ? 12 : 22));
+    const updateRoomDeviceState = (valueToApply) => {
+      setRooms((prevRooms) =>
+        prevRooms.map((room) => ({
+          ...room,
+          devices: room.devices.map((device) =>
+            device.id === deviceId ? { ...device, state: valueToApply } : device
+          )
+        }))
+      );
+    };
 
-    setMetrics((prev) => {
-      const newTotal = prev.commandsTotal + 1;
-      const newSuccess = (prev.commandsSuccess || 0) + 1;
-      const newAvg = Math.round((prev.avgResponseTimeMs * prev.commandsTotal + elapsed) / newTotal);
-      return {
-        ...prev,
-        commandsTotal: newTotal,
-        commandsSuccess: newSuccess,
-        avgResponseTimeMs: newAvg
-      };
-    });
-
-    setNetworkState((prev) => ({
-      ...prev,
-      lastUpdated: nowTime
-    }));
+    const useEmbeddedApi = isEmbeddedFirmwareHost;
+    const useBridgeApi = !useEmbeddedApi && Boolean(bridgeHttpBase) && bridgeStatusRef.current === 'connected';
 
     const stateAction = isLockType
       ? (targetState ? 'Unlocked' : 'Locked')
       : (targetState ? 'turned ON' : 'turned OFF');
-    const routeName = networkState.mode === 'LOCAL' ? 'Local LAN' : 'Cloud + LAN';
+    const actionKey = isLockType
+      ? (targetState ? 'notifications.actionUnlocked' : 'notifications.actionLocked')
+      : (targetState ? 'notifications.actionTurnedOn' : 'notifications.actionTurnedOff');
 
-    setRecentActivity((prev) => [
-      {
-        id: `act-${Date.now()}`,
-        title: `${changedDeviceName || 'Device'} ${stateAction}`,
-        sub: `Confirmed via ${routeName} · Source: Simulator`,
-        time: nowTime,
-        type: deviceType
-      },
-      ...prev.slice(0, 5)
-    ]);
+    if (!useEmbeddedApi && !useBridgeApi) {
+      setMetrics((prev) => ({
+        ...prev,
+        commandsTotal: prev.commandsTotal + 1
+      }));
+      addNotification({
+        type: 'error',
+        titleKey: 'notifications.cmdNoDataTitle',
+        messageKey: 'notifications.cmdNoDataMsg',
+        params: { deviceId, device: changedDeviceName },
+        title: `${changedDeviceName} · No Data Received`,
+        message: 'Not connected to ESP32-S3 or MQTT Bridge; hardware command cannot be sent.'
+      });
+      return { ok: false };
+    }
 
-    addNotification({
-      type: 'success',
-      title: `${changedDeviceName || 'Device'} ${stateAction}`,
-      message: `State updated via ${routeName} (${elapsed}ms · Source: Simulator).`
-    });
+    pendingDeviceUntilRef.current[deviceId] = Date.now() + 2500;
+    updateRoomDeviceState(nextStateValue);
 
-    return true;
-  }, [networkState.mode, addNotification]);
+    const recordFailure = (errorMessage) => {
+      delete pendingDeviceUntilRef.current[deviceId];
+      if (previousState !== undefined) {
+        updateRoomDeviceState(previousState);
+      }
+      setMetrics((prev) => ({
+        ...prev,
+        commandsTotal: prev.commandsTotal + 1
+      }));
+      addNotification({
+        type: 'error',
+        titleKey: 'notifications.cmdFailedTitle',
+        params: { deviceId, device: changedDeviceName },
+        title: `${changedDeviceName} Command Failed`,
+        message: errorMessage
+      });
+      return { ok: false };
+    };
+
+    try {
+      const endpoint = useEmbeddedApi ? '/api/hardware/command' : `${bridgeHttpBase}/api/devices/command`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        credentials: useEmbeddedApi ? 'same-origin' : 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commandId: `cmd-web-${Date.now()}`,
+          deviceId,
+          targetState: targetStateStr
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || (useEmbeddedApi && data.status !== 'SUCCESS')) {
+        return recordFailure(data.error || `HTTP ${response.status} rejected device command.`);
+      }
+
+      let ackNote = useEmbeddedApi
+        ? `Embedded AP · GPIO${data.hardwarePin ?? '?'} · Source: ESP32-S3 Live`
+        : 'MQTT Broker QoS 1 · Awaiting ESP32-S3';
+      let ackKey = useEmbeddedApi ? 'notifications.ackEmbedded' : 'notifications.ackMqttWait';
+      let ackPin = data.hardwarePin ?? '?';
+
+      if (useBridgeApi && data.commandId) {
+        const hardwareAck = await new Promise((resolve) => {
+          const timer = setTimeout(() => {
+            pendingAckWaitersRef.current.delete(data.commandId);
+            resolve(null);
+          }, 1200);
+          pendingAckWaitersRef.current.set(data.commandId, (ack) => {
+            clearTimeout(timer);
+            resolve(ack);
+          });
+        });
+
+        if (hardwareAck && hardwareAck.status === 'FAILED') {
+          return recordFailure(hardwareAck.error || 'ESP32 hardware execution failed.');
+        }
+        if (hardwareAck && hardwareAck.status === 'SUCCESS') {
+          ackPin = hardwareAck.hardwarePin ?? '?';
+          ackKey = 'notifications.ackMqttBridge';
+          ackNote = `MQTT Bridge -> ESP32-S3 GPIO${ackPin} · Source: ESP32-S3 Live`;
+        }
+      }
+
+      const elapsed = Math.max(1, Math.round(performance.now() - startTime));
+      setMetrics((prev) => {
+        const newTotal = prev.commandsTotal + 1;
+        const newSuccess = (prev.commandsSuccess || 0) + 1;
+        const newAvg = Math.round((prev.avgResponseTimeMs * prev.commandsTotal + elapsed) / newTotal);
+        return {
+          ...prev,
+          commandsTotal: newTotal,
+          commandsSuccess: newSuccess,
+          avgResponseTimeMs: newAvg
+        };
+      });
+      setNetworkState((prev) => ({ ...prev, lastUpdated: nowTime }));
+      const eventParams = { deviceId, device: changedDeviceName, actionKey, ackKey, pin: ackPin };
+      setRecentActivity((prev) => [
+        {
+          id: `act-${Date.now()}`,
+          titleKey: 'notifications.cmdSuccessTitle',
+          params: eventParams,
+          title: `${changedDeviceName} ${stateAction}`,
+          sub: ackNote,
+          time: nowTime,
+          type: deviceType
+        },
+        ...prev.slice(0, 5)
+      ]);
+      addNotification({
+        type: 'success',
+        titleKey: 'notifications.cmdSuccessTitle',
+        params: eventParams,
+        appendLatencyMs: elapsed,
+        title: `${changedDeviceName} ${stateAction}`,
+        message: `${ackNote} (${elapsed}ms).`
+      });
+      return { ok: true, latencyMs: elapsed };
+    } catch {
+      return recordFailure('Network request to hardware controller failed.');
+    }
+  }, [networkState.mode, addNotification, isEmbeddedFirmwareHost, bridgeHttpBase]);
 
   const triggerFault = useCallback((faultType) => {
     if (transitionTimerRef.current) {
@@ -526,6 +908,8 @@ export function useSmartHome() {
 
       addNotification({
         type: 'warning',
+        titleKey: 'notifications.wanLostTitle',
+        messageKey: 'notifications.wanLostMsg',
         title: 'Internet Uplink Lost',
         message: 'Switching control path to autonomous Local LAN...'
       });
@@ -551,8 +935,11 @@ export function useSmartHome() {
         setRecentActivity((prev) => [
           {
             id: `act-${Date.now()}`,
+            titleKey: 'activity.failoverLocalTitle',
+            subKey: 'activity.failoverLocalSub',
+            params: { ms: fallbackDuration },
             title: 'Failover to Local LAN Mode',
-            sub: `Transitioned in ${fallbackDuration}ms · Source: Simulator`,
+            sub: `Transitioned in ${fallbackDuration}ms`,
             time: resolvedTime,
             type: 'network'
           },
@@ -563,18 +950,22 @@ export function useSmartHome() {
           {
             id: `EXP-${Date.now().toString().slice(-4)}`,
             time: resolvedTime,
+            testKey: 'testLab.dockT2',
             test: 'T2: Internet Partition',
             internet: 'OFF',
             lan: 'ON',
             expected: 'LOCAL',
             measured: `${fallbackDuration} ms`,
-            result: 'PASS · Simulator'
+            result: 'PASS'
           },
           ...prev
         ]);
 
         addNotification({
           type: 'warning',
+          titleKey: 'notifications.lanFallbackTitle',
+          messageKey: 'notifications.lanFallbackMsg',
+          params: { ms: fallbackDuration },
           title: 'LOCAL FALLBACK ACTIVE',
           message: `Switched to Local LAN in ${fallbackDuration}ms. Domestic controls remain online.`
         });
@@ -593,12 +984,13 @@ export function useSmartHome() {
         {
           id: `EXP-${Date.now().toString().slice(-4)}`,
           time: nowTime,
+          testKey: 'testLab.dockT3',
           test: 'T3: Total Network Outage',
           internet: 'OFF',
           lan: 'OFF',
           expected: 'UNAVAILABLE',
           measured: '12 ms',
-          result: 'PASS · Simulator'
+          result: 'PASS'
         },
         ...prev
       ]);
@@ -606,8 +998,10 @@ export function useSmartHome() {
       setRecentActivity((prev) => [
         {
           id: `act-${Date.now()}`,
+          titleKey: 'activity.lanOutageTitle',
+          subKey: 'activity.lanOutageSub',
           title: 'Total Network Outage',
-          sub: 'UNAVAILABLE · Controls locked · Source: Simulator',
+          sub: 'UNAVAILABLE · Controls locked',
           time: nowTime,
           type: 'network'
         },
@@ -616,6 +1010,8 @@ export function useSmartHome() {
 
       addNotification({
         type: 'error',
+        titleKey: 'notifications.lanDownTitle',
+        messageKey: 'notifications.lanDownMsg',
         title: 'GATEWAY UNREACHABLE',
         message: 'Local LAN and ESP32-S3 Gateway are offline. Remote controls are locked.'
       });
@@ -629,6 +1025,8 @@ export function useSmartHome() {
 
       addNotification({
         type: 'info',
+        titleKey: 'notifications.cloudSyncingTitle',
+        messageKey: 'notifications.cloudSyncingMsg',
         title: 'Cloud Link Restored',
         message: 'Replaying buffered local telemetry to cloud storage...'
       });
@@ -648,12 +1046,13 @@ export function useSmartHome() {
           {
             id: `EXP-${Date.now().toString().slice(-4)}`,
             time: recoveredTime,
+            testKey: 'testLab.dockT4',
             test: 'T4: Carrier Recovery & Sync',
             internet: 'RESTORED',
             lan: 'ON',
             expected: 'NORMAL',
             measured: '785 ms',
-            result: 'PASS · Simulator'
+            result: 'PASS'
           },
           ...prev
         ]);
@@ -661,8 +1060,10 @@ export function useSmartHome() {
         setRecentActivity((prev) => [
           {
             id: `act-${Date.now()}`,
+            titleKey: 'activity.cloudRestoredTitle',
+            subKey: 'activity.cloudRestoredSub',
             title: 'Cloud connection synchronized',
-            sub: 'NORMAL · Dual-path active · Source: Simulator',
+            sub: 'NORMAL · Dual-path active',
             time: recoveredTime,
             type: 'network'
           },
@@ -671,6 +1072,9 @@ export function useSmartHome() {
 
         addNotification({
           type: 'success',
+          titleKey: 'notifications.cloudRestoredTitle',
+          messageKey: 'notifications.cloudRestoredMsg',
+          params: { ms: 785 },
           title: 'NORMAL MODE RESTORED',
           message: 'Cloud uplink and Local LAN are synchronized.'
         });
@@ -692,7 +1096,7 @@ export function useSmartHome() {
       prevRooms.map((room) => ({
         ...room,
         sensors: room.sensors.map((s) =>
-          s.type === 'smoke' ? { ...s, status: 'NORMAL', value: 'Clear' } : s
+          s.type === 'smoke' && s.status === 'ALERT' ? { ...s, status: 'NORMAL', value: 'Clear' } : s
         )
       }))
     );
@@ -701,12 +1105,13 @@ export function useSmartHome() {
       {
         id: `EXP-${Date.now().toString().slice(-4)}`,
         time: nowTime,
+        testKey: 'testLab.dockT1',
         test: 'T1: Normal Baseline Engaged',
         internet: 'ON',
         lan: 'ON',
         expected: 'NORMAL',
         measured: '18 ms',
-        result: 'PASS · Simulator'
+        result: 'PASS'
       },
       ...prev
     ]);
@@ -714,8 +1119,10 @@ export function useSmartHome() {
     setRecentActivity((prev) => [
       {
         id: `act-${Date.now()}`,
+        titleKey: 'activity.baselineRestoredTitle',
+        subKey: 'activity.baselineRestoredSub',
         title: 'Normal baseline restored',
-        sub: 'NORMAL · Dual-path active · Source: Simulator',
+        sub: 'NORMAL · Dual-path active',
         time: nowTime,
         type: 'network'
       },
@@ -724,6 +1131,8 @@ export function useSmartHome() {
 
     addNotification({
       type: 'success',
+      titleKey: 'notifications.baselineTitle',
+      messageKey: 'notifications.baselineMsg',
       title: 'Normal Baseline Active',
       message: 'All zones, sensors, and network routes returned to normal operation.'
     });
@@ -743,6 +1152,20 @@ export function useSmartHome() {
       activeSocketRef.current = null;
     }
     setBridgeEnabled(false);
+    lastHardwareTelemetryAtRef.current = 0;
+    pendingDeviceUntilRef.current = {};
+    pendingAckWaitersRef.current.clear();
+    seenCriticalEventsRef.current.clear();
+    setHardwareStatus({
+      isLive: false,
+      lastTelemetryAt: null,
+      dataSource: 'No Data (ESP32-S3)',
+      dhtValid: false,
+      mq2Valid: false,
+      mq2Preheating: false,
+      mq2RawMv: null,
+      mq2Percent: null
+    });
     setRooms(INITIAL_ROOMS_DATA);
     setNetworkState({
       ...INITIAL_NETWORK_STATE,
@@ -758,6 +1181,7 @@ export function useSmartHome() {
     rooms,
     networkState,
     deviceNetworkStatus,
+    hardwareStatus,
     bridgeState,
     connectBridge,
     metrics,
@@ -768,6 +1192,7 @@ export function useSmartHome() {
     recentActivity,
     experimentLogs,
     notifications,
+    addNotification,
     dismissNotification,
     toggleDevice,
     triggerFault,

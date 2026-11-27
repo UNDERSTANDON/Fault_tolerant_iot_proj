@@ -286,8 +286,8 @@ export function useAuth() {
       setUsersError('Username must be 3–20 characters (letters, numbers, underscore).');
       return false;
     }
-    if (password.length < 6) {
-      setUsersError('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      setUsersError('Password must be at least 8 characters.');
       return false;
     }
 
@@ -427,6 +427,26 @@ export function useAuth() {
     }
   }, [broadcastAuthEvent]);
 
+  const saveSettings = useCallback(async (nextPrefs) => {
+    setPreferences((prev) => ({ ...prev, ...nextPrefs }));
+    if (useLocalVaultRef.current) {
+      return true;
+    }
+    try {
+      const data = await requestJson('/api/settings/me', {
+        method: 'POST',
+        body: JSON.stringify({ preferences: nextPrefs })
+      });
+      if (data?.preferences) {
+        setPreferences((prev) => ({ ...prev, ...data.preferences }));
+      }
+      setSettingsError('');
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   return {
     currentUser,
     isAuthenticated: Boolean(currentUser),
@@ -445,6 +465,7 @@ export function useAuth() {
     signIn,
     signOut,
     loadSettings,
+    saveSettings,
     clearError
   };
 }

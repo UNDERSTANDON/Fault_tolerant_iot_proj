@@ -1,7 +1,9 @@
 import { Lightbulb, Fan, Lock, Network, ArrowRight, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './DashboardBottomRow.module.css';
 
 export default function DashboardBottomRow({ networkMode, onNavigateToConnections, recentActivity = [] }) {
+  const { t } = useLanguage();
   const isLocal = networkMode === 'LOCAL';
 
   const getActivityIcon = (type) => {
@@ -18,28 +20,49 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
     }
   };
 
+  const resolveActivityItem = (item) => {
+    const rawParams = item.params || {};
+    const resolvedParams = { ...rawParams };
+    if (rawParams.deviceId) {
+      const translatedDev = t(`devices.${rawParams.deviceId}`);
+      resolvedParams.device = translatedDev !== `devices.${rawParams.deviceId}` ? translatedDev : (rawParams.device || rawParams.deviceId);
+    }
+    if (rawParams.actionKey) {
+      resolvedParams.action = t(rawParams.actionKey);
+    }
+    if (rawParams.ackKey) {
+      resolvedParams.ack = t(rawParams.ackKey, resolvedParams);
+    }
+    const title = item.titleKey ? t(item.titleKey, resolvedParams) : item.title;
+    const sub = item.subKey ? t(item.subKey, resolvedParams) : (resolvedParams.ack || item.sub);
+    return { title, sub };
+  };
+
   return (
     <div className={styles.bottomGrid}>
       {/* 1. Dynamic Recent Activity Card */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <h3 className={styles.cardTitle}>Recent activity</h3>
-          <span className={styles.badgeConfirmed}>Event Log · Active</span>
+          <h3 className={styles.cardTitle}>{t('dashboard.recentActivity')}</h3>
+          <span className={styles.badgeConfirmed}>{t('dashboard.eventLogActive')}</span>
         </div>
 
         <div className={styles.activityList}>
-          {recentActivity.slice(0, 4).map((item) => (
-            <div key={item.id} className={styles.activityItem}>
-              <div className={styles.itemIconCircle}>
-                {getActivityIcon(item.type)}
+          {recentActivity.slice(0, 4).map((item) => {
+            const { title, sub } = resolveActivityItem(item);
+            return (
+              <div key={item.id} className={styles.activityItem}>
+                <div className={styles.itemIconCircle}>
+                  {getActivityIcon(item.type)}
+                </div>
+                <div className={styles.itemMeta}>
+                  <span className={styles.itemTitle}>{title}</span>
+                  <span className={styles.itemSub}>{sub}</span>
+                </div>
+                <span className={styles.itemTime}>{item.time}</span>
               </div>
-              <div className={styles.itemMeta}>
-                <span className={styles.itemTitle}>{item.title}</span>
-                <span className={styles.itemSub}>{item.sub}</span>
-              </div>
-              <span className={styles.itemTime}>{item.time}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -47,25 +70,23 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <div className={styles.titleWithIcon}>
-            <ShieldCheck size={18} color="#285640" />
+            <ShieldCheck size={18} color="var(--accent-primary)" />
             <h3 className={styles.cardTitle}>
-              {isLocal ? 'Local LAN control active' : 'Local-first resilience'}
+              {isLocal ? t('dashboard.localControlActive') : t('dashboard.localFirstResilience')}
             </h3>
           </div>
         </div>
 
         <div className={styles.flowDiagram}>
           <span className={styles.flowPill}>SafeHaven UI</span>
-          <ArrowRight size={14} color="#6b756d" />
+          <ArrowRight size={14} color="var(--text-secondary)" />
           <span className={styles.flowPill}>Local LAN</span>
-          <ArrowRight size={14} color="#6b756d" />
+          <ArrowRight size={14} color="var(--text-secondary)" />
           <span className={styles.flowPill}>ESP32-S3</span>
         </div>
 
         <p className={styles.cardDesc}>
-          {isLocal
-            ? 'Active over LAN: room lighting, ventilation fan, NFC lock, and MQ-2/DHT22 sensors. Cloud sync is queued until Internet recovery.'
-            : 'Room actuators and environmental sensors route over Local LAN first, keeping home control and fire safety independent of external Internet.'}
+          {isLocal ? t('dashboard.localDescActive') : t('dashboard.localDescNormal')}
         </p>
 
         <div className={styles.cardDivider}></div>
@@ -76,7 +97,7 @@ export default function DashboardBottomRow({ networkMode, onNavigateToConnection
             className={styles.statusLink}
             onClick={onNavigateToConnections}
           >
-            <span>View connection diagnostics</span>
+            <span>{t('dashboard.viewDiagnostics')}</span>
             <ArrowUpRight size={14} />
           </button>
         )}

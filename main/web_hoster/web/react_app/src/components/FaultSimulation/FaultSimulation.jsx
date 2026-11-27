@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { RotateCcw, AlertTriangle, ShieldCheck, ChevronUp, ChevronDown, FlaskConical, WifiOff, Flame } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import styles from './FaultSimulation.module.css';
 
 export default function FaultSimulation({
   currentMode,
+  hardwareStatus,
   onTriggerFault,
   onRestore,
   metrics,
   isSmokeAlert,
   onToggleSmokeAlarm
 }) {
+  const { t, translateSource } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
+  const sourceLabel = translateSource(hardwareStatus?.dataSource);
 
   return (
     <div className={`${styles.simulationContainer} ${isOpen ? styles.open : styles.collapsed}`}>
@@ -19,17 +23,17 @@ export default function FaultSimulation({
         type="button"
         className={styles.toggleBar}
         onClick={() => setIsOpen(!isOpen)}
-        title="Toggle SafeHaven Resilience Test Lab (Administrator Only)"
+        title={t('testLab.dockTitle')}
       >
         <div className={styles.barLeft}>
           <span className={styles.labIconPill}>
             <FlaskConical size={15} />
           </span>
-          <span className={styles.barTitle}>Resilience Test Lab</span>
-          <span className={styles.sourceBadge}>Admin · Simulator</span>
+          <span className={styles.barTitle}>{t('testLab.dockTitle')}</span>
+          <span className={styles.sourceBadge}>{t('common.adminShort')} · {sourceLabel}</span>
         </div>
         <div className={styles.barRight}>
-          <span className={styles.activeModeTag}>Mode: <strong>{currentMode}</strong></span>
+          <span className={styles.activeModeTag}>{t('testLab.dockMode')}: <strong>{currentMode}</strong></span>
           {isOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
         </div>
       </button>
@@ -38,7 +42,7 @@ export default function FaultSimulation({
       {isOpen && (
         <div className={styles.drawerContent}>
           <div className={styles.testActions}>
-            <span className={styles.actionGroupTitle}>1. Trigger Network &amp; Safety Test Scenarios:</span>
+            <span className={styles.actionGroupTitle}>{t('testLab.dockGroup1')}</span>
 
             <div className={styles.buttonRow}>
               <button
@@ -47,7 +51,7 @@ export default function FaultSimulation({
                 onClick={() => onRestore()}
               >
                 <ShieldCheck size={15} />
-                <span>T1: Normal Mode</span>
+                <span>{t('testLab.dockT1')}</span>
               </button>
 
               <button
@@ -56,7 +60,7 @@ export default function FaultSimulation({
                 onClick={() => onTriggerFault('INTERNET_DOWN')}
               >
                 <WifiOff size={15} />
-                <span>T2: Internet Lost (LAN Fallback)</span>
+                <span>{t('testLab.dockT2')}</span>
               </button>
 
               <button
@@ -65,7 +69,7 @@ export default function FaultSimulation({
                 onClick={() => onTriggerFault('LAN_DOWN')}
               >
                 <AlertTriangle size={15} />
-                <span>T3: Complete LAN Outage</span>
+                <span>{t('testLab.dockT3')}</span>
               </button>
 
               <button
@@ -74,7 +78,7 @@ export default function FaultSimulation({
                 onClick={() => onTriggerFault('SIMULATE_RECOVERY')}
               >
                 <RotateCcw size={15} />
-                <span>T4: Cloud Reconnection</span>
+                <span>{t('testLab.dockT4')}</span>
               </button>
 
               <button
@@ -83,25 +87,25 @@ export default function FaultSimulation({
                 onClick={() => onToggleSmokeAlarm && onToggleSmokeAlarm(!isSmokeAlert)}
               >
                 <Flame size={15} />
-                <span>{isSmokeAlert ? 'Clear MQ-2 Smoke Alert' : 'Trigger MQ-2 Smoke Alert'}</span>
+                <span>{isSmokeAlert ? t('testLab.dockSmokeClear') : t('testLab.dockSmokeTrigger')}</span>
               </button>
             </div>
           </div>
 
           {/* Test Lab Metrics Display */}
           <div className={styles.metricsBox}>
-            <span className={styles.actionGroupTitle}>2. Test Lab Telemetry Metrics (Source: Simulator):</span>
+            <span className={styles.actionGroupTitle}>{t('testLab.dockGroup2', { source: sourceLabel })}</span>
             <div className={styles.metricsGrid}>
               <div className={styles.metricItem}>
-                <span className={styles.metricLabel}>Failover Transition Time</span>
+                <span className={styles.metricLabel}>{t('testLab.dockFailoverTime')}</span>
                 <span className={styles.metricValue}>{metrics.fallbackTimeMs} ms</span>
               </div>
               <div className={styles.metricItem}>
-                <span className={styles.metricLabel}>Avg Command Latency</span>
+                <span className={styles.metricLabel}>{t('testLab.dockAvgLatency')}</span>
                 <span className={styles.metricValue}>{metrics.avgResponseTimeMs} ms</span>
               </div>
               <div className={styles.metricItem}>
-                <span className={styles.metricLabel}>Session Actions Executed</span>
+                <span className={styles.metricLabel}>{t('testLab.dockCommandsExecuted')}</span>
                 <span className={styles.metricValue}>{metrics.commandsTotal}</span>
               </div>
             </div>
