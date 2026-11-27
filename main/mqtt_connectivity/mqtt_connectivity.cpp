@@ -3,9 +3,15 @@
 #include <cstdio>
 #include <cstring>
 
+#if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
+#include "cJSON.h"
+#include "event_notifier.h"
+#endif
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_mac.h"
+#include "esp_random.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
@@ -27,7 +33,12 @@ namespace
 {
     constexpr char TAG[] = "mqtt_connectivity";
     constexpr char TEST_TOPIC[] = "demo/esp32-mqtt-connectivity/test";
+    constexpr char TEST_NOTIFICATION_TOPIC[] = "test/esp32/notifications/v1";
     constexpr TickType_t PUBLISH_INTERVAL = pdMS_TO_TICKS(30000);
+#if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
+    constexpr TickType_t MOCK_NOTIFICATION_INTERVAL = pdMS_TO_TICKS(60000);
+    constexpr uint32_t MOCK_NOTIFICATION_LIMIT = 4;
+#endif
     constexpr EventBits_t MQTT_CONNECTED_BIT = BIT0;
     constexpr int MQTT_RECONNECT_TIMEOUT_MS = 10000;
     constexpr int MQTT_NETWORK_TIMEOUT_MS = 3000;
@@ -36,6 +47,9 @@ namespace
     EventGroupHandle_t mqtt_event_group = nullptr;
     TaskHandle_t publish_task_handle = nullptr;
     char device_id[13] = {};
+#if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
+    char test_run_id[17] = {};
+#endif
     uint32_t publish_sequence = 0;
     bool previously_connected = false;
 
@@ -76,6 +90,126 @@ namespace
             break;
         }
     }
+
+#if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
+    class MqttNotificationSink final : public event_notifier::NotificationSink
+    {
+    public:
+        bool notify_warning(const event_notifier::Notification &notification) override
+        {
+            return publish(notification, "warning");
+        }
+
+        bool notify_critical(const event_notifier::Notification &notification) override
+        {
+            return publish(notification, "critical");
+        }
+
+    private:
+        bool publish(const event_notifier::Notification &notification,
+                     const char *severity)
+        {
+            const uint32_t sequence = sequence_ + 1;
+            char event_id[48] = {};
+            const int event_id_length = std::snprintf(
+                event_id, sizeof(event_id), "%s-%s-%lu", device_id, test_run_id,
+                static_cast<unsigned long>(sequence));
+            if (event_id_length < 0 ||
+                static_cast<std::size_t>(event_id_length) >= sizeof(event_id))
+            {
+                ESP_LOGE(TAG, "Could not format synthetic event ID");
+                return false;
+            }
+
+            cJSON *event = cJSON_CreateObject();
+            if (event == nullptr)
+            {
+                ESP_LOGE(TAG, "Could not allocate synthetic event");
+                return false;
+            }
+            const bool fields_added =
+                cJSON_AddNumberToObject(event, "schema_version", 1) != nullptr &&
+                cJSON_AddStringToObject(event, "kind", "synthetic_notification") != nullptr &&
+                cJSON_AddBoolToObject(event, "is_test", true) != nullptr &&
+                cJSON_AddStringToObject(event, "event_id", event_id) != nullptr &&
+                cJSON_AddStringToObject(event, "source", "esp32_mock") != nullptr &&
+                cJSON_AddStringToObject(event, "device_id", device_id) != nullptr &&
+                cJSON_AddStringToObject(event, "test_run_id", test_run_id) != nullptr &&
+                cJSON_AddNumberToObject(event, "sequence", sequence) != nullptr &&
+                cJSON_AddStringToObject(event, "severity", severity) != nullptr &&
+                cJSON_AddStringToObject(event, "title", notification.title) != nullptr &&
+                cJSON_AddStringToObject(event, "message", notification.message) != nullptr &&
+                cJSON_AddNumberToObject(
+                    event, "timestamp_ms",
+                    static_cast<double>(esp_timer_get_time() / 1000)) != nullptr &&
+                cJSON_AddStringToObject(
+                    event, "timestamp_kind", "device_uptime_ms") != nullptr;
+            if (!fields_added)
+            {
+                cJSON_Delete(event);
+                ESP_LOGE(TAG, "Could not construct synthetic event payload");
+                return false;
+            }
+
+            char *payload = cJSON_PrintUnformatted(event);
+            cJSON_Delete(event);
+            if (payload == nullptr)
+            {
+                ESP_LOGE(TAG, "Could not serialize synthetic event payload");
+                return false;
+            }
+
+            const int message_id = esp_mqtt_client_publish(
+                mqtt_client, TEST_NOTIFICATION_TOPIC, payload, 0, 1, 0);
+            cJSON_free(payload);
+            if (message_id < 0)
+            {
+                ESP_LOGW(TAG, "Synthetic event was not accepted by the local MQTT client");
+                return false;
+            }
+
+            sequence_ = sequence;
+            ESP_LOGI(TAG, "Synthetic %s notification accepted locally; "
+                          "broker and Firestore acknowledgement are pending "
+                          "(event %s)",
+                     severity, event_id);
+            return true;
+        }
+
+        uint32_t sequence_ = 0;
+    };
+
+    void mock_notification_task(void *)
+    {
+        MqttNotificationSink sink;
+        const event_notifier::EventNotifier notifier(sink);
+        for (uint32_t index = 0; index < MOCK_NOTIFICATION_LIMIT; ++index)
+        {
+            xEventGroupWaitBits(mqtt_event_group, MQTT_CONNECTED_BIT, pdFALSE,
+                                pdTRUE, portMAX_DELAY);
+
+            const bool is_critical = (index % 2) != 0;
+            const event_notifier::Notification notification = {
+                is_critical ? event_notifier::Severity::critical
+                            : event_notifier::Severity::warning,
+                is_critical ? "Synthetic critical test event"
+                            : "Synthetic warning test event",
+                is_critical ? "Generated test notification; no physical hazard is present."
+                            : "Generated test notification; no physical sensor is represented."};
+            if (!notifier.notify(notification))
+            {
+                ESP_LOGW(TAG, "Synthetic notification sink rejected event %lu",
+                         static_cast<unsigned long>(index + 1));
+            }
+
+            if (index + 1 < MOCK_NOTIFICATION_LIMIT)
+            {
+                vTaskDelay(MOCK_NOTIFICATION_INTERVAL);
+            }
+        }
+        vTaskDelete(nullptr);
+    }
+#endif
 
     void publish_task(void *)
     {
@@ -194,6 +328,11 @@ namespace mqtt_connectivity
         std::snprintf(device_id, sizeof(device_id),
                       "%02x%02x%02x%02x%02x%02x",
                       mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+#if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
+        std::snprintf(test_run_id, sizeof(test_run_id), "%08lx%08lx",
+                      static_cast<unsigned long>(esp_random()),
+                      static_cast<unsigned long>(esp_random()));
+#endif
 
         mqtt_event_group = xEventGroupCreate();
         if (mqtt_event_group == nullptr)
@@ -266,5 +405,12 @@ namespace mqtt_connectivity
         }
 
         ESP_LOGI(TAG, "MQTT client started after Wi-Fi obtained an IP address");
+#if CONFIG_CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
+        if (xTaskCreate(mock_notification_task, "mock_event_publish", 4096,
+                        nullptr, 4, nullptr) != pdPASS)
+        {
+            ESP_LOGE(TAG, "Could not create synthetic event test publisher task");
+        }
+#endif
     }
 }

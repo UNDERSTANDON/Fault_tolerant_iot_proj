@@ -7,11 +7,16 @@
     "start": "node lan_broker_bridge.mjs",
     "setup:admin": "node setup_local_admin.mjs",
     "test": "node --test",
+    "test:firebase-emulator": "node firebase_emulator_smoke.mjs",
     "test:lan": "node lan_stability_monitor.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
+    "firebase-admin": "^14.5.1",
     "mqtt": "^5.16.1",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

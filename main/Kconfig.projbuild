@@ -41,6 +41,14 @@ config CONNECTIVITY_MQTT_USE_CUSTOM_CA
         CA certificate for a development broker. The PEM is embedded in the
         firmware image; never put the CA private key in the project.
 
+config CONNECTIVITY_ENABLE_MOCK_EVENT_NOTIFICATIONS
+    bool "Publish synthetic warning/critical notifications for testing"
+    default n
+    help
+        Test only. Publishes four synthetic warning/critical notification
+        events to the isolated test topic after MQTT connects. Keep disabled
+        in production firmware.
+
 config CONNECTIVITY_FALLBACK_AP_SSID
     string "Fallback access point SSID"
     default "ESP32_Fault_Tolerant_IoT_LAN"
@@ -53,5 +61,27 @@ config CONNECTIVITY_FALLBACK_AP_PASSWORD
     help
         Required to start the fallback access point; use 8-63 characters.
         This value is compiled into firmware.
+
+endmenu
+
+menu "Local controller GPIO mapping"
+
+config LOCAL_GPIO_SENSOR_INPUT_1
+    int "Sensor input 1 GPIO"
+    range -1 48
+    default -1
+    help
+        Logical input role only. Keep at -1 until the board revision and
+        electrical interface are reviewed. Assigning a pin does not enable
+        hardware initialization.
+
+config LOCAL_GPIO_LIGHT_RELAY_1
+    int "Light relay 1 GPIO"
+    range -1 48
+    default -1
+    help
+        Logical output role only. Keep at -1 until the board revision, wiring,
+        and safe inactive level are reviewed. Assigning a pin does not enable
+        relay hardware.
 
 endmenu

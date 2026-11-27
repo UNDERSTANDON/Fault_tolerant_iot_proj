@@ -56,6 +56,7 @@ export default function App() {
   const {
     rooms,
     networkState,
+    deviceNetworkStatus,
     bridgeState,
     connectBridge,
     metrics,
@@ -216,6 +217,7 @@ export default function App() {
               <main>
                 <ConnectionStatus
                   networkState={networkState}
+                  deviceNetworkStatus={deviceNetworkStatus}
                   bridgeState={bridgeState}
                   onConnectBridge={connectBridge}
                 />

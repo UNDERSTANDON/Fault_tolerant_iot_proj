@@ -12,7 +12,7 @@ endif()
 idf_component_register(
      SRCS
           "Fault_tolerant_iot_proj.cpp"
-          "cloud_controller/cloud_controller.cpp"
+          "event_notifier/event_notifier.cpp"
           "local_controller/local_controller.cpp"
           "mqtt_connectivity/mqtt_connectivity.cpp"
           "web_hoster/web_hoster.cpp"
@@ -37,7 +37,7 @@ idf_component_register(
 
      INCLUDE_DIRS
           "."
-          "cloud_controller"
+          "event_notifier"
           "local_controller"
           "mqtt_connectivity"
           "web_hoster"

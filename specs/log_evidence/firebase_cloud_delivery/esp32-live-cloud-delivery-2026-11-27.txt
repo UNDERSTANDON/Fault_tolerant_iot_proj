@@ -1,0 +1,38 @@
+Physical ESP32 synthetic event delivery to live Firebase test project
+Date: 2026-11-27
+Result: PASS - four device-generated event documents verified
+
+Evidence:
+- `esp_20261127_132236.log` is a fresh ESP-IDF monitor capture from the
+  physical ESP32-S3. It records Wi-Fi station connection, MQTT connection,
+  and all four bounded synthetic warning/critical notifications accepted by
+  the firmware MQTT client.
+- `firebase_log_written.png` shows the live Firebase test project's
+  `testEventNotifications` collection and a synthetic notification document.
+  The selected document in the screenshot is from a different test run than
+  the four events in the monitor capture; the screenshot is supporting
+  collection-level evidence, not the ID-by-ID match for this run.
+- A read-only Admin SDK lookup was run against the configured Firebase test
+  project for the four IDs printed by this firmware run. All four documents
+  existed and matched their event ID, device ID, test-run ID, sequence,
+  `is_test=true`, and `source=esp32_mock` markers. Severity matched the
+  firmware sequence: warning, critical, warning, critical.
+- No writes, deletes, or production-project requests were made during this
+  readback verification.
+
+Event IDs verified:
+- `14c19f3bd6a8-7b419a999c979b88-1`
+- `14c19f3bd6a8-7b419a999c979b88-2`
+- `14c19f3bd6a8-7b419a999c979b88-3`
+- `14c19f3bd6a8-7b419a999c979b88-4`
+
+The firmware log says the MQTT client accepted the publish locally and that
+broker/Firestore acknowledgements were pending at that instant. Those lines
+are not stale queue status. The subsequent Firestore readback of matching
+event IDs verifies that the bridge delivered these device-generated events.
+
+Limitations:
+- This verifies one physical-device run against the configured test project;
+  it does not verify a production event producer or production destination.
+- Outage/recovery, IAM denial, throttling, and queue-capacity behavior remain
+  outstanding integration checks.

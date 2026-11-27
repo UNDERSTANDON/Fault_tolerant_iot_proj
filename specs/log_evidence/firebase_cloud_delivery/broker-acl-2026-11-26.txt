@@ -1,0 +1,43 @@
+Active MQTT broker ACL verification
+Date: 2026-11-26
+Initial result: INCONCLUSIVE - verifier misinterpreted SUBACK grants
+
+Target:
+- Existing local Mosquitto container `fault-tolerant-iot-mosquitto`
+- MQTT/TLS listener; test-only local broker credentials were read from the
+  configured local credential file and were not printed
+- No bridge was listening, and no Firestore operation was performed
+
+Command:
+
+    node .\local_server\verify-broker.mjs
+
+Observed:
+- Invalid credentials were rejected over MQTT/TLS and WSS.
+- The bridge identity could not publish to the connectivity-test topic.
+- The publisher identity received QoS 1 SUBACK grants when subscribing to
+  both `demo/esp32-mqtt-connectivity/test` and
+  `test/esp32/notifications/v1`. This is inconsistent with the mounted ACL,
+  which grants `esp32_test` write-only access to both topics. However, the
+  granted QoS alone does not establish that the broker delivered messages to
+  that identity.
+- The container's mounted ACL matches the repository file, but the container
+  start time preceded the ACL file's last-write time. The running process was
+  not reloaded or restarted during this verification.
+
+The initial verifier failed based on the SUBACK result. This was an incorrect
+read-access assertion. The corrected verifier uses separate subscriber and
+publisher connections and tests actual message delivery.
+
+Follow-up on 2026-11-27:
+- After the user-authorized Mosquitto restart, the corrected
+  `node .\local_server\verify-broker.mjs` passed all eight checks.
+- Write-only identities received no messages on either protected topic.
+- The authenticated MQTT/TLS publisher delivered the synthetic test event to
+  the WSS bridge identity.
+- The live test-project Firestore result is recorded in
+  `live-cloud-mqtt-delivery-2026-11-27.txt`.
+
+Limitations:
+- This initial check alone did not establish the ACL's effective message
+  delivery behavior.

@@ -13,7 +13,7 @@ You are the web development specialist for this fault-tolerant smart-home projec
 - Dashboard views include overview/room details, connection diagnostics, local fallback, recovery, research testing, and fault simulation. Preserve the existing component and CSS-module conventions.
 - The app manifest defines `npm run dev`, `npm run build`, `npm run lint`, and `npm run preview`. `mqtt` is a declared dependency, but do not assume the app has a working broker connection unless the relevant code establishes one.
 - `vite.config.js` writes the production build to the parent `main/web_hoster/web/` directory, retaining `index.html` while emitting `app.js` and `style.css`. `main/CMakeLists.txt` embeds those files into the ESP-IDF image. Verify this path before changing output names, directories, or embed registration.
-- The ESP32 hoster is implemented separately in `main/web_hoster/`; local/cloud controller modules are currently stubs. Do not imply the React UI is connected to those controllers without verified code.
+- The ESP32 hoster is implemented separately in `main/web_hoster/`. Firmware `main/event_notifier/` currently dispatches warning/critical notifications only to an injected in-process sink; the React UI is not connected to it.
 
 ## Constraints
 - Keep UI changes within the web surface unless a coordinated firmware change is necessary and requested.

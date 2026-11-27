@@ -8,6 +8,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import {
+  TEST_NOTIFICATION_TOPIC,
+  TestEventDeliveryWorker,
+  TestEventOutbox,
+  validateTestNotification
+} from './test_event_delivery.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +21,18 @@ const envPath = path.resolve(__dirname, '.env');
 dotenv.config({ path: envPath });
 if (process.env.LOCAL_BROKER_CREDENTIALS) {
   dotenv.config({ path: process.env.LOCAL_BROKER_CREDENTIALS, override: true });
+}
+
+const firestoreTestEnabledValue = process.env.FIRESTORE_TEST_ENABLED || 'false';
+if (!['true', 'false'].includes(firestoreTestEnabledValue)) {
+  throw new Error('FIRESTORE_TEST_ENABLED must be true or false.');
+}
+const firestoreTestEmulatorValue = process.env.FIRESTORE_TEST_EMULATOR || 'false';
+if (!['true', 'false'].includes(firestoreTestEmulatorValue)) {
+  throw new Error('FIRESTORE_TEST_EMULATOR must be true or false.');
+}
+if (firestoreTestEmulatorValue === 'true' && firestoreTestEnabledValue !== 'true') {
+  throw new Error('FIRESTORE_TEST_EMULATOR requires FIRESTORE_TEST_ENABLED=true.');
 }
 
 const config = {
@@ -26,7 +44,16 @@ const config = {
   bridgePort: Number(process.env.BRIDGE_PORT || 8081),
   tlsCertPath: process.env.BRIDGE_TLS_CERT_PATH || '',
   tlsKeyPath: process.env.BRIDGE_TLS_KEY_PATH || '',
-  allowedTopics: ['demo/esp32-mqtt-connectivity/test'],
+  allowedTopics: [
+    'demo/esp32-mqtt-connectivity/test',
+    ...(firestoreTestEnabledValue === 'true' ? [TEST_NOTIFICATION_TOPIC] : [])
+  ],
+  firestoreTestEnabled: firestoreTestEnabledValue === 'true',
+  firestoreTestEmulator: firestoreTestEmulatorValue === 'true',
+  firebaseTestProjectId: process.env.FIREBASE_TEST_PROJECT_ID || '',
+  firebaseProductionProjectId: process.env.FIREBASE_PRODUCTION_PROJECT_ID || '',
+  firestoreEmulatorHost: process.env.FIRESTORE_EMULATOR_HOST || '',
+  firebaseCredentialsPath: process.env.GOOGLE_APPLICATION_CREDENTIALS || '',
   allowedOrigins: new Set(
     (process.env.BRIDGE_ALLOWED_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
       .split(',')
@@ -54,8 +81,14 @@ const isLoopbackBridge = ['localhost', '127.0.0.1', '::1'].includes(config.bridg
 const useHttpsBridge = !isLoopbackBridge || Boolean(config.tlsCertPath || config.tlsKeyPath);
 const serverDataDir = path.join(config.appDataDir, 'local-server');
 const usersFile = path.join(serverDataDir, 'users.json');
+const testEventOutbox = config.firestoreTestEnabled
+  ? new TestEventOutbox(path.join(serverDataDir, 'test-event-outbox'))
+  : null;
 const sessionStore = new Map();
 const loginAttempts = new Map();
+let testEventOutboxReady = false;
+let testFirebaseWriterReady = false;
+let testEventWorker = null;
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -648,6 +681,39 @@ bridgeServer.on('request', (request, res) => {
     return;
   }
 
+  if (url.pathname === '/api/admin/test-events/status' && request.method === 'GET') {
+    const user = requireAuth(request);
+    if (!user) {
+      sendJson(res, 401, { error: 'Authentication required.' });
+      return;
+    }
+    if (user.role !== 'admin') {
+      sendJson(res, 403, { error: 'Administrator access required.' });
+      return;
+    }
+
+    if (!testEventOutbox) {
+      sendJson(res, 200, {
+        enabled: false,
+        firestoreConfigured: false,
+        outbox: { pending: 0, quarantined: 0, oldestPendingAgeMs: 0 }
+      });
+      return;
+    }
+
+    testEventOutbox.getStatus()
+      .then((outbox) => sendJson(res, 200, {
+        enabled: true,
+        firestoreConfigured: testFirebaseWriterReady,
+        outbox
+      }))
+      .catch(() => {
+        console.error('Could not read the test event outbox status.');
+        sendJson(res, 500, { error: 'Test event status is unavailable.' });
+      });
+    return;
+  }
+
   sendJson(res, 404, { error: 'Not found.' });
 });
 
@@ -670,6 +736,51 @@ const buildConnectionOptions = () => {
   return options;
 };
 
+async function initializeTestEventDelivery() {
+  try {
+    await testEventOutbox.initialize();
+    testEventOutboxReady = true;
+  } catch {
+    console.error('Test event outbox could not be initialized; synthetic events will not be acknowledged.');
+    return;
+  }
+
+  let writer = null;
+  try {
+    const { createFirebaseTestWriter } = await import('./firebase_test_admin.mjs');
+    writer = await createFirebaseTestWriter({
+      testProjectId: config.firebaseTestProjectId,
+      productionProjectId: config.firebaseProductionProjectId,
+      useEmulator: config.firestoreTestEmulator,
+      emulatorHost: config.firestoreEmulatorHost,
+      credentialsPath: config.firebaseCredentialsPath,
+      repositoryRoot: path.resolve(__dirname, '..')
+    });
+    testFirebaseWriterReady = true;
+  } catch {
+    console.error(
+      'Firebase test writer is unavailable; synthetic events will remain in the local outbox until configuration is fixed and the bridge restarts.'
+    );
+  }
+
+  testEventWorker = new TestEventDeliveryWorker({
+    outbox: testEventOutbox,
+    writer
+  });
+  const retryTimer = setInterval(() => {
+    testEventWorker.runOnce().catch(() => {
+      console.error('Test event delivery worker failed; queued events remain in the local outbox.');
+    });
+  }, 1000);
+  retryTimer.unref();
+}
+
+if (testEventOutbox) {
+  initializeTestEventDelivery().catch(() => {
+    console.error('Test event delivery initialization failed; local bridge services remain available.');
+  });
+}
+
 const sendStatus = (status, detail) => {
   for (const client of messageClients) {
     if (client.readyState !== client.OPEN) {
@@ -681,6 +792,7 @@ const sendStatus = (status, detail) => {
 };
 
 const sendPayload = (topic, payload) => {
+  if (topic === TEST_NOTIFICATION_TOPIC) return;
   if (!isAllowedTopic(topic) || !isValidTestPayload(payload)) {
     console.warn(`Rejected invalid or unexpected broker payload on ${topic}`);
     return;
@@ -708,12 +820,59 @@ function isValidTestPayload(payload) {
 }
 
 const brokerClient = mqtt.connect(config.brokerUrl, buildConnectionOptions());
+const handleMqttMessage = brokerClient.handleMessage.bind(brokerClient);
+brokerClient.handleMessage = (packet, callback) => {
+  if (packet.topic !== TEST_NOTIFICATION_TOPIC) {
+    handleMqttMessage(packet, callback);
+    return;
+  }
+
+  if (packet.payload.length > MAX_BROKER_MESSAGE_BYTES) {
+    console.warn('Rejected oversized synthetic event notification.');
+    handleMqttMessage(packet, callback);
+    return;
+  }
+
+  let event;
+  try {
+    event = validateTestNotification(
+      packet.topic,
+      JSON.parse(packet.payload.toString('utf8'))
+    );
+  } catch {
+    console.warn('Rejected invalid synthetic event notification.');
+    handleMqttMessage(packet, callback);
+    return;
+  }
+
+  if (!testEventOutboxReady) {
+    callback(new Error('Test event outbox is unavailable.'));
+    return;
+  }
+
+  testEventOutbox.enqueue(event)
+    .then((result) => {
+      if (result.duplicate) {
+        console.info(`Duplicate test event already queued: ${event.event_id}`);
+      }
+      testEventWorker?.runOnce().catch(() => {
+        console.error('Test event delivery attempt failed; event remains queued.');
+      });
+      handleMqttMessage(packet, callback);
+    })
+    .catch((error) => {
+      const code = String(error.code || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+      console.error(`Could not persist synthetic event before MQTT acknowledgement (${code || 'unknown'}).`);
+      callback(error);
+    });
+};
 
 brokerClient.on('connect', () => {
   console.log('MQTT broker connected.');
   sendStatus('connected', 'MQTT broker reachable');
   for (const topic of config.allowedTopics) {
-    brokerClient.subscribe(topic, { qos: 0 }, (error) => {
+    const qos = topic === TEST_NOTIFICATION_TOPIC ? 1 : 0;
+    brokerClient.subscribe(topic, { qos }, (error) => {
       if (error) {
         console.error(`Failed to subscribe to ${topic} (${error.code || error.name || 'unknown error'}).`);
         return;

@@ -67,6 +67,9 @@ function isConnectivityTestPayload(topic, payload) {
 
 export function useSmartHome() {
   const localBridgeUrl = import.meta.env.VITE_LAN_BRIDGE_URL || '';
+  const isEmbeddedFirmwareHost = typeof window !== 'undefined'
+    && window.location.protocol === 'http:'
+    && window.location.port === '';
   const bridgeSecurity = getBridgeSecurityMode(localBridgeUrl);
   const isInsecureRemoteBridge = Boolean(localBridgeUrl && bridgeSecurity.isRemote && !bridgeSecurity.usesTls);
   const [rooms, setRooms] = useState(INITIAL_ROOMS_DATA);
@@ -90,6 +93,7 @@ export function useSmartHome() {
     requiresAuthentication: false,
     error: isInsecureRemoteBridge ? 'Remote dashboard connections require a WSS bridge URL.' : null
   }));
+  const [deviceNetworkStatus, setDeviceNetworkStatus] = useState(null);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [isSmokeAlert, setIsSmokeAlert] = useState(false);
 
@@ -105,6 +109,47 @@ export function useSmartHome() {
       error: isInsecureRemoteBridge ? 'Remote dashboard connections require a WSS bridge URL.' : null
     }));
   }, [isInsecureRemoteBridge, localBridgeUrl]);
+
+  useEffect(() => {
+    if (!isEmbeddedFirmwareHost) {
+      return undefined;
+    }
+
+    let active = true;
+    const readDeviceNetworkStatus = async () => {
+      try {
+        const response = await fetch('/api/network/status', { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const status = await response.json();
+        if (!['initializing', 'station_connecting', 'station_connected',
+          'fallback_ap_active', 'fallback_ap_reconnecting', 'station_ap_recovery',
+          'unavailable'].includes(status.state)
+          || typeof status.station_connected !== 'boolean'
+          || typeof status.fallback_ap_active !== 'boolean') {
+          throw new Error('Invalid firmware network status response.');
+        }
+        if (active) {
+          setDeviceNetworkStatus({ available: true, ...status });
+        }
+      } catch {
+        if (active) {
+          setDeviceNetworkStatus({
+            available: false,
+            error: 'Firmware network status is currently unavailable.'
+          });
+        }
+      }
+    };
+
+    readDeviceNetworkStatus();
+    const interval = setInterval(readDeviceNetworkStatus, 5000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [isEmbeddedFirmwareHost]);
 
   useEffect(() => {
     if (!localBridgeUrl || !bridgeEnabled || isInsecureRemoteBridge) {
@@ -712,6 +757,7 @@ export function useSmartHome() {
   return {
     rooms,
     networkState,
+    deviceNetworkStatus,
     bridgeState,
     connectBridge,
     metrics,

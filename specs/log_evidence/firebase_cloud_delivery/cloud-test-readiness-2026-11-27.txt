@@ -1,0 +1,26 @@
+Live Firebase event-delivery readiness follow-up
+Date: 2026-11-27
+Result at this check: Firebase configuration valid locally; service restarts pending
+
+Firebase preflight:
+- Test delivery is enabled in cloud mode; emulator mode is disabled.
+- Both project IDs are present, distinct, and valid under application checks.
+- The configured service-account file exists and its project ID matches the
+  configured test project.
+- Firebase Admin writer initialization passed. No network request or Firestore
+  write was performed.
+- Project IDs, credential path, and credential contents are omitted.
+
+Active services:
+- The running bridge process started before `local_server/.env` was modified,
+  so it has not loaded the newly configured Firebase environment.
+- The active Mosquitto broker returned QoS 1 SUBACK values for the publisher's
+  subscriptions. This result alone did not prove message-read access or that
+  the broker had failed to load its ACL.
+- Neither service was restarted or reloaded. No MQTT messages were published.
+
+Follow-up:
+- The user later authorized the service restarts. The corrected broker verifier
+  passed, the bridge loaded the new environment, and live MQTT-to-Firestore
+  write/readback/replay verification passed. See
+  `live-cloud-mqtt-delivery-2026-11-27.txt`.

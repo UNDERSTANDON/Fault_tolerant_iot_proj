@@ -1,0 +1,30 @@
+Live Firebase event-delivery readiness check
+Date: 2026-11-27
+Initial result: BLOCKED - runtime project configuration was incomplete
+
+Broker:
+- The active Mosquitto container remained running; no restart or reload was
+  performed.
+- Using the configured `esp32_test` identity, the active broker returned
+  SUBACK QoS 1 for `demo/esp32-mqtt-connectivity/test` and
+  `test/esp32/notifications/v1`. This protocol acknowledgement alone did not
+  prove that the broker delivered messages contrary to the mounted write-only
+  ACL policy.
+- This check subscribed only; it published no MQTT messages.
+
+Firebase test configuration:
+- `FIRESTORE_TEST_ENABLED=true` and `FIRESTORE_TEST_EMULATOR=false`.
+- `FIREBASE_TEST_PROJECT_ID` and `FIREBASE_PRODUCTION_PROJECT_ID` were blank
+  in `local_server/.env`.
+- `GOOGLE_APPLICATION_CREDENTIALS` was configured and its file exists. Its
+  path and contents are intentionally omitted.
+- No live Firestore delivery test was run because the project IDs were
+  missing. No credentials or project identifiers are recorded here.
+
+Next steps:
+- Set the two distinct project IDs as `KEY=value` entries in the runtime
+  `local_server/.env`; do not place local project-specific values or personal
+  paths in the committed `.env.example`.
+- This configuration blocker was resolved later on 2026-11-27. See
+  `cloud-test-readiness-2026-11-27.txt` and
+  `live-cloud-mqtt-delivery-2026-11-27.txt`.

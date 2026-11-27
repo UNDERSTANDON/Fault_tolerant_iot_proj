@@ -20,3 +20,11 @@
 /local_server/mosquitto/private/
 /local_server/mosquitto/data/
 *.key
+/skills-lock.json
+/firebase.json
+/.agents
+/.claude
+/.firebaserc
+/firebase-debug.log
+/firestore-debug.log
+/ui-debug.log
